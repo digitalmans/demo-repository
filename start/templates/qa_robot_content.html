@@ -1,0 +1,947 @@
+<!-- 问答机器人内容 -->
+<div class="qa-robot-wrapper" style="width: 100%; height: 100%; overflow: hidden;">
+    <div class="container" style="max-width: 100%; height: 100vh; margin: 0; border-radius: 0; box-shadow: none;">
+        <header style="padding: 20px 30px;">
+            <h1 style="font-size: 2em; margin-bottom: 5px;">🤖 检索式问答机器人</h1>
+            <p class="subtitle" style="font-size: 1em; opacity: 0.9;">基于Neo4j知识图谱的智能问答系统</p>
+        </header>
+
+        <div class="main-content" style="display: flex; flex: 1; overflow: hidden; height: calc(100vh - 120px);">
+            <!-- 最左侧：历史记录侧边栏 -->
+            <div class="history-sidebar" id="qa-robot-history-sidebar" style="width: 280px; background: #f8f9ff; border-right: 2px solid #e0e0e0; display: flex; flex-direction: column; overflow: hidden;">
+                <div class="history-header" style="padding: 20px; border-bottom: 2px solid #e0e0e0; background: white; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 1.2em; color: #333; margin: 0; font-weight: 600;">💬 历史记录</h3>
+                    <button id="qa-robot-new-chat-btn" onclick="qaRobotCreateNewChat()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600;">+ 新对话</button>
+                </div>
+                <div class="history-list" id="qa-robot-history-list" style="flex: 1; overflow-y: auto; padding: 10px;">
+                    <div class="loading-history" style="text-align: center; padding: 40px; color: #999;">加载中...</div>
+                </div>
+            </div>
+            
+            <!-- 中间：提问和统计区域 -->
+            <div class="search-sidebar" style="width: 350px; background: #f8f9ff; border-right: 2px solid #e0e0e0; display: flex; flex-direction: column; overflow-y: auto; padding: 20px;">
+                <div class="search-card" style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); margin-bottom: 20px;">
+                    <h2 style="font-size: 1.5em; margin-bottom: 20px; color: #333;">💬 提问</h2>
+                    <div class="input-group" style="margin-bottom: 15px; position: relative;">
+                        <textarea 
+                            id="qa-robot-question-input" 
+                            rows="4" 
+                            placeholder="请输入您的问题，例如：&#10;• 太阳系中体积最大的行星是哪一颗？&#10;• 人体最大的器官是什么？&#10;• 澳大利亚的首都是悉尼吗？"
+                            style="width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; font-family: inherit; resize: vertical; transition: border-color 0.3s; line-height: 1.5;"
+                        ></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button class="btn btn-primary" id="qa-robot-send-btn" onclick="qaRobotSendQuestion()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <span class="btn-text">发送</span>
+                        <span class="btn-loading" style="display: none;">思考中...</span>
+                        </button>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="qa-robot-speaker-select" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666; font-weight: 500;">🎤 选择发音人（中文）</label>
+                        <select id="qa-robot-speaker-select" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background: white; cursor: pointer; transition: border-color 0.3s;" onchange="qaRobotUpdateSpeaker()">
+                            <option value="0">0 - 度小美（女声）</option>
+                            <option value="1">1 - 度小字（男声）</option>
+                            <option value="3">3 - 度逍遥（男声）</option>
+                            <option value="4">4 - 度丫丫（女声）</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button class="btn btn-secondary" id="qa-robot-output-zh-btn" onclick="qaRobotOutputChinese()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #4CAF50; color: white;">
+                        🇨🇳 输出中文
+                        </button>
+                        <!-- 输出英文功能已取消
+                        <button class="btn btn-secondary" id="qa-robot-output-en-btn" onclick="qaRobotOutputEnglish()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #2196F3; color: white;">
+                        🇺🇸 输出英文
+                        </button>
+                        -->
+                    </div>
+                    <button class="btn btn-secondary" id="qa-robot-clear-btn" onclick="qaRobotClearChat()" style="padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; margin-bottom: 10px; background: #f0f0f0; color: #666;">
+                        清空当前对话
+                    </button>
+                    
+                    <div class="hint-box" style="margin-top: 20px; padding: 15px; background: #f8f9ff; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <p class="hint-title" style="font-weight: 600; color: #667eea; margin-bottom: 10px; font-size: 0.95em;">💡 提示</p>
+                        <ul class="hint-list" style="list-style: none; padding-left: 0;">
+                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">可以询问各种常见问题</li>
+                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">系统会从知识库中检索最相关的答案</li>
+                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">支持多种类型的问题和答案</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="stats-card" id="qa-robot-stats-card" style="background: white; border-radius: 15px; padding: 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
+                    <h3 style="font-size: 1.2em; margin-bottom: 15px; color: #333;">📊 统计信息</h3>
+                    <div class="stats-content" id="qa-robot-stats-content">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧对话区域 -->
+            <div class="chat-area" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <div class="chat-header" style="padding: 20px 30px; background: white; border-bottom: 2px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="font-size: 1.5em; color: #333;">对话历史</h2>
+                    <span class="message-count" id="qa-robot-message-count" style="color: #666; font-size: 0.9em;">0 条消息</span>
+                </div>
+                
+                <div class="chat-messages" id="qa-robot-chat-messages" style="flex: 1; overflow-y: auto; padding: 30px; background: #f5f5f5;">
+                    <div class="welcome-message" style="text-align: center; padding: 60px 20px; color: #666;">
+                        <div class="welcome-icon" style="font-size: 4em; margin-bottom: 20px;">👋</div>
+                        <h3 style="font-size: 1.8em; color: #333; margin-bottom: 15px;">欢迎使用检索式问答机器人！</h3>
+                        <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">我是基于Neo4j知识图谱的智能问答助手，可以回答各种问题。</p>
+                        <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">请在左侧输入您的问题，我会从知识库中检索最相关的答案。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script>
+// 问答机器人 - 前端JavaScript（集成版本）
+
+let qaRobotMessageCount = 0;
+let currentQaRobotHistoryId = null;
+let qaRobotSelectedSpeaker = 0; // 默认使用度小美（0）
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 加载统计信息
+    qaRobotLoadStats();
+    
+    // 加载历史记录侧边栏
+    qaRobotLoadHistorySidebar();
+    
+    // 绑定回车键发送
+    const questionInput = document.getElementById('qa-robot-question-input');
+    if (questionInput) {
+        questionInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                qaRobotSendQuestion();
+            }
+        });
+        
+        // 自动聚焦输入框
+        questionInput.focus();
+    }
+});
+
+// 发送问题
+async function qaRobotSendQuestion() {
+    const questionInput = document.getElementById('qa-robot-question-input');
+    const question = questionInput.value.trim();
+    
+    if (!question) {
+        return;
+    }
+    
+    // 禁用按钮
+    const sendBtn = document.getElementById('qa-robot-send-btn');
+    const btnText = sendBtn.querySelector('.btn-text');
+    const btnLoading = sendBtn.querySelector('.btn-loading');
+    
+    sendBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    
+    // 添加用户消息
+    qaRobotAddMessage(question, 'user');
+    
+    // 清空输入框
+    questionInput.value = '';
+    
+    // 添加加载消息
+    const loadingId = qaRobotAddLoadingMessage();
+    
+    try {
+        const response = await fetch('/api/qa_robot/ask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ question: question })
+        });
+        
+        const data = await response.json();
+        
+        // 移除加载消息
+        qaRobotRemoveMessage(loadingId);
+        
+        if (data.success) {
+            // 确保answer是字符串
+            let answerText = typeof data.answer === 'string' ? data.answer : String(data.answer || '');
+            if (data.similarity !== undefined) {
+                answerText += `\n\n[相似度: ${(data.similarity * 100).toFixed(1)}%]`;
+            }
+            qaRobotAddMessage(answerText, 'bot');
+            
+            // 如果有候选答案，显示提示
+            if (data.alternatives && data.alternatives.length > 0) {
+                const altText = `\n\n其他候选答案:\n${data.alternatives.map((alt, i) => `${i + 1}. ${alt.answer.substring(0, 50)}... [${(alt.similarity * 100).toFixed(1)}%]`).join('\n')}`;
+                qaRobotAddMessage(altText, 'bot', false, false, true);
+            }
+            
+            // 保存后刷新历史记录侧边栏
+            qaRobotLoadHistorySidebar();
+            // 重置选中状态（因为这是新对话）
+            currentQaRobotHistoryId = null;
+            document.querySelectorAll('.qa-robot-history-item').forEach(item => {
+                item.style.background = 'white';
+                item.style.borderColor = 'transparent';
+            });
+        } else {
+            qaRobotAddMessage('抱歉，发生了错误: ' + (data.error || '未知错误'), 'bot', true);
+        }
+    } catch (error) {
+        qaRobotRemoveMessage(loadingId);
+        qaRobotAddMessage('网络错误: ' + error.message, 'bot', true);
+    } finally {
+        // 恢复按钮
+        sendBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+        
+        // 重新聚焦输入框
+        questionInput.focus();
+    }
+}
+
+// 添加消息
+function qaRobotAddMessage(text, type, isError = false, customTime = null, isAlternative = false) {
+    const chatMessages = document.getElementById('qa-robot-chat-messages');
+    
+    // 如果是第一条消息，移除欢迎消息
+    if (qaRobotMessageCount === 0) {
+        const welcomeMessage = chatMessages.querySelector('.welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.remove();
+        }
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    messageDiv.style.cssText = `
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+        animation: fadeIn 0.3s;
+    `;
+    
+    if (type === 'user') {
+        messageDiv.style.justifyContent = 'flex-end';
+    } else {
+        messageDiv.style.justifyContent = 'flex-start';
+    }
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.style.cssText = `
+        max-width: 70%;
+        padding: 15px 20px;
+        border-radius: 18px;
+        word-wrap: break-word;
+        line-height: 1.6;
+        white-space: pre-wrap;
+    `;
+    
+    if (type === 'user') {
+        contentDiv.style.cssText += `
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        `;
+    } else {
+        contentDiv.style.cssText += `
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        `;
+        if (isError) {
+            contentDiv.style.cssText += `
+                background: #ffeaea;
+                color: #c33;
+                border-color: #fcc;
+            `;
+        }
+        if (isAlternative) {
+            contentDiv.style.cssText += `
+                background: #f0f0f0;
+                color: #666;
+                font-size: 0.9em;
+            `;
+        }
+    }
+    
+    contentDiv.textContent = text;
+    
+    // 为机器人回复添加小喇叭图标（支持语言选择）
+    if (type === 'bot' && !isError && !isAlternative) {
+        const speakerBtn = document.createElement('button');
+        speakerBtn.className = 'qa-robot-speaker-btn';
+        speakerBtn.dataset.text = text;
+        speakerBtn.innerHTML = '🔊';
+        speakerBtn.title = '播放语音（点击选择语言）';
+        speakerBtn.style.cssText = `
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+            opacity: 0.7;
+            transition: all 0.2s;
+            margin-left: 10px;
+            vertical-align: middle;
+        `;
+        speakerBtn.onmouseover = () => {
+            if (qaRobotCurrentPlayingButton !== speakerBtn) {
+                speakerBtn.style.opacity = '1';
+            }
+        };
+        speakerBtn.onmouseout = () => {
+            if (qaRobotCurrentPlayingButton !== speakerBtn) {
+                speakerBtn.style.opacity = '0.7';
+            }
+        };
+        speakerBtn.onclick = (e) => {
+            e.stopPropagation();
+            
+            // 如果这个按钮正在播放，点击时停止播放
+            if (qaRobotCurrentPlayingButton === speakerBtn && qaRobotCurrentAudio && !qaRobotCurrentAudio.paused) {
+                qaRobotStopTTS(speakerBtn);
+            } else {
+                // 如果其他按钮正在播放，先停止它
+                if (qaRobotCurrentAudio && qaRobotCurrentPlayingButton !== speakerBtn) {
+                    qaRobotStopTTS();
+                }
+                // 显示语言选择菜单
+                qaRobotShowLanguageMenu(speakerBtn, text);
+            }
+        };
+        
+        // 将文本和按钮放在一个容器中
+        const textContainer = document.createElement('div');
+        textContainer.style.cssText = 'display: flex; align-items: center; width: 100%;';
+        textContainer.appendChild(contentDiv);
+        textContainer.appendChild(speakerBtn);
+        messageDiv.appendChild(textContainer);
+    } else {
+        messageDiv.appendChild(contentDiv);
+    }
+    
+    // 添加时间戳
+    const timeDiv = document.createElement('div');
+    timeDiv.style.cssText = `
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+        padding: 0 5px;
+        text-align: ${type === 'user' ? 'right' : 'left'};
+    `;
+    const timeStr = customTime 
+        ? new Date(customTime).toLocaleString('zh-CN')
+        : new Date().toLocaleString('zh-CN');
+    timeDiv.textContent = timeStr;
+    messageDiv.appendChild(timeDiv);
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    qaRobotMessageCount++;
+    qaRobotUpdateMessageCount();
+}
+
+// 添加加载消息
+function qaRobotAddLoadingMessage() {
+    const chatMessages = document.getElementById('qa-robot-chat-messages');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'qa-robot-loading-' + Date.now();
+    loadingDiv.className = 'message bot';
+    loadingDiv.style.cssText = `
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+    `;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.style.cssText = `
+        padding: 15px 20px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 18px;
+        border-bottom-left-radius: 4px;
+    `;
+    contentDiv.innerHTML = '<span style="display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(102, 126, 234, 0.3); border-radius: 50%; border-top-color: #667eea; animation: spin 1s ease-in-out infinite;"></span> 思考中...';
+    
+    loadingDiv.appendChild(contentDiv);
+    chatMessages.appendChild(loadingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    return loadingDiv.id;
+}
+
+// 移除消息
+function qaRobotRemoveMessage(messageId) {
+    const message = document.getElementById(messageId);
+    if (message) {
+        message.remove();
+    }
+}
+
+// 更新消息计数
+function qaRobotUpdateMessageCount() {
+    const countElement = document.getElementById('qa-robot-message-count');
+    if (countElement) {
+        countElement.textContent = qaRobotMessageCount + ' 条消息';
+    }
+}
+
+// 清空对话
+function qaRobotClearChat() {
+    if (qaRobotMessageCount === 0) {
+        return;
+    }
+    
+    if (!confirm('确定要清空当前对话吗？')) {
+        return;
+    }
+    
+    const chatMessages = document.getElementById('qa-robot-chat-messages');
+    chatMessages.innerHTML = `
+        <div class="welcome-message" style="text-align: center; padding: 60px 20px; color: #666;">
+            <div class="welcome-icon" style="font-size: 4em; margin-bottom: 20px;">👋</div>
+            <h3 style="font-size: 1.8em; color: #333; margin-bottom: 15px;">欢迎使用检索式问答机器人！</h3>
+            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">我是基于Neo4j知识图谱的智能问答助手，可以回答各种问题。</p>
+            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">请在左侧输入您的问题，我会从知识库中检索最相关的答案。</p>
+        </div>
+    `;
+    
+    qaRobotMessageCount = 0;
+    qaRobotUpdateMessageCount();
+    currentQaRobotHistoryId = null;
+}
+
+// 加载统计信息
+async function qaRobotLoadStats() {
+    const statsContent = document.getElementById('qa-robot-stats-content');
+    if (!statsContent) return;
+    
+    try {
+        // 这里可以添加统计信息API，暂时显示基本信息
+        statsContent.innerHTML = `
+            <div class="stat-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                <span class="stat-label" style="color: #666;">知识库</span>
+                <span class="stat-value" style="font-weight: 600; color: #667eea;">Neo4j</span>
+            </div>
+            <div class="stat-item" style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span class="stat-label" style="color: #666;">检索方式</span>
+                <span class="stat-value" style="font-weight: 600; color: #667eea;">相似度匹配</span>
+            </div>
+        `;
+    } catch (error) {
+        statsContent.innerHTML = '<p style="color: #c33;">加载失败</p>';
+    }
+}
+
+// 加载历史记录到侧边栏
+async function qaRobotLoadHistorySidebar() {
+    const historyList = document.getElementById('qa-robot-history-list');
+    if (!historyList) return;
+    
+    historyList.innerHTML = '<div class="loading-history" style="text-align: center; padding: 40px; color: #999;">加载中...</div>';
+    
+    try {
+        const response = await fetch('/api/qa_robot/history?limit=200');
+        const data = await response.json();
+        
+        if (!data.success) {
+            historyList.innerHTML = '<div style="text-align: center; padding: 40px; color: #c33;">加载失败</div>';
+            return;
+        }
+        
+        if (!data.history || data.history.length === 0) {
+            historyList.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <p style="font-size: 0.9em;">暂无历史记录</p>
+                    <p style="font-size: 0.8em; margin-top: 10px; color: #ccc;">开始提问后，记录会显示在这里</p>
+                </div>
+            `;
+            return;
+        }
+        
+        historyList.innerHTML = '';
+        
+        data.history.forEach((record) => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'qa-robot-history-item';
+            historyItem.dataset.historyId = record.id;
+            historyItem.style.cssText = `
+                padding: 12px 15px;
+                margin-bottom: 8px;
+                background: white;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+                border: 2px solid transparent;
+            `;
+            
+            const questionPreview = record.question.length > 30 
+                ? record.question.substring(0, 30) + '...' 
+                : record.question;
+            
+            const timeStr = record.created_at 
+                ? new Date(record.created_at).toLocaleString('zh-CN', { 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+                : '';
+            
+            historyItem.innerHTML = `
+                <div style="font-size: 0.9em; color: #333; margin-bottom: 5px; line-height: 1.4; word-break: break-word;">
+                    ${escapeHtml(questionPreview)}
+                </div>
+                <div style="font-size: 0.75em; color: #999; display: flex; justify-content: space-between; align-items: center;">
+                    <span>${timeStr}</span>
+                    <button onclick="event.stopPropagation(); qaRobotDeleteHistoryRecord(${record.id})" 
+                            style="background: none; border: none; color: #c33; cursor: pointer; padding: 2px 5px; font-size: 0.9em; opacity: 0.6; transition: opacity 0.2s;"
+                            onmouseover="this.style.opacity='1'" 
+                            onmouseout="this.style.opacity='0.6'">×</button>
+                </div>
+            `;
+            
+            historyItem.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                qaRobotLoadHistoryRecord(record);
+            });
+            
+            historyItem.addEventListener('mouseenter', () => {
+                historyItem.style.background = '#f0f0ff';
+                historyItem.style.borderColor = '#667eea';
+            });
+            
+            historyItem.addEventListener('mouseleave', () => {
+                if (currentQaRobotHistoryId != record.id) {
+                    historyItem.style.background = 'white';
+                    historyItem.style.borderColor = 'transparent';
+                }
+            });
+            
+            historyList.appendChild(historyItem);
+        });
+    } catch (error) {
+        console.error('加载历史记录失败:', error);
+        historyList.innerHTML = '<div style="text-align: center; padding: 40px; color: #c33;">网络错误</div>';
+    }
+}
+
+// 加载单条历史记录
+function qaRobotLoadHistoryRecord(record) {
+    currentQaRobotHistoryId = record.id;
+    
+    document.querySelectorAll('.qa-robot-history-item').forEach(item => {
+        if (item.dataset.historyId == record.id) {
+            item.style.background = '#e8e9ff';
+            item.style.borderColor = '#667eea';
+        } else {
+            item.style.background = 'white';
+            item.style.borderColor = 'transparent';
+        }
+    });
+    
+    const chatMessages = document.getElementById('qa-robot-chat-messages');
+    chatMessages.innerHTML = '';
+    
+    qaRobotAddMessage(record.question, 'user', false, record.created_at);
+    qaRobotAddMessage(record.answer, 'bot', false, record.created_at);
+    
+    qaRobotMessageCount = 2;
+    qaRobotUpdateMessageCount();
+}
+
+// 创建新对话
+function qaRobotCreateNewChat() {
+    currentQaRobotHistoryId = null;
+    
+    document.querySelectorAll('.qa-robot-history-item').forEach(item => {
+        item.style.background = 'white';
+        item.style.borderColor = 'transparent';
+    });
+    
+    qaRobotClearChat();
+}
+
+// 删除历史记录
+async function qaRobotDeleteHistoryRecord(historyId) {
+    if (!confirm('确定要删除这条记录吗？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/qa_robot/history/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ history_id: historyId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            qaRobotLoadHistorySidebar();
+            if (currentQaRobotHistoryId == historyId) {
+                qaRobotCreateNewChat();
+            }
+        } else {
+            alert('删除失败: ' + (data.error || '未知错误'));
+        }
+    } catch (error) {
+        alert('网络错误: ' + error.message);
+    }
+}
+
+// HTML转义
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 更新发音人选择
+function qaRobotUpdateSpeaker() {
+    const speakerSelect = document.getElementById('qa-robot-speaker-select');
+    if (speakerSelect) {
+        qaRobotSelectedSpeaker = parseInt(speakerSelect.value) || 0;
+        console.log(`[TTS] 发音人已更新为: ${qaRobotSelectedSpeaker}`);
+    }
+}
+
+// 输出中文（播放最后一条机器人回复的中文语音）
+async function qaRobotOutputChinese() {
+    const chatMessages = document.getElementById('qa-robot-chat-messages');
+    const botMessages = chatMessages.querySelectorAll('.message.bot');
+    
+    if (botMessages.length === 0) {
+        alert('没有可播放的回复');
+        return;
+    }
+    
+    // 获取最后一条机器人消息
+    const lastBotMessage = botMessages[botMessages.length - 1];
+    const textElement = lastBotMessage.querySelector('div[style*="max-width: 70%"]');
+    
+    if (!textElement) {
+        alert('无法找到回复内容');
+        return;
+    }
+    
+    const text = textElement.textContent.trim();
+    if (!text) {
+        alert('回复内容为空');
+        return;
+    }
+    
+    // 移除相似度信息等额外内容
+    const cleanText = text.split('\n\n[相似度:')[0].trim();
+    
+    // 获取当前选择的发音人
+    const speakerSelect = document.getElementById('qa-robot-speaker-select');
+    const speaker = speakerSelect ? parseInt(speakerSelect.value) || 0 : qaRobotSelectedSpeaker;
+    
+    await qaRobotPlayTTS(cleanText, null, 'zh', speaker);
+}
+
+// 输出英文功能已取消
+/*
+// 输出英文（播放最后一条机器人回复的英文语音）
+async function qaRobotOutputEnglish() {
+    const chatMessages = document.getElementById('qa-robot-chat-messages');
+    const botMessages = chatMessages.querySelectorAll('.message.bot');
+    
+    if (botMessages.length === 0) {
+        alert('没有可播放的回复');
+        return;
+    }
+    
+    // 获取最后一条机器人消息
+    const lastBotMessage = botMessages[botMessages.length - 1];
+    const textElement = lastBotMessage.querySelector('div[style*="max-width: 70%"]');
+    
+    if (!textElement) {
+        alert('无法找到回复内容');
+        return;
+    }
+    
+    const text = textElement.textContent.trim();
+    if (!text) {
+        alert('回复内容为空');
+        return;
+    }
+    
+    // 移除相似度信息等额外内容
+    const cleanText = text.split('\n\n[相似度:')[0].trim();
+    
+    // 先翻译成英文，再播放
+    try {
+        const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: cleanText,
+                target_lang: 'en'
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success && data.translated_text) {
+            await qaRobotPlayTTS(data.translated_text, null, 'en');
+        } else {
+            alert('翻译失败: ' + (data.error || '未知错误'));
+        }
+    } catch (error) {
+        alert('翻译请求失败: ' + error.message);
+    }
+}
+*/
+
+// 显示语言选择菜单
+function qaRobotShowLanguageMenu(buttonElement, text) {
+    // 确保text是字符串
+    const textStr = typeof text === 'string' ? text : String(text || '');
+    
+    // 创建语言选择菜单
+    const menu = document.createElement('div');
+    menu.id = 'qa-robot-tts-language-menu';
+    menu.style.cssText = `
+        position: absolute;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        padding: 8px 0;
+        z-index: 10000;
+        min-width: 120px;
+    `;
+    
+    const zhOption = document.createElement('div');
+    zhOption.textContent = '🇨🇳 中文';
+    zhOption.style.cssText = `
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+    `;
+    zhOption.onmouseover = () => zhOption.style.background = '#f0f0f0';
+    zhOption.onmouseout = () => zhOption.style.background = 'white';
+    zhOption.onclick = () => {
+        menu.remove();
+        // 获取当前选择的发音人
+        const speakerSelect = document.getElementById('qa-robot-speaker-select');
+        const speaker = speakerSelect ? parseInt(speakerSelect.value) || 0 : qaRobotSelectedSpeaker;
+        qaRobotPlayTTS(textStr, buttonElement, 'zh', speaker);
+    };
+    
+    // 英文选项已取消
+    /*
+    const enOption = document.createElement('div');
+    enOption.textContent = '🇺🇸 English';
+    enOption.style.cssText = `
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-top: 1px solid #f0f0f0;
+    `;
+    enOption.onmouseover = () => enOption.style.background = '#f0f0f0';
+    enOption.onmouseout = () => enOption.style.background = 'white';
+    enOption.onclick = () => {
+        menu.remove();
+        // 英文使用默认发音人0（度小美）
+        qaRobotPlayTTS(textStr, buttonElement, 'en', 0);
+    };
+    */
+    
+    menu.appendChild(zhOption);
+    // menu.appendChild(enOption); // 英文选项已取消
+    
+    // 定位菜单
+    const rect = buttonElement.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (rect.bottom + 5) + 'px';
+    menu.style.left = (rect.left - 50) + 'px';
+    
+    document.body.appendChild(menu);
+    
+    // 点击外部关闭菜单
+    const closeMenu = (e) => {
+        if (!menu.contains(e.target) && e.target !== buttonElement) {
+            menu.remove();
+            document.removeEventListener('click', closeMenu);
+        }
+    };
+    setTimeout(() => document.addEventListener('click', closeMenu), 100);
+}
+
+// 播放TTS语音
+let qaRobotCurrentAudio = null;
+let qaRobotCurrentPlayingButton = null; // 当前正在播放的按钮
+
+// 停止TTS播放
+function qaRobotStopTTS(buttonElement = null) {
+    if (qaRobotCurrentAudio) {
+        qaRobotCurrentAudio.pause();
+        qaRobotCurrentAudio.currentTime = 0;
+        qaRobotCurrentAudio = null;
+    }
+    
+    // 恢复所有按钮状态
+    if (qaRobotCurrentPlayingButton) {
+        qaRobotCurrentPlayingButton.innerHTML = '🔊';
+        qaRobotCurrentPlayingButton.style.opacity = '0.7';
+    }
+    
+    // 如果指定了按钮，也更新它
+    if (buttonElement && buttonElement !== qaRobotCurrentPlayingButton) {
+        buttonElement.innerHTML = '🔊';
+        buttonElement.style.opacity = '0.7';
+    }
+    
+    qaRobotCurrentPlayingButton = null;
+}
+
+async function qaRobotPlayTTS(text, buttonElement, language = 'zh', speaker = null) {
+    try {
+        // 确保text是字符串
+        const textStr = typeof text === 'string' ? text : String(text || '');
+        
+        if (!textStr || !textStr.trim()) {
+            alert('文本内容为空');
+            return;
+        }
+        
+        // 如果正在播放，先停止之前的播放
+        if (qaRobotCurrentAudio) {
+            qaRobotStopTTS();
+        }
+        
+        // 更新按钮状态
+        if (buttonElement) {
+            buttonElement.innerHTML = '⏸️';
+            buttonElement.style.opacity = '1';
+            qaRobotCurrentPlayingButton = buttonElement; // 记录当前播放的按钮
+        }
+        
+        // 确定发音人：如果未指定，中文使用选择的发音人，英文使用0（度小美）
+        let finalSpeaker = speaker;
+        if (finalSpeaker === null || finalSpeaker === undefined) {
+            if (language === 'zh') {
+                const speakerSelect = document.getElementById('qa-robot-speaker-select');
+                finalSpeaker = speakerSelect ? parseInt(speakerSelect.value) || 0 : qaRobotSelectedSpeaker;
+            } else {
+                finalSpeaker = 0; // 英文默认使用度小美
+            }
+        }
+        
+        // 调用TTS API
+        // 确保language参数是有效的值
+        const validLanguage = (language === 'zh' || language === 'en') ? language : 'zh';
+        console.log(`[TTS] 请求参数 - text长度: ${textStr.trim().length}, language: ${validLanguage}, speaker: ${finalSpeaker}`);
+        
+        const response = await fetch('/api/voice/tts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                text: textStr.trim(), 
+                language: validLanguage,
+                speaker: finalSpeaker  // 传递发音人参数
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'TTS请求失败');
+        }
+        
+        // 检查响应类型
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            // 如果是JSON响应，说明出错了
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'TTS请求失败');
+        }
+        
+        // 获取音频 blob
+        const audioBlob = await response.blob();
+        
+        // 检查是否是错误响应（可能是文本错误信息）
+        if (audioBlob.type.startsWith('text/') || audioBlob.size < 100) {
+            const errorText = await audioBlob.text();
+            try {
+                const errorData = JSON.parse(errorText);
+                throw new Error(errorData.error || 'TTS生成失败');
+            } catch {
+                throw new Error('TTS生成失败: ' + errorText.substring(0, 100));
+            }
+        }
+        
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        // 创建音频元素并播放
+        qaRobotCurrentAudio = new Audio(audioUrl);
+        
+        qaRobotCurrentAudio.onended = () => {
+            qaRobotStopTTS(buttonElement);
+            URL.revokeObjectURL(audioUrl);
+        };
+        
+        qaRobotCurrentAudio.onerror = (error) => {
+            console.error('播放音频失败:', error);
+            qaRobotStopTTS(buttonElement);
+            alert('播放音频失败');
+            URL.revokeObjectURL(audioUrl);
+        };
+        
+        qaRobotCurrentAudio.onpause = () => {
+            // 当音频被暂停时，恢复按钮状态
+            if (qaRobotCurrentPlayingButton === buttonElement) {
+                qaRobotStopTTS(buttonElement);
+            }
+        };
+        
+        qaRobotCurrentAudio.play();
+        
+    } catch (error) {
+        console.error('TTS失败:', error);
+        alert('语音播放失败: ' + error.message);
+        if (buttonElement) {
+            buttonElement.innerHTML = '🔊';
+            buttonElement.style.opacity = '0.7';
+        }
+    }
+}
+
+// CSS动画
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>

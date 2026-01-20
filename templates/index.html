@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音助手系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎤 语音助手系统</h1>
+            <p class="subtitle">语音识别 (ASR) & 语音生成 (TTS)</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="asr">语音识别</button>
+            <button class="tab-btn" data-tab="tts">语音生成</button>
+        </div>
+
+        <!-- 语音识别面板 -->
+        <div class="tab-content active" id="asr-tab">
+            <div class="card">
+                <h2>📢 将语音转换为文本</h2>
+                <p class="hint">支持格式: PCM, WAV, AMR, MP3, M4A (最大16MB)</p>
+                
+                <div class="upload-area" id="asr-upload-area">
+                    <input type="file" id="audio-file" accept=".pcm,.wav,.amr,.mp3,.m4a" hidden>
+                    <div class="upload-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>点击选择音频文件或拖拽文件到此处</p>
+                        <span class="file-name" id="asr-file-name"></span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="asr-submit" disabled>开始识别</button>
+
+                <div class="result-area" id="asr-result" style="display: none;">
+                    <h3>识别结果:</h3>
+                    <div class="result-text" id="asr-result-text"></div>
+                </div>
+
+                <div class="loading" id="asr-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>正在识别中，请稍候...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 语音生成面板 -->
+        <div class="tab-content" id="tts-tab">
+            <div class="card">
+                <h2>🔊 将文本转换为语音</h2>
+                <p class="hint">输入文本，系统将生成语音文件</p>
+                
+                <div class="input-group">
+                    <label for="tts-text">输入文本:</label>
+                    <textarea 
+                        id="tts-text" 
+                        rows="5" 
+                        placeholder="请输入要转换为语音的文本内容..."
+                    ></textarea>
+                </div>
+
+                <button class="btn btn-primary" id="tts-submit">生成语音</button>
+
+                <div class="result-area" id="tts-result" style="display: none;">
+                    <h3>生成成功!</h3>
+                    <div class="audio-player" id="tts-audio-player"></div>
+                    <a class="btn btn-download" id="tts-download" download>下载音频</a>
+                </div>
+
+                <div class="loading" id="tts-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>正在生成语音，请稍候...</p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>基于百度语音API | 语音助手系统 v1.0</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
