@@ -2,8 +2,8 @@
 <div class="qa-robot-wrapper" style="width: 100%; height: 100%; overflow: hidden;">
     <div class="container" style="max-width: 100%; height: 100vh; margin: 0; border-radius: 0; box-shadow: none;">
         <header style="padding: 20px 30px;">
-            <h1 style="font-size: 2em; margin-bottom: 5px;">🤖 检索式问答机器人</h1>
-            <p class="subtitle" style="font-size: 1em; opacity: 0.9;">基于Neo4j知识图谱的智能问答系统</p>
+            <h1 style="font-size: 2em; margin-bottom: 5px;">🤖 智能问答机器人</h1>
+            <p class="subtitle" style="font-size: 1em; opacity: 0.9;">本地知识库 + DeepSeek API 综合回答</p>
         </header>
 
         <div class="main-content" style="display: flex; flex: 1; overflow: hidden; height: calc(100vh - 120px);">
@@ -29,6 +29,30 @@
                             placeholder="请输入您的问题，例如：&#10;• 太阳系中体积最大的行星是哪一颗？&#10;• 人体最大的器官是什么？&#10;• 澳大利亚的首都是悉尼吗？"
                             style="width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; font-family: inherit; resize: vertical; transition: border-color 0.3s; line-height: 1.5;"
                         ></textarea>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="qa-robot-preset-select" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666; font-weight: 500;">回答模式</label>
+                        <select id="qa-robot-preset-select" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background: white; cursor: pointer; transition: border-color 0.3s;">
+                            {% for preset_key, preset in deepseek_presets.items() %}
+                            <option value="{{ preset_key }}" {% if preset_key == default_deepseek_preset %}selected{% endif %}>{{ preset.label }}</option>
+                            {% endfor %}
+                            <option value="local">本地知识库</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 10px; padding: 12px; background: #f8f9ff; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <label for="qa-robot-deepseek-key-input" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666; font-weight: 500;">DeepSeek API Key</label>
+                        <input
+                            type="password"
+                            id="qa-robot-deepseek-key-input"
+                            placeholder="请输入 sk-... 格式的 API Key"
+                            autocomplete="off"
+                            style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95em; margin-bottom: 8px;"
+                        >
+                        <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                            <button type="button" onclick="qaRobotSaveDeepSeekKey()" style="flex: 1; padding: 8px 10px; border: none; border-radius: 8px; background: #667eea; color: white; cursor: pointer; font-weight: 600;">保存</button>
+                            <button type="button" onclick="qaRobotClearDeepSeekKey()" style="flex: 1; padding: 8px 10px; border: none; border-radius: 8px; background: #f0f0f0; color: #666; cursor: pointer; font-weight: 600;">清除</button>
+                        </div>
+                        <div id="qa-robot-deepseek-key-status" style="font-size: 0.82em; color: #999;">未配置</div>
                     </div>
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                         <button class="btn btn-primary" id="qa-robot-send-btn" onclick="qaRobotSendQuestion()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -63,7 +87,7 @@
                         <p class="hint-title" style="font-weight: 600; color: #667eea; margin-bottom: 10px; font-size: 0.95em;">💡 提示</p>
                         <ul class="hint-list" style="list-style: none; padding-left: 0;">
                             <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">可以询问各种常见问题</li>
-                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">系统会从知识库中检索最相关的答案</li>
+                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">系统会优先检索本地知识库，再按回答模式生成答案</li>
                             <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">支持多种类型的问题和答案</li>
                         </ul>
                     </div>
@@ -87,9 +111,9 @@
                 <div class="chat-messages" id="qa-robot-chat-messages" style="flex: 1; overflow-y: auto; padding: 30px; background: #f5f5f5;">
                     <div class="welcome-message" style="text-align: center; padding: 60px 20px; color: #666;">
                         <div class="welcome-icon" style="font-size: 4em; margin-bottom: 20px;">👋</div>
-                        <h3 style="font-size: 1.8em; color: #333; margin-bottom: 15px;">欢迎使用检索式问答机器人！</h3>
-                        <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">我是基于Neo4j知识图谱的智能问答助手，可以回答各种问题。</p>
-                        <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">请在左侧输入您的问题，我会从知识库中检索最相关的答案。</p>
+                        <h3 style="font-size: 1.8em; color: #333; margin-bottom: 15px;">欢迎使用智能问答机器人！</h3>
+                        <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">我是结合本地知识库和DeepSeek API的智能问答助手。</p>
+                        <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">请在左侧输入问题，并选择适合的回答模式。</p>
                     </div>
                 </div>
             </div>
@@ -104,9 +128,14 @@
 let qaRobotMessageCount = 0;
 let currentQaRobotHistoryId = null;
 let qaRobotSelectedSpeaker = 0; // 默认使用度小美（0）
+const qaRobotDeepSeekConfigured = {{ 'true' if deepseek_configured else 'false' }};
+const qaRobotLocalAvailable = {{ 'true' if qa_robot_available else 'false' }};
+const qaRobotDeepSeekKeyStorageName = 'qa_robot_deepseek_api_key';
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
+    qaRobotInitDeepSeekKeyConfig();
+
     // 加载统计信息
     qaRobotLoadStats();
     
@@ -128,10 +157,72 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function qaRobotInitDeepSeekKeyConfig() {
+    const keyInput = document.getElementById('qa-robot-deepseek-key-input');
+    const savedKey = qaRobotGetDeepSeekApiKey();
+    if (keyInput && savedKey) {
+        keyInput.value = savedKey;
+    }
+    qaRobotUpdateDeepSeekKeyStatus();
+}
+
+function qaRobotGetDeepSeekApiKey() {
+    return localStorage.getItem(qaRobotDeepSeekKeyStorageName) || '';
+}
+
+function qaRobotSaveDeepSeekKey() {
+    const keyInput = document.getElementById('qa-robot-deepseek-key-input');
+    const apiKey = keyInput ? keyInput.value.trim() : '';
+
+    if (!apiKey) {
+        alert('请输入 DeepSeek API Key');
+        return;
+    }
+
+    localStorage.setItem(qaRobotDeepSeekKeyStorageName, apiKey);
+    qaRobotUpdateDeepSeekKeyStatus();
+    qaRobotLoadStats();
+}
+
+function qaRobotClearDeepSeekKey() {
+    localStorage.removeItem(qaRobotDeepSeekKeyStorageName);
+    const keyInput = document.getElementById('qa-robot-deepseek-key-input');
+    if (keyInput) {
+        keyInput.value = '';
+    }
+    qaRobotUpdateDeepSeekKeyStatus();
+    qaRobotLoadStats();
+}
+
+function qaRobotUpdateDeepSeekKeyStatus() {
+    const status = document.getElementById('qa-robot-deepseek-key-status');
+    if (!status) return;
+
+    if (qaRobotDeepSeekConfigured) {
+        status.textContent = '服务器环境变量已配置；也可以在此覆盖当前浏览器使用的 Key';
+        status.style.color = '#667eea';
+        return;
+    }
+
+    if (qaRobotGetDeepSeekApiKey()) {
+        status.textContent = '已保存到当前浏览器';
+        status.style.color = '#4CAF50';
+    } else {
+        status.textContent = '未配置，DeepSeek模式会回退到本地知识库';
+        status.style.color = '#999';
+    }
+}
+
 // 发送问题
 async function qaRobotSendQuestion() {
     const questionInput = document.getElementById('qa-robot-question-input');
+    const presetSelect = document.getElementById('qa-robot-preset-select');
+    const keyInput = document.getElementById('qa-robot-deepseek-key-input');
     const question = questionInput.value.trim();
+    const preset = presetSelect ? presetSelect.value : '{{ default_deepseek_preset }}';
+    const deepseekApiKey = keyInput && keyInput.value.trim()
+        ? keyInput.value.trim()
+        : qaRobotGetDeepSeekApiKey();
     
     if (!question) {
         return;
@@ -161,7 +252,11 @@ async function qaRobotSendQuestion() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ question: question })
+            body: JSON.stringify({
+                question: question,
+                preset: preset,
+                deepseek_api_key: deepseekApiKey
+            })
         });
         
         const data = await response.json();
@@ -172,10 +267,21 @@ async function qaRobotSendQuestion() {
         if (data.success) {
             // 确保answer是字符串
             let answerText = typeof data.answer === 'string' ? data.answer : String(data.answer || '');
-            if (data.similarity !== undefined) {
+            if (typeof data.similarity === 'number') {
                 answerText += `\n\n[相似度: ${(data.similarity * 100).toFixed(1)}%]`;
             }
+            if (data.source === 'deepseek' && data.model) {
+                answerText += `\n[来源: DeepSeek API / ${data.model}]`;
+            } else if (data.source === 'local_fallback') {
+                answerText += `\n[来源: 本地知识库回退]`;
+            } else if (data.source === 'local') {
+                answerText += `\n[来源: 本地知识库]`;
+            }
             qaRobotAddMessage(answerText, 'bot');
+
+            if (data.notice) {
+                qaRobotAddMessage(data.notice, 'bot', false, false, true);
+            }
             
             // 如果有候选答案，显示提示
             if (data.alternatives && data.alternatives.length > 0) {
@@ -412,9 +518,9 @@ function qaRobotClearChat() {
     chatMessages.innerHTML = `
         <div class="welcome-message" style="text-align: center; padding: 60px 20px; color: #666;">
             <div class="welcome-icon" style="font-size: 4em; margin-bottom: 20px;">👋</div>
-            <h3 style="font-size: 1.8em; color: #333; margin-bottom: 15px;">欢迎使用检索式问答机器人！</h3>
-            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">我是基于Neo4j知识图谱的智能问答助手，可以回答各种问题。</p>
-            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">请在左侧输入您的问题，我会从知识库中检索最相关的答案。</p>
+            <h3 style="font-size: 1.8em; color: #333; margin-bottom: 15px;">欢迎使用智能问答机器人！</h3>
+            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">我是结合本地知识库和DeepSeek API的智能问答助手。</p>
+            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 10px;">请在左侧输入问题，并选择适合的回答模式。</p>
         </div>
     `;
     
@@ -429,15 +535,23 @@ async function qaRobotLoadStats() {
     if (!statsContent) return;
     
     try {
+        const deepSeekStatus = qaRobotDeepSeekConfigured
+            ? '服务器已配置'
+            : (qaRobotGetDeepSeekApiKey() ? '浏览器已配置' : '未配置');
+
         // 这里可以添加统计信息API，暂时显示基本信息
         statsContent.innerHTML = `
             <div class="stat-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
                 <span class="stat-label" style="color: #666;">知识库</span>
-                <span class="stat-value" style="font-weight: 600; color: #667eea;">Neo4j</span>
+                <span class="stat-value" style="font-weight: 600; color: #667eea;">${qaRobotLocalAvailable ? 'Neo4j已连接' : 'Neo4j不可用'}</span>
             </div>
-            <div class="stat-item" style="display: flex; justify-content: space-between; padding: 8px 0;">
+            <div class="stat-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
                 <span class="stat-label" style="color: #666;">检索方式</span>
                 <span class="stat-value" style="font-weight: 600; color: #667eea;">相似度匹配</span>
+            </div>
+            <div class="stat-item" style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span class="stat-label" style="color: #666;">DeepSeek</span>
+                <span class="stat-value" style="font-weight: 600; color: #667eea;">${deepSeekStatus}</span>
             </div>
         `;
     } catch (error) {

@@ -105,6 +105,28 @@ if QA_ROBOT_AVAILABLE:
         QA_ROBOT_AVAILABLE = False
         qa_robot_service = None
 
+# 导入DeepSeek服务
+DEEPSEEK_AVAILABLE = False
+deepseek_service = None
+DEEPSEEK_PRESETS = {}
+try:
+    from deepseek_service import (
+        DeepSeekService,
+        DeepSeekAPIError,
+        DEEPSEEK_PRESETS,
+        DEFAULT_PRESET as DEFAULT_DEEPSEEK_PRESET,
+    )
+    deepseek_service = DeepSeekService()
+    DEEPSEEK_AVAILABLE = True
+    if deepseek_service.is_configured():
+        print("✓ DeepSeek API 已配置")
+    else:
+        print("提示: 未配置 DEEPSEEK_API_KEY，DeepSeek回答将回退到本地知识库")
+except ImportError as e:
+    print(f"警告: 无法导入DeepSeek服务模块: {e}")
+    DeepSeekAPIError = Exception
+    DEFAULT_DEEPSEEK_PRESET = "deepseek_qa"
+
 # 语音助手配置
 if VOICE_ASSISTANT_AVAILABLE:
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 限制上传文件大小为16MB
@@ -254,14 +276,19 @@ def voice_assistant():
 @login_required
 def qa_robot():
     """问答机器人页面（需要登录）"""
-    if not QA_ROBOT_AVAILABLE:
+    deepseek_configured = DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured()
+    if not QA_ROBOT_AVAILABLE and not deepseek_configured:
         return render_template('voice_assistant.html', 
                              username=session.get('username'),
                              current_view='qa_robot',
-                             error='问答机器人模块不可用')
+                             error='问答机器人模块不可用，且未配置 DeepSeek API')
     return render_template('voice_assistant.html', 
                          username=session.get('username'),
-                         current_view='qa_robot')
+                         current_view='qa_robot',
+                         deepseek_presets=DEEPSEEK_PRESETS,
+                         default_deepseek_preset=DEFAULT_DEEPSEEK_PRESET,
+                         deepseek_configured=deepseek_configured,
+                         qa_robot_available=QA_ROBOT_AVAILABLE)
 
 
 @app.route('/qa_discussion')
@@ -399,15 +426,26 @@ def match_quick_qa(question):
 @login_required
 def api_qa_robot_ask():
     """问答机器人API"""
-    if not QA_ROBOT_AVAILABLE:
-        return jsonify({'success': False, 'error': '问答机器人模块不可用'}), 503
-    
     try:
-        data = request.get_json()
-        question = data.get('question', '').strip()
+        data = request.get_json() or {}
+        question = str(data.get('question') or '').strip()
+        preset = str(data.get('preset') or DEFAULT_DEEPSEEK_PRESET).strip() or DEFAULT_DEEPSEEK_PRESET
+        deepseek_api_key = str(data.get('deepseek_api_key') or '').strip()
+        use_local_only = preset == 'local'
         
         if not question:
             return jsonify({'success': False, 'error': '问题不能为空'}), 400
+
+        request_deepseek_service = deepseek_service
+        if deepseek_api_key and DEEPSEEK_AVAILABLE:
+            request_deepseek_service = DeepSeekService(api_key=deepseek_api_key)
+        deepseek_configured = (
+            DEEPSEEK_AVAILABLE and
+            request_deepseek_service and
+            request_deepseek_service.is_configured()
+        )
+        if not QA_ROBOT_AVAILABLE and (use_local_only or not deepseek_configured):
+            return jsonify({'success': False, 'error': '问答机器人模块不可用，且当前请求无法使用DeepSeek API'}), 503
         
         # 首先检查是否是快速问答对（直接返回，不进行检索）
         quick_answer = match_quick_qa(question)
@@ -430,56 +468,96 @@ def api_qa_robot_ask():
                 'similarity': similarity,
                 'matched_question': question,
                 'source': 'quick_qa',
+                'preset': 'quick_qa',
                 'alternatives': []
             })
         
-        # 如果不是快速问答对，进行正常检索
-        # 获取答案（降低阈值以确保能找到结果）
-        result = qa_robot_service.ask(question, top_k=3, threshold=0.1)
-        
-        if result:
-            answer = result['answer']
-            similarity = result.get('similarity', 0.0)
-        
-        # 限制答案长度，最多2000字
+        # 如果不是快速问答对，先做本地检索，再按预设决定是否调用DeepSeek
+        result = None
+        if QA_ROBOT_AVAILABLE and qa_robot_service:
+            result = qa_robot_service.ask(question, top_k=3, threshold=0.1)
+
+        answer = None
+        similarity = result.get('similarity') if result else None
+        source = 'local'
+        notice = None
+        deepseek_meta = {}
+
+        if use_local_only:
+            if not result:
+                return jsonify({
+                    'success': False,
+                    'error': '没有找到相关答案，请切换到DeepSeek综合问答或换一种方式提问。'
+                }), 404
+            answer = result.get('answer', '')
+        else:
+            if deepseek_configured:
+                try:
+                    deepseek_result = request_deepseek_service.ask(question, preset_key=preset, local_result=result)
+                    answer = deepseek_result['answer']
+                    source = 'deepseek'
+                    deepseek_meta = deepseek_result
+                except DeepSeekAPIError as e:
+                    if not result:
+                        return jsonify({'success': False, 'error': f'DeepSeek API调用失败: {str(e)}'}), 502
+                    answer = result.get('answer', '')
+                    source = 'local_fallback'
+                    notice = f'DeepSeek API调用失败，已回退到本地知识库: {str(e)}'
+            elif result:
+                answer = result.get('answer', '')
+                source = 'local_fallback'
+                notice = '未配置 DEEPSEEK_API_KEY，已回退到本地知识库。'
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': '未配置 DEEPSEEK_API_KEY，且本地知识库没有找到相关答案。'
+                }), 503
+
+        if not answer:
+            return jsonify({'success': False, 'error': '没有生成有效答案'}), 500
+
+        # 限制答案长度，最多2000字，避免前端和语音播报过长
         MAX_LENGTH = 2000
         if answer and len(answer) > MAX_LENGTH:
             answer = answer[:MAX_LENGTH] + "\n\n(单次回答最多生成2000字)"
         
-            # 保存历史记录（包括快速问答对）
-            source = result.get('source', '')
         if 'user_id' in session and 'username' in session:
-                save_qa_robot_history(
+            save_qa_robot_history(
                 session['user_id'],
                 session['username'],
                 question,
-                    answer,
-                    similarity
+                answer,
+                similarity
             )
-        
-        return jsonify({
+
+        alternatives = []
+        if result:
+            for alt in result.get('alternatives', []):
+                if len(alt) >= 3:
+                    alternatives.append({
+                        'question': alt[0],
+                        'answer': alt[1],
+                        'similarity': round(alt[2], 3),
+                        'source': alt[3] if len(alt) >= 4 else ''
+                    })
+
+        response_payload = {
             'success': True,
             'question': question,
-                'answer': answer,
-                'similarity': round(similarity, 3),
-                'matched_question': result.get('question', ''),
-                'alternatives': [
-                    {
-                         'question': q,
-                          'answer': a,
-                         'similarity': round(s, 3),
-                          'source': src if len(alt) >= 4 else ''
-                     }
-                      for alt in result.get('alternatives', [])
-                      for q, a, s, src in [(alt[0], alt[1], alt[2], alt[3] if len(alt) >= 4 else '')]
-                  ]
-              })
- #       else:
- #           return jsonify({
-#                'success': False,
- #               'error': '没有找到相关答案',
-  #              'answer': '抱歉，我没有找到相关答案。请尝试换一种方式提问。'
- #       })
+            'answer': answer,
+            'matched_question': result.get('question', '') if result else '',
+            'source': source,
+            'preset': deepseek_meta.get('preset', preset),
+            'preset_label': deepseek_meta.get('preset_label', '本地知识库' if use_local_only else ''),
+            'model': deepseek_meta.get('model', ''),
+            'alternatives': alternatives
+        }
+        if similarity is not None:
+            response_payload['similarity'] = round(similarity, 3)
+        if notice:
+            response_payload['notice'] = notice
+
+        return jsonify(response_payload)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
