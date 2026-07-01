@@ -19,8 +19,7 @@ from config import SECRET_KEY
 from database import (
     init_database, register_user, verify_user, get_user_info,
     get_all_users, update_user_role, delete_user,
-    save_movie_qa_history, get_movie_qa_history, get_movie_qa_history_count,
-    delete_movie_qa_history,
+
     save_qa_robot_history, get_qa_robot_history, get_qa_robot_history_count,
     delete_qa_robot_history,
     get_tts_audio_cache, save_tts_audio_cache,
@@ -34,11 +33,7 @@ voice_assistant_path = os.path.join(os.path.dirname(os.path.dirname(os.path.absp
 if voice_assistant_path not in sys.path:
     sys.path.insert(0, voice_assistant_path)
 
-# 添加 movieanswer 目录到路径，以便导入检索服务
-movie_qa_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
-                             'movieanswer', 'Movie-KBQA', 'src')
-if movie_qa_path not in sys.path:
-    sys.path.insert(0, movie_qa_path)
+# 移除了电影问答目录到路径
 
 
 # 添加 ask_answer_robot 目录到路径，以便导入问答机器人服务
@@ -67,28 +62,13 @@ except ImportError as e:
     print(f"警告: 无法导入翻译模块: {e}")
     TRANSLATOR_AVAILABLE = False
 
-# 导入电影问答服务
-try:
-    from retrieval_service import RetrievalService
-    MOVIE_QA_AVAILABLE = True
-except ImportError as e:
-    print(f"警告: 无法导入电影问答模块: {e}")
-    MOVIE_QA_AVAILABLE = False
+MOVIE_QA_AVAILABLE = False
 
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-# 初始化电影问答服务
 movie_qa_service = None
-if MOVIE_QA_AVAILABLE:
-    try:
-        kb_file = os.path.join(os.path.dirname(movie_qa_path), 'data', 'knowledge_base.json')
-        movie_qa_service = RetrievalService(kb_file=kb_file)
-        print("电影问答服务初始化成功")
-    except Exception as e:
-        print(f"警告: 电影问答服务初始化失败: {e}")
-        MOVIE_QA_AVAILABLE = False
 
 
 # 导入问答机器人服务
@@ -169,7 +149,7 @@ def admin_required(f):
 def index():
     """首页，重定向到登录页"""
     if 'username' in session:
-        return redirect(url_for('movie_qa'))
+        return redirect(url_for('qa_robot'))
     return redirect(url_for('login'))
 
 
@@ -213,7 +193,7 @@ def login():
     
     # GET请求，返回登录页面
     if 'username' in session:
-        return redirect(url_for('movie_qa'))
+        return redirect(url_for('qa_robot'))
     return render_template('login.html')
 
 
@@ -265,24 +245,9 @@ def logout():
 @app.route('/voice_assistant')
 @login_required
 def voice_assistant():
-    """语音助手页面（重定向到电影问答）"""
-    # 默认跳转到电影问答
-    return redirect(url_for('movie_qa'))
-
-
-@app.route('/movie_qa')
-@login_required
-def movie_qa():
-    """电影问答页面（需要登录）"""
-    if not MOVIE_QA_AVAILABLE:
-        return render_template('voice_assistant.html', 
-                             username=session.get('username'),
-                             current_view='movie',
-                             error='电影问答模块不可用')
-    # 使用 voice_assistant 模板，但传入 movie 视图
-    return render_template('voice_assistant.html', 
-                         username=session.get('username'),
-                         current_view='movie')
+    """语音助手页面（重定向到问答机器人）"""
+    # 默认跳转到问答机器人
+    return redirect(url_for('qa_robot'))
 
 
 @app.route('/qa_robot')
@@ -307,205 +272,6 @@ def qa_discussion():
                          username=session.get('username'),
                          current_view='qa_discussion')
 
-
-# 电影问答API路由
-@app.route('/api/movie/ask', methods=['POST'])
-@login_required
-def api_movie_ask():
-    """电影问答API"""
-    if not MOVIE_QA_AVAILABLE:
-        return jsonify({'success': False, 'error': '电影问答模块不可用'}), 503
-    
-    try:
-        data = request.get_json()
-        question = data.get('question', '').strip()
-        
-        if not question:
-            return jsonify({'success': False, 'error': '问题不能为空'}), 400
-        
-        # 首先检查是否是快速问答对（直接返回，不进行检索）
-        quick_answer = match_movie_quick_qa(question)
-        if quick_answer:
-            # 快速问答对也保存历史记录
-            similarity = 1.0  # 完全匹配，相似度为1.0
-            if 'user_id' in session and 'username' in session:
-                save_movie_qa_history(
-                    session['user_id'],
-                    session['username'],
-                    question,
-                    quick_answer
-                )
-            
-            return jsonify({
-                'success': True,
-                'question': question,
-                'answer': quick_answer,
-                'similarity': similarity,
-                'source': 'quick_qa'
-            })
-        
-        # 如果不是快速问答对，进行正常检索
-        # 获取答案
-        answer = movie_qa_service.ask(question, top_k=1, threshold=0.05)
-        
-        # 如果答案为空或None，返回默认提示
-        if not answer:
-            answer = "抱歉，我没有找到相关答案。请尝试换一种问法，或者添加相关的问答对到知识库中。"
-        
-        # 确保answer是字符串类型
-        if not isinstance(answer, str):
-            answer = str(answer) if answer else "抱歉，我没有找到相关答案。请尝试换一种问法，或者添加相关的问答对到知识库中。"
-        
-        # 限制答案长度，最多2000字（retrieval_service已经处理，这里作为双重保障）
-        MAX_LENGTH = 2000
-        if answer and len(answer) > MAX_LENGTH:
-            answer = answer[:MAX_LENGTH] + "\n\n(单次回答最多生成2000字)"
-        
-        # 保存历史记录
-        if 'user_id' in session and 'username' in session:
-            save_movie_qa_history(
-                session['user_id'],
-                session['username'],
-                question,
-                answer
-            )
-        
-        return jsonify({
-            'success': True,
-            'question': question,
-            'answer': answer
-        })
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/movie/search', methods=['POST'])
-@login_required
-def api_movie_search():
-    """电影问答搜索API - 返回多个相关结果"""
-    if not MOVIE_QA_AVAILABLE:
-        return jsonify({'success': False, 'error': '电影问答模块不可用'}), 503
-    
-    try:
-        data = request.get_json()
-        question = data.get('question', '').strip()
-        top_k = data.get('top_k', 3)
-        threshold = data.get('threshold', 0.05)
-        
-        if not question:
-            return jsonify({'success': False, 'error': '问题不能为空'}), 400
-        
-        # 搜索相关结果
-        results = movie_qa_service.search(question, top_k=top_k, threshold=threshold)
-        
-        formatted_results = []
-        for q, a, score, cat in results:
-            formatted_results.append({
-                'question': q,
-                'answer': a,
-                'score': round(score, 3),
-                'category': cat
-            })
-        
-        return jsonify({
-            'success': True,
-            'question': question,
-            'results': formatted_results,
-            'count': len(formatted_results)
-        })
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/movie/history', methods=['GET'])
-@login_required
-def api_movie_history():
-    """获取电影问答历史记录"""
-    try:
-        if 'user_id' not in session:
-            return jsonify({'success': False, 'error': '未登录'}), 401
-        
-        limit = request.args.get('limit', 100, type=int)
-        offset = request.args.get('offset', 0, type=int)
-        
-        history = get_movie_qa_history(session['user_id'], limit=limit, offset=offset)
-        total_count = get_movie_qa_history_count(session['user_id'])
-        
-        return jsonify({
-            'success': True,
-            'history': history,
-            'total_count': total_count,
-            'limit': limit,
-            'offset': offset
-        })
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/movie/history/delete', methods=['POST'])
-@login_required
-def api_movie_history_delete():
-    """删除电影问答历史记录"""
-    try:
-        if 'user_id' not in session:
-            return jsonify({'success': False, 'error': '未登录'}), 401
-        
-        data = request.get_json()
-        history_id = data.get('history_id', None)  # 如果为None，删除所有记录
-        
-        success, message = delete_movie_qa_history(session['user_id'], history_id)
-        
-        if success:
-            return jsonify({'success': True, 'message': message})
-        else:
-            return jsonify({'success': False, 'error': message}), 400
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/movie/qa/add', methods=['POST'])
-@login_required
-def api_movie_add_qa():
-    """添加问答对API"""
-    if not MOVIE_QA_AVAILABLE:
-        return jsonify({'success': False, 'error': '电影问答模块不可用'}), 503
-    
-    try:
-        data = request.get_json()
-        question = data.get('question', '').strip()
-        answer = data.get('answer', '').strip()
-        category = data.get('category', 'custom').strip()
-        
-        if not question or not answer:
-            return jsonify({'success': False, 'error': '问题和答案不能为空'}), 400
-        
-        success, message = movie_qa_service.add_qa(question, answer, category)
-        
-        if success:
-            return jsonify({'success': True, 'message': message})
-        else:
-            return jsonify({'success': False, 'error': message}), 400
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/movie/stats', methods=['GET'])
-@login_required
-def api_movie_stats():
-    """电影问答统计信息API"""
-    if not MOVIE_QA_AVAILABLE:
-        return jsonify({'success': False, 'error': '电影问答模块不可用'}), 503
-    
-    try:
-        stats = movie_qa_service.get_statistics()
-        return jsonify({'success': True, 'stats': stats})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # 问答机器人API路由
@@ -628,106 +394,6 @@ def match_quick_qa(question):
     
     return None
 
-# 电影问答快速问答对映射（直接返回，不进行检索）
-MOVIE_QUICK_QA_MAP = {
-    "李连杰演过什么电影": "他主演过《少林寺》、《黄飞鸿》系列、《方世玉》、《精武英雄》、《霍元甲》、《投名状》以及好莱坞电影《敢死队》等。",
-    "李连杰演过什么电影？": "他主演过《少林寺》、《黄飞鸿》系列、《方世玉》、《精武英雄》、《霍元甲》、《投名状》以及好莱坞电影《敢死队》等。",
-    "李连杰的电影": "他主演过《少林寺》、《黄飞鸿》系列、《方世玉》、《精武英雄》、《霍元甲》、《投名状》以及好莱坞电影《敢死队》等。",
-    "李连杰演过哪些电影": "他主演过《少林寺》、《黄飞鸿》系列、《方世玉》、《精武英雄》、《霍元甲》、《投名状》以及好莱坞电影《敢死队》等。",
-    "英雄的评分是多少": "电影《英雄》在豆瓣的评分约为 7.7 分，IMDb 评分为 7.9 分（数据随时间可能有微调）。",
-    "英雄的评分是多少？": "电影《英雄》在豆瓣的评分约为 7.7 分，IMDb 评分为 7.9 分（数据随时间可能有微调）。",
-    "英雄评分": "电影《英雄》在豆瓣的评分约为 7.7 分，IMDb 评分为 7.9 分（数据随时间可能有微调）。",
-    "电影英雄的评分": "电影《英雄》在豆瓣的评分约为 7.7 分，IMDb 评分为 7.9 分（数据随时间可能有微调）。",
-    "巩俐的简介是什么": "巩俐是著名的华语电影女演员，毕业于中央戏剧学院。她是世界影史第二位包揽欧洲三大国际电影节最高奖的演员，代表作有《红高粱》、《秋菊打官司》、《霸王别姬》、《大红灯笼高高挂》等。",
-    "巩俐的简介是什么？": "巩俐是著名的华语电影女演员，毕业于中央戏剧学院。她是世界影史第二位包揽欧洲三大国际电影节最高奖的演员，代表作有《红高粱》、《秋菊打官司》、《霸王别姬》、《大红灯笼高高挂》等。",
-    "巩俐简介": "巩俐是著名的华语电影女演员，毕业于中央戏剧学院。她是世界影史第二位包揽欧洲三大国际电影节最高奖的演员，代表作有《红高粱》、《秋菊打官司》、《霸王别姬》、《大红灯笼高高挂》等。",
-    "电影《泰坦尼克号》的上映时间是什么时候": "该片于1997年12月19日在美国上映，并于1998年4月3日在中国大陆上映。",
-    "电影《泰坦尼克号》的上映时间是什么时候？": "该片于1997年12月19日在美国上映，并于1998年4月3日在中国大陆上映。",
-    "泰坦尼克号上映时间": "该片于1997年12月19日在美国上映，并于1998年4月3日在中国大陆上映。",
-    "泰坦尼克号什么时候上映": "该片于1997年12月19日在美国上映，并于1998年4月3日在中国大陆上映。",
-    "周星驰的代表作品有哪些": "周星驰的代表作包括《功夫》、《大话西游》、《喜剧之王》、《少林足球》、《唐伯虎点秋香》和《食神》等。",
-    "周星驰的代表作品有哪些？": "周星驰的代表作包括《功夫》、《大话西游》、《喜剧之王》、《少林足球》、《唐伯虎点秋香》和《食神》等。",
-    "周星驰的代表作": "周星驰的代表作包括《功夫》、《大话西游》、《喜剧之王》、《少林足球》、《唐伯虎点秋香》和《食神》等。",
-    "周星驰演过什么电影": "周星驰的代表作包括《功夫》、《大话西游》、《喜剧之王》、《少林足球》、《唐伯虎点秋香》和《食神》等。",
-    "电影《流浪地球》属于什么类型": "《流浪地球》是一部科幻灾难片，改编自刘慈欣的同名小说。",
-    "电影《流浪地球》属于什么类型？": "《流浪地球》是一部科幻灾难片，改编自刘慈欣的同名小说。",
-    "流浪地球是什么类型": "《流浪地球》是一部科幻灾难片，改编自刘慈欣的同名小说。",
-    "流浪地球类型": "《流浪地球》是一部科幻灾难片，改编自刘慈欣的同名小说。",
-    "电影《肖申克的救赎》的剧情简介是什么": "影片讲述了银行家安迪被冤枉杀害妻子和情夫而入狱，在肖申克监狱中他结识了瑞德，并通过坚持不懈的努力和智慧，最终成功越狱重获自由的故事。",
-    "电影《肖申克的救赎》的剧情简介是什么？": "影片讲述了银行家安迪被冤枉杀害妻子和情夫而入狱，在肖申克监狱中他结识了瑞德，并通过坚持不懈的努力和智慧，最终成功越狱重获自由的故事。",
-    "肖申克的救赎剧情": "影片讲述了银行家安迪被冤枉杀害妻子和情夫而入狱，在肖申克监狱中他结识了瑞德，并通过坚持不懈的努力和智慧，最终成功越狱重获自由的故事。",
-    "肖申克的救赎简介": "影片讲述了银行家安迪被冤枉杀害妻子和情夫而入狱，在肖申克监狱中他结识了瑞德，并通过坚持不懈的努力和智慧，最终成功越狱重获自由的故事。",
-    "演员吴京主演过哪些高票房电影": "吴京主演的高票房电影包括《战狼2》、《长津湖》、《长津湖之水门桥》以及《流浪地球》系列。",
-    "演员吴京主演过哪些高票房电影？": "吴京主演的高票房电影包括《战狼2》、《长津湖》、《长津湖之水门桥》以及《流浪地球》系列。",
-    "吴京的高票房电影": "吴京主演的高票房电影包括《战狼2》、《长津湖》、《长津湖之水门桥》以及《流浪地球》系列。",
-    "吴京演过什么电影": "吴京主演的高票房电影包括《战狼2》、《长津湖》、《长津湖之水门桥》以及《流浪地球》系列。",
-    "电影《千与千寻》的豆瓣评分是多少": "《千与千寻》的评分极高，常年保持在 9.4 分左右，是宫崎骏的经典动画作品。",
-    "电影《千与千寻》的豆瓣评分是多少？": "《千与千寻》的评分极高，常年保持在 9.4 分左右，是宫崎骏的经典动画作品。",
-    "千与千寻评分": "《千与千寻》的评分极高，常年保持在 9.4 分左右，是宫崎骏的经典动画作品。",
-    "千与千寻豆瓣评分": "《千与千寻》的评分极高，常年保持在 9.4 分左右，是宫崎骏的经典动画作品。"
-}
-
-def match_movie_quick_qa(question):
-    """
-    匹配电影问答快速问答对（智能匹配，支持多种问法）
-    :param question: 用户问题
-    :return: 如果匹配，返回答案；否则返回None
-    """
-    import re
-    
-    # 去除标点符号和空格，进行标准化匹配
-    normalized_question = re.sub(r'[，。！？、；：\s]', '', question.strip())
-    
-    # 1. 直接匹配
-    if question in MOVIE_QUICK_QA_MAP:
-        return MOVIE_QUICK_QA_MAP[question]
-    
-    # 2. 标准化匹配（去除标点后匹配）
-    for key, value in MOVIE_QUICK_QA_MAP.items():
-        normalized_key = re.sub(r'[，。！？、；：\s]', '', key.strip())
-        if normalized_question == normalized_key:
-            return value
-    
-    # 3. 智能关键词匹配（处理各种问法变体）
-    question_lower = question.lower()
-    
-    # 李连杰演过什么电影
-    if "李连杰" in question and ("演" in question or "电影" in question or "作品" in question):
-        return "他主演过《少林寺》、《黄飞鸿》系列、《方世玉》、《精武英雄》、《霍元甲》、《投名状》以及好莱坞电影《敢死队》等。"
-    
-    # 英雄的评分
-    if "英雄" in question and ("评分" in question or "分数" in question or "多少分" in question):
-        return "电影《英雄》在豆瓣的评分约为 7.7 分，IMDb 评分为 7.9 分（数据随时间可能有微调）。"
-    
-    # 巩俐的简介
-    if "巩俐" in question and ("简介" in question or "介绍" in question or "是谁" in question):
-        return "巩俐是著名的华语电影女演员，毕业于中央戏剧学院。她是世界影史第二位包揽欧洲三大国际电影节最高奖的演员，代表作有《红高粱》、《秋菊打官司》、《霸王别姬》、《大红灯笼高高挂》等。"
-    
-    # 泰坦尼克号上映时间
-    if "泰坦尼克号" in question and ("上映" in question or "时间" in question or "什么时候" in question):
-        return "该片于1997年12月19日在美国上映，并于1998年4月3日在中国大陆上映。"
-    
-    # 周星驰的代表作
-    if "周星驰" in question and ("代表" in question or "作品" in question or "演" in question or "电影" in question):
-        return "周星驰的代表作包括《功夫》、《大话西游》、《喜剧之王》、《少林足球》、《唐伯虎点秋香》和《食神》等。"
-    
-    # 流浪地球类型
-    if "流浪地球" in question and ("类型" in question or "什么类型" in question or "属于" in question):
-        return "《流浪地球》是一部科幻灾难片，改编自刘慈欣的同名小说。"
-    
-    # 肖申克的救赎剧情
-    if "肖申克的救赎" in question and ("剧情" in question or "简介" in question or "讲" in question or "内容" in question):
-        return "影片讲述了银行家安迪被冤枉杀害妻子和情夫而入狱，在肖申克监狱中他结识了瑞德，并通过坚持不懈的努力和智慧，最终成功越狱重获自由的故事。"
-    
-    # 吴京的高票房电影
-    if "吴京" in question and ("票房" in question or "高票房" in question or ("演" in question and "电影" in question)):
-        return "吴京主演的高票房电影包括《战狼2》、《长津湖》、《长津湖之水门桥》以及《流浪地球》系列。"
-    
-    # 千与千寻评分
-    if "千与千寻" in question and ("评分" in question or "分数" in question or "多少分" in question or "豆瓣" in question):
-        return "《千与千寻》的评分极高，常年保持在 9.4 分左右，是宫崎骏的经典动画作品。"
-    
-    return None
 
 @app.route('/api/qa_robot/ask', methods=['POST'])
 @login_required
@@ -939,13 +605,6 @@ def api_translate():
     except Exception as e:
         return jsonify({'success': False, 'error': f'服务器错误: {str(e)}'}), 500
 
-
-@app.route('/movie_static/<path:filename>')
-def movie_static(filename):
-    """提供movieanswer的静态文件"""
-    from flask import send_from_directory
-    static_path = os.path.join(movie_qa_path, 'static')
-    return send_from_directory(static_path, filename)
 
 
 # 语音助手API路由

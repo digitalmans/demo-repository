@@ -171,14 +171,12 @@
             <div style="padding: 20px; color: red;">
                 <p>错误: {{ error }}</p>
             </div>
-            {% elif current_view == 'movie' %}
-            {% include 'movie_qa_content.html' %}
             {% elif current_view == 'qa_robot' %}
                 {% include 'qa_robot_content.html' %}
             {% elif current_view == 'qa_discussion' %}
                 {% include 'qa_discussion_content.html' %}
             {% else %}
-            {% include 'movie_qa_content.html' %}
+                {% include 'qa_robot_content.html' %}
             {% endif %}
         </div>
         
@@ -190,9 +188,6 @@
             </div>
             
             <div class="switch-buttons">
-                <a href="{{ url_for('movie_qa') }}" class="switch-btn {% if current_view == 'movie' %}active{% endif %}" id="movie-btn">
-                    🎬 电影问答
-                </a>
                 <a href="{{ url_for('qa_robot') }}" class="switch-btn {% if current_view == 'qa_robot' %}active{% endif %}" id="qa-robot-btn">
                     🤖 问答机器人
                 </a>

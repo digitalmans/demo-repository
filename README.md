@@ -36,12 +36,27 @@ cd pythonProject
 
 ### 2. 创建虚拟环境（推荐）
 
+你可以选择以下两种方式之一来创建并激活虚拟环境：
+
+#### 方式一：使用 Conda 创建（可指定 Python 3.13.5 版本）
 ```bash
+# 创建虚拟环境
+conda create --prefix "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.venv" python=3.13.5
+
+# Windows 激活虚拟环境
+conda activate "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.venv"
+```
+
+#### 方式二：使用 Python 自带的 venv（极速创建）
+```bash
+# 创建虚拟环境
 python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux/Mac
-source .venv/bin/activate
+
+# Windows 激活虚拟环境 (PowerShell)
+.\.venv\Scripts\Activate.ps1
+
+# Windows 激活虚拟环境 (CMD)
+.\.venv\Scripts\activate
 ```
 
 ### 3. 安装依赖

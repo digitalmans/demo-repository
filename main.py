@@ -9,6 +9,14 @@
 import os
 import sys
 
+# Configure standard output encoding to utf-8 to prevent encoding errors on Windows
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
+
 # 添加 start 目录到 Python 路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
 start_dir = os.path.join(current_dir, 'start')
@@ -31,4 +39,4 @@ if __name__ == '__main__':
     print(f"管理员后台: http://localhost:5001/admin")
     print("=" * 60)
     
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
