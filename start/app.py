@@ -277,11 +277,11 @@ def voice_assistant():
 def qa_robot():
     """问答机器人页面（需要登录）"""
     deepseek_configured = DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured()
-    if not QA_ROBOT_AVAILABLE and not deepseek_configured:
+    if not QA_ROBOT_AVAILABLE and not DEEPSEEK_AVAILABLE:
         return render_template('voice_assistant.html', 
                              username=session.get('username'),
                              current_view='qa_robot',
-                             error='问答机器人模块不可用，且未配置 DeepSeek API')
+                             error='问答机器人模块不可用，且DeepSeek服务模块不可用')
     return render_template('voice_assistant.html', 
                          username=session.get('username'),
                          current_view='qa_robot',
