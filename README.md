@@ -47,12 +47,25 @@ conda create --prefix "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.v
 conda activate "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.venv"
 ```
 
+**提示：若激活虚拟环境失败，也可以无需激活直接使用：**
+1. **安装项目依赖**：直接使用该虚拟环境的 `python.exe` 去读取 `requirements.txt` 进行安装：
+   ```powershell
+   .\.venv\python.exe -m pip install -r requirements.txt
+   ```
+2. **运行项目**：直接用该虚拟环境的 `python.exe` 运行项目即可：
+   ```powershell
+   .\.venv\python.exe main.py
+   ```
+   这个方法无需激活环境，非常干净，且绝不会用错 Python 版本！
+
+
 #### 方式二：使用 Python 自带的 venv（极速创建）
 ```bash
-# 创建虚拟环境
+# 创建虚拟环境 (若系统中有多版本 Python，建议使用绝对路径，例如: C:\path\to\python.exe -m venv .venv)
 python -m venv .venv
 
 # Windows 激活虚拟环境 (PowerShell)
+# 若提示“禁止运行脚本”错误，请先执行：Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 .\.venv\Scripts\Activate.ps1
 
 # Windows 激活虚拟环境 (CMD)
@@ -72,11 +85,7 @@ pip install scikit-learn
 ```
 数据库下载地址：https://neo4j.com/
 下载方法参考： https://blog.csdn.net/weixin_66401877/article/details/153195602
-<<<<<<< HEAD
-
-=======
 数据库下载需要科学上网。
->>>>>>> dc1a204e374ffceb0824039fe1af2ef7530360d6
 运行前要配置百度语音api,配置方法参考： https://blog.csdn.net/Exaggeration08/article/details/105610925
 在 ./voice_assistant/tts.py 中配置相应的API_KEY和SECRET_KEY 
 然后再./voice_assistant/translator.py 中配置APP_ID ,SECRET_KEY ,TRANSLATE_URL 
