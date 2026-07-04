@@ -7,11 +7,10 @@
 
 # 智能问答系统
 
-基于 Flask 的多功能智能问答平台，集成电影问答、通用问答机器人、语音助手和讨论区等功能。
+基于 Flask 的多功能智能问答平台，集成通用问答机器人、语音助手和讨论区等功能。
 
 ## 功能特性
 
-- 🎬 **电影问答**: 基于知识库的检索式电影问答系统
 - 🤖 **问答机器人**: 基于 Neo4j 知识图谱的通用问答系统
 - 💬 **讨论区**: 用户问答讨论和评论功能
 - 🔊 **语音功能**: 支持文本转语音（TTS），多发音人选择
@@ -41,10 +40,10 @@ cd pythonProject
 #### 方式一：使用 Conda 创建（可指定 Python 3.13.5 版本）
 ```bash
 # 创建虚拟环境
-conda create --prefix "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.venv" python=3.13.5
+conda create --prefix "C:\Users\Asus\Desktop\gooduse\pythonProject\.venv" python=3.13.5
 
 # Windows 激活虚拟环境
-conda activate "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.venv"
+conda activate "C:\Users\Asus\Desktop\gooduse\pythonProject\.venv"
 ```
 
 **提示：若激活虚拟环境失败，也可以无需激活直接使用：**
@@ -161,9 +160,6 @@ pythonProject/
 │   ├── config.py          # 配置文件
 │   ├── templates/         # HTML 模板
 │   └── static/           # 静态资源（CSS、JS）
-├── movieanswer/           # 电影问答模块
-│   └── Movie-KBQA/       # 电影知识库问答
-│       └── src/          # 检索服务源码
 ├── ask_answer_robot/     # 通用问答机器人模块
 │   ├── retrieval_engine.py  # 检索引擎
 │   ├── qa_service.py     # 问答服务
@@ -193,7 +189,6 @@ pythonProject/
    - 讨论区数据管理
 
 3. **问答模块**
-   - **电影问答** (`movieanswer/`): 基于知识库的检索式问答
    - **通用问答** (`ask_answer_robot/`): 基于 Neo4j 的问答机器人
 
 4. **算法模块** (`text_similarity/`)
@@ -209,12 +204,6 @@ pythonProject/
 
 ### 技术栈
 
-<<<<<<< HEAD
-- **后端**: Python, Flask
-- **数据库**: MySQL, Neo4j
-- **前端**: HTML, CSS, JavaScript
-- **算法**: 文本相似度算法, 检索式问答
-=======
 #### 后端技术
 
 - **Web框架**: Flask 3.0.0
@@ -309,36 +298,29 @@ pythonProject/
 - **权限控制**: 基于角色的访问控制（RBAC）
 - **错误处理**: 完善的异常捕获和错误提示
 - **快速问答匹配**: 预设问答对直接匹配，无需检索
->>>>>>> dc1a204e374ffceb0824039fe1af2ef7530360d6
 
 ## 主要功能模块
 
-### 1. 电影问答
-
-- 基于知识库的检索式问答
-- 支持电影评分、演员信息、上映时间等查询
-- 快速问答对直接匹配（9个预设问题）
-
-### 2. 通用问答机器人
+### 1. 通用问答机器人
 
 - 基于 Neo4j 知识图谱
 - 支持多种文本相似度算法（BM25、Jaccard、编辑距离）
 - 快速问答对直接匹配（10个预设问题）
 - 异步数据加载，支持大数据集
 
-### 3. 讨论区
+### 2. 讨论区
 
 - 用户发布问题和讨论
 - 支持评论和回复
 - 管理员审核和管理
 
-### 4. 语音功能
+### 3. 语音功能
 
 - 文本转语音（TTS）
 - 支持4种中文发音人选择
 - 语音缓存机制
 
-### 5. 用户管理
+### 4. 用户管理
 
 - 用户注册和登录
 - 角色管理（普通用户、管理员）
@@ -353,14 +335,6 @@ pythonProject/
 - `POST /api/login` - 用户登录
 - `GET /api/logout` - 退出登录
 - `GET /api/user_info` - 获取用户信息
-
-### 电影问答
-
-- `POST /api/movie/ask` - 提交问题
-- `POST /api/movie/search` - 搜索相关问题
-- `GET /api/movie/history` - 获取历史记录
-- `POST /api/movie/history/delete` - 删除历史记录
-- `GET /api/movie/stats` - 获取统计信息
 
 ### 问答机器人
 
@@ -390,10 +364,6 @@ pythonProject/
 - `DELETE /api/admin/user/<id>` - 删除用户
 
 ## 数据导入
-
-### 电影问答数据
-
-电影问答数据位于 `movieanswer/Movie-KBQA/data/import/`，系统启动时自动加载。
 
 ### 通用问答机器人数据
 
@@ -441,7 +411,6 @@ python import_quick_qa.py
 
 - `main.py`: 主启动入口
 - `start/`: 主应用代码
-- `movieanswer/`: 电影问答模块
 - `ask_answer_robot/`: 通用问答机器人模块
 - `voice_assistant/`: 语音助手模块
 - `text_similarity/`: 文本相似度算法库
@@ -457,7 +426,7 @@ python import_quick_qa.py
 
 ### 扩展快速问答对
 
-编辑 `start/app.py` 中的 `QUICK_QA_MAP` 或 `MOVIE_QUICK_QA_MAP` 字典。
+编辑 `start/app.py` 中的 `QUICK_QA_MAP` 字典。
 
 ## 许可证
 
