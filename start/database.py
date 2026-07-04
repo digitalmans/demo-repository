@@ -25,7 +25,8 @@ def get_db_connection():
             database=MYSQL_CONFIG['database'],
             charset=MYSQL_CONFIG['charset'],
             cursorclass=pymysql.cursors.DictCursor,
-            autocommit=True
+            autocommit=True,
+            ssl_disabled=True
         )
         return connection
     except OperationalError as e:
@@ -44,7 +45,8 @@ def init_database():
             port=MYSQL_CONFIG['port'],
             user=MYSQL_CONFIG['user'],
             password=MYSQL_CONFIG['password'],
-            charset=MYSQL_CONFIG['charset']
+            charset=MYSQL_CONFIG['charset'],
+            ssl_disabled=True
         )
         
         with connection.cursor() as cursor:

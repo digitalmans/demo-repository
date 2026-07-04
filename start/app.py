@@ -300,6 +300,20 @@ def qa_discussion():
                          current_view='qa_discussion')
 
 
+@app.route('/digital_human')
+@login_required
+def digital_human():
+    """3D 数字人页面（需要登录）"""
+    deepseek_configured = DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured()
+    return render_template('voice_assistant.html', 
+                         username=session.get('username'),
+                         current_view='digital_human',
+                         deepseek_presets=DEEPSEEK_PRESETS,
+                         default_deepseek_preset=DEFAULT_DEEPSEEK_PRESET,
+                         deepseek_configured=deepseek_configured,
+                         qa_robot_available=QA_ROBOT_AVAILABLE)
+
+
 
 # 问答机器人API路由
 # 快速问答对映射（直接返回，不进行检索）

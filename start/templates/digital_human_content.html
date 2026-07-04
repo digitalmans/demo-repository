@@ -1,0 +1,651 @@
+<!-- 3D 数字人问答模板 -->
+<div class="digital-human-wrapper" style="width: 100%; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div class="dh-container" style="display: flex; height: 100%; width: 100%; background: #0b0b16; color: #fff;">
+        
+        <!-- 左侧：3D数字人渲染区 -->
+        <div class="dh-left-panel" style="flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid rgba(255, 255, 255, 0.1);">
+            <!-- 三维视口 -->
+            <div id="canvas-container" style="width: 100%; height: 100%; position: relative;"></div>
+            
+            <!-- 加载状态 -->
+            <div id="model-loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0b0b16; z-index: 100;">
+                <div class="dh-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: #00ffff; border-radius: 50%; animation: dh-spin 1s linear infinite;"></div>
+                <p style="margin-top: 20px; font-size: 1.1em; color: #00ffff; letter-spacing: 1px;">正在唤醒数字人... <span id="loading-percentage">0%</span></p>
+            </div>
+
+            <!-- 控制面板与状态条 -->
+            <div class="dh-status-bar" style="position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(15, 15, 30, 0.7); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div id="dh-status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #4CAF50; box-shadow: 0 0 10px #4CAF50;"></div>
+                    <span id="dh-status-text" style="font-weight: 600; font-size: 0.95em; color: rgba(255, 255, 255, 0.9);">状态: 空闲 (💤)</span>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <label for="dh-speaker-select" style="font-size: 0.9em; color: rgba(255, 255, 255, 0.7);">🎤 发音人:</label>
+                    <select id="dh-speaker-select" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 6px; outline: none; cursor: pointer;">
+                        <option value="0" style="background: #0b0b16;">度小美（女声）</option>
+                        <option value="1" style="background: #0b0b16;">度小字（男声）</option>
+                        <option value="3" style="background: #0b0b16;">度逍遥（男声）</option>
+                        <option value="4" style="background: #0b0b16;">度丫丫（女声）</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：控制与对话交互面板 -->
+        <div class="dh-right-panel" style="width: 420px; display: flex; flex-direction: column; background: rgba(15, 15, 30, 0.95); overflow: hidden;">
+            <div class="dh-panel-header" style="padding: 25px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: center; background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);">
+                <h2 style="font-size: 1.5em; font-weight: 700; margin: 0; color: #00ffff; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    👤 3D 数字人助手
+                </h2>
+                <p style="font-size: 0.85em; color: rgba(255, 255, 255, 0.5); margin-top: 5px;">本地库检索 + ASR语音交互 + 自动发音动画</p>
+            </div>
+
+            <!-- 聊天区 -->
+            <div id="dh-chat-messages" style="flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                <div class="dh-msg assistant" style="display: flex; flex-direction: column; max-width: 85%; align-self: flex-start; background: rgba(255, 255, 255, 0.05); padding: 12px 18px; border-radius: 12px 12px 12px 0; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <div style="font-size: 0.95em; line-height: 1.5; color: rgba(255, 255, 255, 0.9);">你好！我是 3D 数字人助手。你可以使用下方的文本框向我提问，或者点击麦克风按钮直接通过语音与我交流。</div>
+                </div>
+            </div>
+
+            <!-- 控制与输入区 -->
+            <div class="dh-input-area" style="padding: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(10, 10, 20, 0.8); display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <!-- 麦克风语音按钮 -->
+                    <button id="dh-mic-btn" style="width: 55px; height: 55px; border-radius: 50%; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); outline: none;">
+                        <svg id="dh-mic-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+
+                    <!-- 文本输入框 -->
+                    <input 
+                        type="text" 
+                        id="dh-text-input" 
+                        placeholder="在此输入问题..." 
+                        style="flex: 1; height: 50px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 25px; padding: 0 20px; color: white; outline: none; font-size: 0.95em; transition: border-color 0.3s;"
+                    >
+
+                    <!-- 发送按钮 -->
+                    <button id="dh-send-btn" style="width: 50px; height: 50px; border-radius: 50%; border: none; background: #00ffff; color: #0b0b16; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; outline: none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div id="dh-speech-temp-text" style="font-size: 0.82em; color: #00ffff; min-height: 15px; padding-left: 10px; display: none;"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    @keyframes dh-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    #dh-text-input:focus {
+        border-color: #00ffff !important;
+        box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+    }
+    
+    #dh-mic-btn.recording {
+        background: #f44336 !important;
+        box-shadow: 0 0 20px #f44336 !important;
+        animation: dh-pulse 1.5s infinite;
+    }
+    
+    @keyframes dh-pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .dh-msg.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px 12px 0 12px;
+        border: none;
+    }
+    
+    #dh-chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+    #dh-chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #dh-chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+</style>
+
+<!-- 引入 Three.js 和 GLTF 模型加载库 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// ==================== WAV 音频录制器 ====================
+class WAVRecorder {
+    constructor() {
+        this.audioContext = null;
+        this.scriptProcessor = null;
+        this.mediaStreamSource = null;
+        this.recordedSamples = [];
+        this.sampleRate = 16000;
+        this.stream = null;
+    }
+
+    async start() {
+        this.recordedSamples = [];
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        this.audioContext = new AudioContextClass({ sampleRate: this.sampleRate });
+        this.mediaStreamSource = this.audioContext.createMediaStreamSource(this.stream);
+        
+        this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+        
+        this.scriptProcessor.onaudioprocess = (e) => {
+            const inputData = e.inputBuffer.getChannelData(0);
+            this.recordedSamples.push(new Float32Array(inputData));
+        };
+        
+        this.mediaStreamSource.connect(this.scriptProcessor);
+        this.scriptProcessor.connect(this.audioContext.destination);
+    }
+
+    async stop() {
+        if (this.scriptProcessor) this.scriptProcessor.disconnect();
+        if (this.mediaStreamSource) this.mediaStreamSource.disconnect();
+        if (this.audioContext) await this.audioContext.close();
+        if (this.stream) this.stream.getTracks().forEach(track => track.stop());
+
+        const totalLength = this.recordedSamples.reduce((acc, val) => acc + val.length, 0);
+        const mergedBuffer = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of this.recordedSamples) {
+            mergedBuffer.set(chunk, offset);
+            offset += chunk.length;
+        }
+
+        const wavBuffer = this.encodeWAV(mergedBuffer, this.sampleRate);
+        return new Blob([wavBuffer], { type: 'audio/wav' });
+    }
+
+    encodeWAV(samples, sampleRate) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+
+        this.writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        this.writeString(view, 8, 'WAVE');
+        this.writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        this.writeString(view, 36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+
+        let index = 44;
+        for (let i = 0; i < samples.length; i++) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(index, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            index += 2;
+        }
+
+        return buffer;
+    }
+
+    writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+}
+
+// ==================== 3D 数字人逻辑 ====================
+let scene, camera, renderer, model, mixer, controls;
+let isTalking = false;
+let mouthAnimationTimer = 0;
+let defaultDeepseekPreset = '{{ default_deepseek_preset }}';
+
+function initDigitalHuman() {
+    const container = document.getElementById('canvas-container');
+    if (!container) return;
+
+    // Scene
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a14);
+    scene.fog = new THREE.FogExp2(0x0a0a14, 0.15);
+
+    // Camera
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 1.4, 2.5);
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // Controls
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 + 0.1;
+    controls.minDistance = 1;
+    controls.maxDistance = 5;
+    controls.target.set(0, 1.1, 0);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight1.position.set(2, 4, 3);
+    dirLight1.castShadow = true;
+    scene.add(dirLight1);
+
+    // Colored accent lights (Sci-fi feel)
+    const blueLight = new THREE.PointLight(0x00ffff, 2, 8);
+    blueLight.position.set(-1.5, 1.2, 0.5);
+    scene.add(blueLight);
+
+    const purpleLight = new THREE.PointLight(0x764ba2, 2, 8);
+    purpleLight.position.set(1.5, 1.2, 0.5);
+    scene.add(purpleLight);
+
+    const rimLight = new THREE.PointLight(0xffffff, 1, 5);
+    rimLight.position.set(0, 2.5, -1.5);
+    scene.add(rimLight);
+
+    // Ground shadow helper
+    const gridHelper = new THREE.GridHelper(10, 20, 0xffffff, 0xffffff);
+    gridHelper.position.y = 0.01;
+    gridHelper.material.opacity = 0.05;
+    gridHelper.material.transparent = true;
+    scene.add(gridHelper);
+
+    // Loader
+    const loader = new THREE.GLTFLoader();
+    loader.load('/static/models/robot.glb', function(gltf) {
+        model = gltf.scene;
+        
+        // Adjust sizing
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        
+        // Center the model horizontally, place feet on ground (Y=0)
+        model.position.x = -center.x;
+        model.position.y = -box.min.y;
+        model.position.z = -center.z;
+        
+        model.traverse(function(child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                // Add metallic look to make robot look premium
+                if (child.material) {
+                    child.material.roughness = 0.3;
+                    child.material.metalness = 0.8;
+                }
+            }
+        });
+
+        scene.add(model);
+
+        // Setup idle animations
+        if (gltf.animations && gltf.animations.length > 0) {
+            mixer = new THREE.AnimationMixer(model);
+            const idleAction = mixer.clipAction(gltf.animations[0]);
+            idleAction.play();
+        }
+
+        document.getElementById('model-loading').style.display = 'none';
+        animate();
+    }, function(xhr) {
+        if (xhr.total > 0) {
+            const percent = Math.round((xhr.loaded / xhr.total) * 100);
+            document.getElementById('loading-percentage').innerText = percent + '%';
+        }
+    }, function(error) {
+        console.error('Error loading GLB:', error);
+        document.getElementById('model-loading').innerHTML = '<p style="color: #ff3333;">❌ 模型载入失败，请查看控制台报错</p>';
+    });
+
+    window.addEventListener('resize', onResize);
+}
+
+function onResize() {
+    const container = document.getElementById('canvas-container');
+    if (!container) return;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+}
+
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    const delta = clock.getDelta();
+    const elapsedTime = clock.getElapsedTime();
+
+    if (mixer) mixer.update(delta);
+    if (controls) controls.update();
+
+    if (model) {
+        // Idle breathing and micro-nodding motion
+        if (!isTalking) {
+            model.position.y = Math.sin(elapsedTime * 1.5) * 0.01;
+            // Rotate head slightly
+            const head = model.getObjectByName('head') || model.getObjectByName('Head');
+            if (head) {
+                head.rotation.y = Math.sin(elapsedTime * 0.4) * 0.05;
+                head.rotation.x = Math.sin(elapsedTime * 0.8) * 0.02;
+            }
+        } else {
+            // Talking animation: mouth/jaw modulation & head nodding
+            model.position.y = Math.sin(elapsedTime * 8) * 0.005;
+            
+            const head = model.getObjectByName('head') || model.getObjectByName('Head');
+            if (head) {
+                head.rotation.x = (Math.sin(elapsedTime * 12) * 0.04) + 0.02; // dynamic nod
+                head.rotation.y = Math.sin(elapsedTime * 3) * 0.06;
+            }
+            
+            // Speak mouth animation using scaling
+            const mouth = model.getObjectByName('mouth') || model.getObjectByName('Mouth') || 
+                          model.getObjectByName('jaw') || model.getObjectByName('Jaw');
+            if (mouth && mouth !== model) {
+                mouth.scale.z = 1 + Math.sin(elapsedTime * 20) * 0.25;
+                mouth.position.y = Math.sin(elapsedTime * 20) * 0.015;
+            } else {
+                // Fallback body scale modulation
+                model.scale.y = 1 + Math.sin(elapsedTime * 20) * 0.008;
+            }
+        }
+    }
+
+    renderer.render(scene, camera);
+}
+
+// ==================== 语音交互与后台API ====================
+let wavRecorder = null;
+let isRecording = false;
+let currentAudio = null;
+
+function updateStatus(text, color = '#4CAF50') {
+    const indicator = document.getElementById('dh-status-indicator');
+    const statusText = document.getElementById('dh-status-text');
+    indicator.style.background = color;
+    indicator.style.boxShadow = `0 0 10px ${color}`;
+    statusText.innerText = `状态: ${text}`;
+}
+
+function appendMessage(sender, text) {
+    const chatContainer = document.getElementById('dh-chat-messages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `dh-msg ${sender}`;
+    msgDiv.style.display = 'flex';
+    msgDiv.style.flexDirection = 'column';
+    msgDiv.style.maxWidth = '85%';
+    
+    if (sender === 'user') {
+        msgDiv.style.alignSelf = 'flex-end';
+        msgDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        msgDiv.style.borderRadius = '12px 12px 0 12px';
+        msgDiv.style.border = 'none';
+        msgDiv.style.padding = '12px 18px';
+    } else {
+        msgDiv.style.alignSelf = 'flex-start';
+        msgDiv.style.background = 'rgba(255, 255, 255, 0.05)';
+        msgDiv.style.borderRadius = '12px 12px 12px 0';
+        msgDiv.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        msgDiv.style.padding = '12px 18px';
+    }
+
+    const textDiv = document.createElement('div');
+    textDiv.style.fontSize = '0.95em';
+    textDiv.style.lineHeight = '1.5';
+    textDiv.style.color = 'rgba(255, 255, 255, 0.9)';
+    textDiv.innerText = text;
+
+    msgDiv.appendChild(textDiv);
+    chatContainer.appendChild(msgDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// 语音合成与播报驱动
+async function speakResponse(text) {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+    }
+    isTalking = false;
+
+    const speaker = document.getElementById('dh-speaker-select').value;
+    updateStatus('正在思考并合成语音...', '#FF9800');
+
+    try {
+        const response = await fetch('/api/voice/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: text,
+                language: 'zh',
+                speaker: parseInt(speaker)
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('TTS 请求失败');
+        }
+
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        currentAudio = new Audio(audioUrl);
+
+        currentAudio.onplay = () => {
+            isTalking = true;
+            updateStatus('正在说话... (🗣️)', '#00ffff');
+        };
+
+        currentAudio.onended = () => {
+            isTalking = false;
+            updateStatus('空闲 (💤)', '#4CAF50');
+            // Reset head & mouth
+            resetModelNodes();
+        };
+
+        currentAudio.onerror = () => {
+            isTalking = false;
+            updateStatus('语音播放错误', '#f44336');
+        };
+
+        currentAudio.play();
+
+    } catch (err) {
+        console.error('语音合成出错:', err);
+        updateStatus('语音合成失败', '#f44336');
+    }
+}
+
+function resetModelNodes() {
+    if (model) {
+        const mouth = model.getObjectByName('mouth') || model.getObjectByName('Mouth') || 
+                      model.getObjectByName('jaw') || model.getObjectByName('Jaw');
+        if (mouth && mouth !== model) {
+            mouth.scale.z = 1;
+            mouth.position.y = 0;
+        }
+        model.scale.y = 1;
+    }
+}
+
+// 发送文本问题
+async function sendTextInput() {
+    const inputField = document.getElementById('dh-text-input');
+    const text = inputField.value.trim();
+    if (!text) return;
+
+    inputField.value = '';
+    appendMessage('user', text);
+    updateStatus('机器人思考中...', '#FF9800');
+
+    try {
+        const preset = 'local_fallback'; // Use local knowledge base with DeepSeek fallback
+        const response = await fetch('/api/qa_robot/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: text,
+                preset: defaultDeepseekPreset || 'local_fallback',
+                deepseek_api_key: localStorage.getItem('qa_robot_deepseek_api_key') || ''
+            })
+        });
+
+        const data = await response.json();
+        if (data.success && data.answer) {
+            appendMessage('assistant', data.answer);
+            speakResponse(data.answer);
+        } else {
+            const errText = data.error || '未能获得答案，请重试';
+            appendMessage('assistant', `抱歉：${errText}`);
+            updateStatus('空闲 (💤)', '#4CAF50');
+        }
+    } catch (err) {
+        console.error(err);
+        appendMessage('assistant', '网络出错，请确认后端服务运行正常');
+        updateStatus('错误', '#f44336');
+    }
+}
+
+// 录音触发与语音识别逻辑
+async function toggleVoiceRecording() {
+    const micBtn = document.getElementById('dh-mic-btn');
+    const speechTemp = document.getElementById('dh-speech-temp-text');
+    
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+        isTalking = false;
+        resetModelNodes();
+    }
+
+    if (!isRecording) {
+        // 开始录音
+        try {
+            if (!wavRecorder) {
+                wavRecorder = new WAVRecorder();
+            }
+            await wavRecorder.start();
+            isRecording = true;
+            micBtn.classList.add('recording');
+            updateStatus('正在聆听... (🎤)', '#f44336');
+            speechTemp.innerText = '正在说话中...';
+            speechTemp.style.display = 'block';
+        } catch (err) {
+            console.error('麦克风授权失败:', err);
+            updateStatus('获取麦克风失败', '#f44336');
+            alert('请确保麦克风有访问权限！');
+        }
+    } else {
+        // 停止录音并处理 ASR
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        updateStatus('正在进行语音识别...', '#FF9800');
+        speechTemp.innerText = '正在处理转录...';
+        
+        try {
+            const audioBlob = await wavRecorder.stop();
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'voice.wav');
+            
+            const response = await fetch('/api/voice/asr', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.success && data.result) {
+                const queryText = data.result.trim();
+                speechTemp.style.display = 'none';
+                if (queryText) {
+                    // 追加用户问题
+                    appendMessage('user', queryText);
+                    // 问答逻辑
+                    updateStatus('正在分析问题...', '#FF9800');
+                    const qaResponse = await fetch('/api/qa_robot/ask', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question: queryText,
+                            preset: defaultDeepseekPreset || 'local_fallback',
+                            deepseek_api_key: localStorage.getItem('qa_robot_deepseek_api_key') || ''
+                        })
+                    });
+                    const qaData = await qaResponse.json();
+                    if (qaData.success && qaData.answer) {
+                        appendMessage('assistant', qaData.answer);
+                        speakResponse(qaData.answer);
+                    } else {
+                        appendMessage('assistant', `抱歉：${qaData.error || '无法处理'}`);
+                        updateStatus('空闲 (💤)', '#4CAF50');
+                    }
+                } else {
+                    updateStatus('未能识别到有效语音', '#FF9800');
+                    setTimeout(() => updateStatus('空闲 (💤)', '#4CAF50'), 2000);
+                }
+            } else {
+                speechTemp.innerText = '转录失败';
+                updateStatus('语音转录失败', '#f44336');
+                setTimeout(() => {
+                    speechTemp.style.display = 'none';
+                    updateStatus('空闲 (💤)', '#4CAF50');
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('ASR 请求出错:', err);
+            speechTemp.innerText = '网络连接出错';
+            updateStatus('网络连接出错', '#f44336');
+            setTimeout(() => {
+                speechTemp.style.display = 'none';
+                updateStatus('空闲 (💤)', '#4CAF50');
+            }, 2000);
+        }
+    }
+}
+
+// 绑定初始化事件
+document.addEventListener('DOMContentLoaded', () => {
+    initDigitalHuman();
+
+    // 绑定发送按钮
+    document.getElementById('dh-send-btn').addEventListener('click', sendTextInput);
+    
+    // 绑定回车键
+    document.getElementById('dh-text-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            sendTextInput();
+        }
+    });
+
+    // 绑定麦克风语音按钮
+    document.getElementById('dh-mic-btn').addEventListener('click', toggleVoiceRecording);
+});
+</script>

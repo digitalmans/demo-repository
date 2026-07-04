@@ -38,45 +38,35 @@ cd pythonProject
 
 你可以选择以下两种方式之一来创建并激活虚拟环境：
 
-#### 方式一：使用 Conda 创建（可指定 Python 3.13.5 版本）
+#### 方式一：使用 Conda 创建（建议指定 Python 3.9 版本以确保 py2neo 和 pandas 兼容性）
 ```bash
 # 创建虚拟环境
-conda create --prefix "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.venv" python=3.13.5
+conda create --prefix "C:\Users\Asus\Desktop\demo-repository\demo-repository\.venv" python=3.9
 
 # Windows 激活虚拟环境
-conda activate "C:\Users\Asus\Desktop\智能问答系统\pythonProject\.venv"
+conda activate "C:\Users\Asus\Desktop\demo-repository\demo-repository\.venv"
 ```
 
 #### 方式二：使用 Python 自带的 venv（极速创建）
 ```bash
 # 创建虚拟环境
-python -m venv .venv
+python -m venv "C:\Users\Asus\Desktop\demo-repository\demo-repository\.venv"
 
 # Windows 激活虚拟环境 (PowerShell)
-.\.venv\Scripts\Activate.ps1
+& "C:\Users\Asus\Desktop\demo-repository\demo-repository\.venv\Scripts\Activate.ps1"
 
 # Windows 激活虚拟环境 (CMD)
-.\.venv\Scripts\activate
+"C:\Users\Asus\Desktop\demo-repository\demo-repository\.venv\Scripts\activate"
 ```
 
 ### 3. 安装依赖
 
 ```bash
-pip install Flask==3.0.0
-pip install pymysql
-pip install py2neo==2021.2.3
-pip install pandas==2.0.3
-pip install jieba==0.42.1
-pip install numpy>=1.20.0
-pip install scikit-learn
+pip install -r requirements.txt
 ```
 数据库下载地址：https://neo4j.com/
 下载方法参考： https://blog.csdn.net/weixin_66401877/article/details/153195602
-<<<<<<< HEAD
-
-=======
 数据库下载需要科学上网。
->>>>>>> dc1a204e374ffceb0824039fe1af2ef7530360d6
 运行前要配置百度语音api,配置方法参考： https://blog.csdn.net/Exaggeration08/article/details/105610925
 在 ./voice_assistant/tts.py 中配置相应的API_KEY和SECRET_KEY 
 然后再./voice_assistant/translator.py 中配置APP_ID ,SECRET_KEY ,TRANSLATE_URL 
@@ -200,12 +190,6 @@ pythonProject/
 
 ### 技术栈
 
-<<<<<<< HEAD
-- **后端**: Python, Flask
-- **数据库**: MySQL, Neo4j
-- **前端**: HTML, CSS, JavaScript
-- **算法**: 文本相似度算法, 检索式问答
-=======
 #### 后端技术
 
 - **Web框架**: Flask 3.0.0
@@ -300,7 +284,6 @@ pythonProject/
 - **权限控制**: 基于角色的访问控制（RBAC）
 - **错误处理**: 完善的异常捕获和错误提示
 - **快速问答匹配**: 预设问答对直接匹配，无需检索
->>>>>>> dc1a204e374ffceb0824039fe1af2ef7530360d6
 
 ## 主要功能模块
 

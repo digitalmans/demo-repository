@@ -175,6 +175,8 @@
                 {% include 'qa_robot_content.html' %}
             {% elif current_view == 'qa_discussion' %}
                 {% include 'qa_discussion_content.html' %}
+            {% elif current_view == 'digital_human' %}
+                {% include 'digital_human_content.html' %}
             {% else %}
                 {% include 'qa_robot_content.html' %}
             {% endif %}
@@ -190,6 +192,9 @@
             <div class="switch-buttons">
                 <a href="{{ url_for('qa_robot') }}" class="switch-btn {% if current_view == 'qa_robot' %}active{% endif %}" id="qa-robot-btn">
                     🤖 问答机器人
+                </a>
+                <a href="{{ url_for('digital_human') }}" class="switch-btn {% if current_view == 'digital_human' %}active{% endif %}" id="digital-human-btn">
+                    👤 3D 数字人
                 </a>
                 <a href="{{ url_for('qa_discussion') }}" class="switch-btn {% if current_view == 'qa_discussion' %}active{% endif %}" id="qa-discussion-btn">
                     💬 讨论区
