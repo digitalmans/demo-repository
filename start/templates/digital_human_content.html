@@ -284,14 +284,21 @@ function initDigitalHuman() {
     loader.load('/static/models/robot.glb', function(gltf) {
         model = gltf.scene;
         
-        // Adjust sizing
+        // Adjust sizing (Auto-scale to a standard target height of 1.6 meters)
         const box = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        const targetHeight = 1.6;
+        const scaleFactor = targetHeight / (size.y || 1);
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        
+        // Recalculate bounding box after scaling to center correctly
+        const newBox = new THREE.Box3().setFromObject(model);
+        const newCenter = newBox.getCenter(new THREE.Vector3());
         
         // Center the model horizontally, place feet on ground (Y=0)
-        model.position.x = -center.x;
-        model.position.y = -box.min.y;
-        model.position.z = -center.z;
+        model.position.x = -newCenter.x;
+        model.position.y = -newBox.min.y;
+        model.position.z = -newCenter.z;
         
         model.traverse(function(child) {
             if (child.isMesh) {
