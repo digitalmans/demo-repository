@@ -365,9 +365,6 @@ pythonProject/
 
 ## 数据导入
 
-### 电影问答数据
-
-电影问答数据位于 `movieanswer/Movie-KBQA/data/import/`，系统启动时自动加载。
 
 ### 通用问答机器人数据
 
