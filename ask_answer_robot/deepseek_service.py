@@ -134,7 +134,9 @@ class DeepSeekService:
         )
 
         try:
-            with urlopen(req, timeout=self.timeout) as resp:
+            import ssl
+            context = ssl._create_unverified_context()
+            with urlopen(req, timeout=self.timeout, context=context) as resp:
                 body = resp.read().decode("utf-8")
         except HTTPError as err:
             body = err.read().decode("utf-8", errors="replace")

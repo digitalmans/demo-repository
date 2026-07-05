@@ -381,8 +381,8 @@ function animate() {
                 mouth.scale.z = 1 + Math.sin(elapsedTime * 20) * 0.25;
                 mouth.position.y = Math.sin(elapsedTime * 20) * 0.015;
             } else {
-                // Fallback body scale modulation
-                model.scale.y = 1 + Math.sin(elapsedTime * 20) * 0.008;
+                // Fallback body scale modulation (relative to model scale)
+                model.scale.y = model.scale.x * (1 + Math.sin(elapsedTime * 20) * 0.008);
             }
         }
     }
@@ -499,7 +499,7 @@ function resetModelNodes() {
             mouth.scale.z = 1;
             mouth.position.y = 0;
         }
-        model.scale.y = 1;
+        model.scale.y = model.scale.x;
     }
 }
 
@@ -514,14 +514,14 @@ async function sendTextInput() {
     updateStatus('机器人思考中...', '#FF9800');
 
     try {
-        const preset = 'local_fallback'; // Use local knowledge base with DeepSeek fallback
         const response = await fetch('/api/qa_robot/ask', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 question: text,
-                preset: defaultDeepseekPreset || 'local_fallback',
-                deepseek_api_key: localStorage.getItem('qa_robot_deepseek_api_key') || ''
+                preset: defaultDeepseekPreset || 'deepseek_qa',
+                deepseek_api_key: localStorage.getItem('qa_robot_deepseek_api_key') || '',
+                force_deepseek: true
             })
         });
 
@@ -601,8 +601,9 @@ async function toggleVoiceRecording() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             question: queryText,
-                            preset: defaultDeepseekPreset || 'local_fallback',
-                            deepseek_api_key: localStorage.getItem('qa_robot_deepseek_api_key') || ''
+                            preset: defaultDeepseekPreset || 'deepseek_qa',
+                            deepseek_api_key: localStorage.getItem('qa_robot_deepseek_api_key') || '',
+                            force_deepseek: true
                         })
                     });
                     const qaData = await qaResponse.json();

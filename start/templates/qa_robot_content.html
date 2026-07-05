@@ -39,21 +39,7 @@
                             <option value="local">本地知识库</option>
                         </select>
                     </div>
-                    <div style="margin-bottom: 10px; padding: 12px; background: #f8f9ff; border-radius: 8px; border: 1px solid #e0e0e0;">
-                        <label for="qa-robot-deepseek-key-input" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666; font-weight: 500;">DeepSeek API Key</label>
-                        <input
-                            type="password"
-                            id="qa-robot-deepseek-key-input"
-                            placeholder="请输入 sk-... 格式的 API Key"
-                            autocomplete="off"
-                            style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95em; margin-bottom: 8px;"
-                        >
-                        <div style="display: flex; gap: 8px; margin-bottom: 6px;">
-                            <button type="button" onclick="qaRobotSaveDeepSeekKey()" style="flex: 1; padding: 8px 10px; border: none; border-radius: 8px; background: #667eea; color: white; cursor: pointer; font-weight: 600;">保存</button>
-                            <button type="button" onclick="qaRobotClearDeepSeekKey()" style="flex: 1; padding: 8px 10px; border: none; border-radius: 8px; background: #f0f0f0; color: #666; cursor: pointer; font-weight: 600;">清除</button>
-                        </div>
-                        <div id="qa-robot-deepseek-key-status" style="font-size: 0.82em; color: #999;">未配置</div>
-                    </div>
+
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                         <button class="btn btn-primary" id="qa-robot-send-btn" onclick="qaRobotSendQuestion()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                         <span class="btn-text">发送</span>

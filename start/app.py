@@ -446,6 +446,7 @@ def api_qa_robot_ask():
         preset = str(data.get('preset') or DEFAULT_DEEPSEEK_PRESET).strip() or DEFAULT_DEEPSEEK_PRESET
         deepseek_api_key = str(data.get('deepseek_api_key') or '').strip()
         use_local_only = preset == 'local'
+        force_deepseek = data.get('force_deepseek') == True
         
         if not question:
             return jsonify({'success': False, 'error': '问题不能为空'}), 400
@@ -453,6 +454,9 @@ def api_qa_robot_ask():
         request_deepseek_service = deepseek_service
         if deepseek_api_key and DEEPSEEK_AVAILABLE:
             request_deepseek_service = DeepSeekService(api_key=deepseek_api_key)
+        elif DEEPSEEK_AVAILABLE and request_deepseek_service and not request_deepseek_service.is_configured():
+            request_deepseek_service = DeepSeekService()
+            
         deepseek_configured = (
             DEEPSEEK_AVAILABLE and
             request_deepseek_service and
@@ -461,8 +465,8 @@ def api_qa_robot_ask():
         if not QA_ROBOT_AVAILABLE and (use_local_only or not deepseek_configured):
             return jsonify({'success': False, 'error': '问答机器人模块不可用，且当前请求无法使用DeepSeek API'}), 503
         
-        # 首先检查是否是快速问答对（直接返回，不进行检索）
-        quick_answer = match_quick_qa(question)
+        # 首先检查是否是快速问答对（如果强制使用DeepSeek，则跳过快速匹配）
+        quick_answer = None if force_deepseek else match_quick_qa(question)
         if quick_answer:
             # 快速问答对也保存历史记录
             similarity = 1.0  # 完全匹配，相似度为1.0
@@ -486,9 +490,9 @@ def api_qa_robot_ask():
                 'alternatives': []
             })
         
-        # 如果不是快速问答对，先做本地检索，再按预设决定是否调用DeepSeek
+        # 如果不是快速问答对，先做本地检索（如果强制使用DeepSeek，则跳过本地知识库检索）
         result = None
-        if QA_ROBOT_AVAILABLE and qa_robot_service:
+        if not force_deepseek and QA_ROBOT_AVAILABLE and qa_robot_service:
             result = qa_robot_service.ask(question, top_k=3, threshold=0.1)
 
         answer = None
