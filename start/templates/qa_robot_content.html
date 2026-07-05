@@ -36,7 +36,7 @@
                             {% for preset_key, preset in deepseek_presets.items() %}
                             <option value="{{ preset_key }}" {% if preset_key == default_deepseek_preset %}selected{% endif %}>{{ preset.label }}</option>
                             {% endfor %}
-                            <option value="local">本地知识库</option>
+                            <option value="local">本地知识库问答</option>
                         </select>
                     </div>
 

@@ -13,54 +13,30 @@ from urllib.request import Request, urlopen
 
 
 DEEPSEEK_PRESETS = {
-    "deepseek_qa": {
-        "label": "DeepSeek综合问答",
+    "deepseek_only": {
+        "label": "DeepSeek问答",
         "temperature": 0.3,
         "max_tokens": 1200,
         "system_prompt": (
-            "你是一个智能问答系统中的中文问答机器人。"
-            "回答时先给直接结论，再补充必要解释。"
-            "优先参考本地知识库检索结果；如果检索结果相似度低、内容不足或明显不相关，要明确说明，并基于通用知识给出谨慎回答。"
-            "不要编造来源、数据或实时新闻；如果问题依赖最新信息，请提醒用户需要核验。"
+            "你是一个智能问答助手。"
+            "请直接、客观、准确地回答用户的问题。"
             "回答应清晰、自然，适合网页展示和语音播报。"
         ),
     },
-    "grounded": {
-        "label": "知识库优先",
-        "temperature": 0.2,
-        "max_tokens": 1000,
+    "deepseek_combined": {
+        "label": "DeepSeek结合本地知识库问答",
+        "temperature": 0.3,
+        "max_tokens": 1200,
         "system_prompt": (
-            "你是一个知识库问答助手。"
-            "必须优先依据本地知识库检索结果回答。"
-            "当知识库结果不足以支撑答案时，先说明知识库未覆盖或匹配度不足，再给出保守补充。"
-            "不要把猜测包装成确定事实。"
+            "你是一个结合本地知识库（作为你的 skills 技能库）的智能问答助手。"
+            "请认真阅读和学习本地知识库的检索结果，并优先参考它们来生成回答。"
+            "如果本地检索结果相似度较低、内容不足或不相关，请明确说明，然后基于你的通用知识给出解答。"
+            "回答应清晰、自然，适合网页展示和语音播报。"
         ),
-    },
-    "tutor": {
-        "label": "学习讲解",
-        "temperature": 0.4,
-        "max_tokens": 1500,
-        "system_prompt": (
-            "你是一个耐心的学习辅导型问答助手。"
-            "先用一句话回答问题，然后用分点方式解释原因、概念和例子。"
-            "如果本地知识库提供了相关结果，应先结合知识库内容，再做拓展讲解。"
-            "语言要通俗，适合初学者。"
-        ),
-    },
-    "concise": {
-        "label": "简洁回答",
-        "temperature": 0.2,
-        "max_tokens": 600,
-        "system_prompt": (
-            "你是一个简洁准确的中文问答助手。"
-            "用最少的文字回答用户问题。"
-            "如果需要解释，控制在三点以内。"
-            "不确定时直接说明不确定。"
-        ),
-    },
+    }
 }
 
-DEFAULT_PRESET = "deepseek_qa"
+DEFAULT_PRESET = "deepseek_combined"
 
 
 class DeepSeekAPIError(Exception):

@@ -446,7 +446,7 @@ def api_qa_robot_ask():
         preset = str(data.get('preset') or DEFAULT_DEEPSEEK_PRESET).strip() or DEFAULT_DEEPSEEK_PRESET
         deepseek_api_key = str(data.get('deepseek_api_key') or '').strip()
         use_local_only = preset == 'local'
-        force_deepseek = data.get('force_deepseek') == True
+        force_deepseek = (data.get('force_deepseek') == True) or (preset == 'deepseek_only')
         
         if not question:
             return jsonify({'success': False, 'error': '问题不能为空'}), 400
