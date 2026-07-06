@@ -309,6 +309,16 @@ def digital_human():
                          qa_robot_available=QA_ROBOT_AVAILABLE)
 
 
+@app.route('/feature_experience')
+@login_required
+def feature_experience():
+    """功能体验页面（需要登录）"""
+    return render_template('voice_assistant.html', 
+                         username=session.get('username'),
+                         current_view='feature_experience')
+
+
+
 
 # 问答机器人API路由
 # 快速问答对映射（直接返回，不进行检索）
