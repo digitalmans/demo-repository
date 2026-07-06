@@ -272,9 +272,9 @@ function initDigitalHuman() {
     scene.add(rimLight);
 
     // Ground shadow helper
-    const gridHelper = new THREE.GridHelper(10, 20, 0xffffff, 0xffffff);
+    const gridHelper = new THREE.GridHelper(10, 20, 0x4f4f4f, 0x2f2f2f);
     gridHelper.position.y = 0.01;
-    gridHelper.material.opacity = 0.05;
+    gridHelper.material.opacity = 0.5;
     gridHelper.material.transparent = true;
     scene.add(gridHelper);
 
