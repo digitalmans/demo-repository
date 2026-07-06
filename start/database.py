@@ -111,24 +111,7 @@ def init_database():
                 )
                 print("已创建管理员账号: daministrator / 123456")
             
-            # 创建电影问答历史记录表
-            create_history_table_sql = """
-            CREATE TABLE IF NOT EXISTS movie_qa_history (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id INT NOT NULL,
-                username VARCHAR(50) NOT NULL,
-                question TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_user_id (user_id),
-                INDEX idx_username (username),
-                INDEX idx_created_at (created_at),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            """
-            cursor.execute(create_history_table_sql)
-            print("电影问答历史记录表已创建或已存在")
-            
+
             # 创建TTS音频文件缓存表
             create_tts_cache_table_sql = """
             CREATE TABLE IF NOT EXISTS tts_audio_cache (
@@ -433,93 +416,7 @@ def delete_user(user_id, current_user_id):
         return False, f"删除失败: {str(e)}"
 
 
-def save_movie_qa_history(user_id, username, question, answer):
-    """
-    保存电影问答历史记录
-    :param user_id: 用户ID
-    :param username: 用户名
-    :param question: 问题
-    :param answer: 答案
-    :return: (success, message, history_id)
-    """
-    try:
-        connection = get_db_connection()
-        
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO movie_qa_history (user_id, username, question, answer) VALUES (%s, %s, %s, %s)",
-                (user_id, username, question, answer)
-            )
-            history_id = cursor.lastrowid
-        
-        connection.close()
-        return True, "历史记录保存成功", history_id
-        
-    except Exception as e:
-        print(f"保存历史记录错误: {e}")
-        return False, f"保存失败: {str(e)}", None
 
-
-def get_movie_qa_history(user_id, limit=100, offset=0):
-    """
-    获取用户的电影问答历史记录
-    :param user_id: 用户ID
-    :param limit: 返回记录数限制
-    :param offset: 偏移量
-    :return: 历史记录列表
-    """
-    try:
-        connection = get_db_connection()
-        
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT id, question, answer, created_at 
-                FROM movie_qa_history 
-                WHERE user_id = %s 
-                ORDER BY created_at DESC 
-                LIMIT %s OFFSET %s
-                """,
-                (user_id, limit, offset)
-            )
-            records = cursor.fetchall()
-            
-            history_list = []
-            for record in records:
-                history_list.append({
-                    'id': record['id'],
-                    'question': record['question'],
-                    'answer': record['answer'],
-                    'created_at': record['created_at'].isoformat() if record['created_at'] else None
-                })
-        
-        connection.close()
-        return history_list
-        
-    except Exception as e:
-        print(f"获取历史记录错误: {e}")
-        return []
-
-
-def get_movie_qa_history_count(user_id):
-    """
-    获取用户的电影问答历史记录总数
-    :param user_id: 用户ID
-    :return: 记录总数
-    """
-    try:
-        connection = get_db_connection()
-        
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT COUNT(*) as count FROM movie_qa_history WHERE user_id = %s",
-                (user_id,)
-            )
-            result = cursor.fetchone()
-            count = result['count'] if result else 0
-        
-        connection.close()
-        return count
         
     except Exception as e:
         print(f"获取历史记录总数错误: {e}")
@@ -670,36 +567,7 @@ def delete_all_tts_audio_files(delete_db_records=True):
         return False, f"删除失败: {str(e)}", 0
 
 
-def delete_movie_qa_history(user_id, history_id=None):
-    """
-    删除电影问答历史记录
-    :param user_id: 用户ID
-    :param history_id: 历史记录ID，如果为None则删除该用户的所有记录
-    :return: (success, message)
-    """
-    try:
-        connection = get_db_connection()
-        
-        with connection.cursor() as cursor:
-            if history_id:
-                # 删除指定记录（只能删除自己的）
-                cursor.execute(
-                    "DELETE FROM movie_qa_history WHERE id = %s AND user_id = %s",
-                    (history_id, user_id)
-                )
-            else:
-                # 删除该用户的所有记录
-                cursor.execute(
-                    "DELETE FROM movie_qa_history WHERE user_id = %s",
-                    (user_id,)
-                )
-        
-        connection.close()
-        return True, "删除成功"
-        
-    except Exception as e:
-        print(f"删除历史记录错误: {e}")
-        return False, f"删除失败: {str(e)}"
+
 
 
 def save_qa_robot_history(user_id, username, question, answer, similarity=None):

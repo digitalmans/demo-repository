@@ -62,13 +62,8 @@ except ImportError as e:
     print(f"警告: 无法导入翻译模块: {e}")
     TRANSLATOR_AVAILABLE = False
 
-MOVIE_QA_AVAILABLE = False
-
-
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-
-movie_qa_service = None
 
 
 # 导入问答机器人服务
