@@ -187,7 +187,70 @@ def init_database():
             """
             cursor.execute(create_qa_comments_table_sql)
             print("QA评论表已创建或已存在")
-        
+
+            # ========== 讨论区增强：给已存在的表补字段 ==========
+            # MySQL 8 不支持 `ADD COLUMN IF NOT EXISTS`，改用 information_schema 探测
+            cursor.execute("""
+                SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+            """, (MYSQL_CONFIG.get('database', 'voice_assistant_db'),))
+            existing_cols = {}
+            for row in cursor.fetchall():
+                existing_cols.setdefault(row['TABLE_NAME'], set()).add(row['COLUMN_NAME'])
+
+            disc_cols = existing_cols.get('qa_discussion', set())
+            cmnt_cols = existing_cols.get('qa_comments', set())
+
+            schema_upgrades = [
+                ('qa_discussion', 'view_count', 'INT NOT NULL DEFAULT 0'),
+                ('qa_discussion', 'like_count', 'INT NOT NULL DEFAULT 0'),
+                ('qa_discussion', 'dislike_count', 'INT NOT NULL DEFAULT 0'),
+                ('qa_comments',   'like_count', 'INT NOT NULL DEFAULT 0'),
+                ('qa_comments',   'dislike_count', 'INT NOT NULL DEFAULT 0'),
+            ]
+            for tbl, col, col_def in schema_upgrades:
+                if col in (disc_cols if tbl == 'qa_discussion' else cmnt_cols):
+                    continue  # 已存在
+                try:
+                    cursor.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {col_def}")
+                    print(f"[schema] {tbl}.{col} 已添加")
+                except Exception as e:
+                    print(f"[schema] 添加 {tbl}.{col} 失败: {e}")
+
+            # 点赞/点踩记录表（用户对讨论或评论的投票）
+            create_qa_likes_table_sql = """
+            CREATE TABLE IF NOT EXISTS qa_likes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                target_type ENUM('discussion', 'comment') NOT NULL,
+                target_id INT NOT NULL,
+                vote_type ENUM('like', 'dislike') NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_user_target (user_id, target_type, target_id),
+                INDEX idx_target (target_type, target_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """
+            cursor.execute(create_qa_likes_table_sql)
+            print("QA点赞/点踩表已创建或已存在")
+
+            # 收藏夹表
+            create_qa_favorites_table_sql = """
+            CREATE TABLE IF NOT EXISTS qa_favorites (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                discussion_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_user_disc (user_id, discussion_id),
+                INDEX idx_user_id (user_id),
+                INDEX idx_discussion_id (discussion_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (discussion_id) REFERENCES qa_discussion(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """
+            cursor.execute(create_qa_favorites_table_sql)
+            print("QA收藏表已创建或已存在")
+
         connection.close()
         print("数据库初始化完成")
         
@@ -842,3 +905,525 @@ def delete_qa_comment(comment_id, user_id=None, is_admin=False):
     except Exception as e:
         print(f"删除评论错误: {e}")
         return False, f"删除失败: {str(e)}"
+
+
+# ============================================================
+# 讨论区增强功能：点赞/点踩、收藏、浏览量、热度排序、@提及解析
+# ============================================================
+
+def get_qa_discussions_extended(sort='latest', limit=20, offset=0, keyword=None):
+    """
+    获取讨论列表（支持最新/最热/搜索）
+    :param sort: 'latest' 最新 / 'hot' 最热
+    :param limit: 每页数量
+    :param offset: 偏移量
+    :param keyword: 搜索关键词（匹配内容/用户名）
+    """
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            where_clauses = []
+            params = []
+
+            if keyword:
+                where_clauses.append("(d.content LIKE %s OR d.username LIKE %s)")
+                kw = f"%{keyword}%"
+                params.extend([kw, kw])
+
+            where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+
+            if sort == 'hot':
+                # 热度公式：点赞*2 - 点踩 + 评论数*1.5
+                order_sql = "ORDER BY (d.like_count * 2 - d.dislike_count) DESC, d.created_at DESC"
+            else:
+                order_sql = "ORDER BY d.created_at DESC"
+
+            sql = f"""
+                SELECT d.id, d.user_id, d.username, d.content,
+                       d.created_at, d.updated_at,
+                       d.view_count, d.like_count, d.dislike_count
+                FROM qa_discussion d
+                {where_sql}
+                {order_sql}
+                LIMIT %s OFFSET %s
+            """
+            cursor.execute(sql, params + [limit, offset])
+            discussions = cursor.fetchall()
+
+            discussion_list = []
+            for disc in discussions:
+                cursor.execute("SELECT COUNT(*) AS c FROM qa_comments WHERE discussion_id = %s", (disc['id'],))
+                ccnt = cursor.fetchone()['c'] or 0
+                lc = disc.get('like_count', 0) or 0
+                dc = disc.get('dislike_count', 0) or 0
+                discussion_list.append({
+                    'id': disc['id'],
+                    'user_id': disc['user_id'],
+                    'username': disc['username'],
+                    'content': disc['content'],
+                    'created_at': disc['created_at'].isoformat() if disc['created_at'] else None,
+                    'updated_at': disc['updated_at'].isoformat() if disc['updated_at'] else None,
+                    'view_count': disc.get('view_count', 0) or 0,
+                    'like_count': lc,
+                    'dislike_count': dc,
+                    'comment_count': ccnt,
+                    'hot_score': lc * 2 - dc + ccnt * 1.5,
+                })
+        connection.close()
+        return discussion_list
+    except Exception as e:
+        print(f"获取讨论列表(扩展)错误: {e}")
+        return []
+
+
+def get_qa_discussion_count_extended(keyword=None):
+    """获取讨论总数（支持搜索）"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            if keyword:
+                kw = f"%{keyword}%"
+                cursor.execute(
+                    "SELECT COUNT(*) AS c FROM qa_discussion WHERE content LIKE %s OR username LIKE %s",
+                    (kw, kw)
+                )
+            else:
+                cursor.execute("SELECT COUNT(*) AS c FROM qa_discussion")
+            result = cursor.fetchone()
+            count = result['c'] if result else 0
+        connection.close()
+        return count
+    except Exception as e:
+        print(f"获取讨论总数(扩展)错误: {e}")
+        return 0
+
+
+def get_qa_discussion_detail(discussion_id, increment_view=False):
+    """
+    获取单条讨论详情（包含完整统计字段）
+    :param increment_view: 是否+1 浏览量
+    """
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            if increment_view:
+                cursor.execute(
+                    "UPDATE qa_discussion SET view_count = view_count + 1 WHERE id = %s",
+                    (discussion_id,)
+                )
+            cursor.execute(
+                """SELECT id, user_id, username, content, created_at, updated_at,
+                          view_count, like_count, dislike_count
+                   FROM qa_discussion WHERE id = %s""",
+                (discussion_id,)
+            )
+            disc = cursor.fetchone()
+            if not disc:
+                connection.close()
+                return None
+            cursor.execute("SELECT COUNT(*) AS c FROM qa_comments WHERE discussion_id = %s", (disc['id'],))
+            ccnt = cursor.fetchone()['c'] or 0
+            lc = disc.get('like_count', 0) or 0
+            dc = disc.get('dislike_count', 0) or 0
+            result = {
+                'id': disc['id'],
+                'user_id': disc['user_id'],
+                'username': disc['username'],
+                'content': disc['content'],
+                'created_at': disc['created_at'].isoformat() if disc['created_at'] else None,
+                'updated_at': disc['updated_at'].isoformat() if disc['updated_at'] else None,
+                'view_count': disc.get('view_count', 0) or 0,
+                'like_count': lc,
+                'dislike_count': dc,
+                'comment_count': ccnt,
+                'hot_score': lc * 2 - dc + ccnt * 1.5,
+            }
+        connection.close()
+        return result
+    except Exception as e:
+        print(f"获取讨论详情错误: {e}")
+        return None
+
+
+def vote_qa_target(user_id, target_type, target_id, vote_type):
+    """
+    对讨论/评论点赞或点踩
+    :return: (success, message, current_like_count, current_dislike_count, user_vote)
+    - user_vote: 'like' / 'dislike' / None
+    """
+    if target_type not in ('discussion', 'comment'):
+        return False, "目标类型错误", 0, 0, None
+    if vote_type not in ('like', 'dislike', 'cancel'):
+        return False, "投票类型错误", 0, 0, None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 确认目标存在
+            if target_type == 'discussion':
+                cursor.execute("SELECT id, like_count, dislike_count FROM qa_discussion WHERE id = %s", (target_id,))
+            else:
+                cursor.execute("SELECT id, like_count, dislike_count FROM qa_comments WHERE id = %s", (target_id,))
+            target = cursor.fetchone()
+            if not target:
+                connection.close()
+                return False, "目标不存在", 0, 0, None
+
+            # 查已有投票
+            cursor.execute(
+                "SELECT id, vote_type FROM qa_likes WHERE user_id=%s AND target_type=%s AND target_id=%s",
+                (user_id, target_type, target_id)
+            )
+            existing = cursor.fetchone()
+            old_vote = existing['vote_type'] if existing else None
+
+            # 同票幂等保护：如果新票与旧票完全相同，等同于取消
+            if old_vote and vote_type == old_vote:
+                new_vote = None
+            elif vote_type == 'cancel':
+                new_vote = None
+            else:
+                new_vote = vote_type
+
+            # 取消原票
+            if old_vote:
+                cursor.execute("DELETE FROM qa_likes WHERE id=%s", (existing['id'],))
+                col = 'like_count' if old_vote == 'like' else 'dislike_count'
+                if target_type == 'discussion':
+                    cursor.execute(f"UPDATE qa_discussion SET {col} = GREATEST({col} - 1, 0) WHERE id=%s", (target_id,))
+                else:
+                    cursor.execute(f"UPDATE qa_comments SET {col} = GREATEST({col} - 1, 0) WHERE id=%s", (target_id,))
+
+            # 添加新票
+            if new_vote and new_vote != old_vote:
+                cursor.execute(
+                    "INSERT INTO qa_likes (user_id, target_type, target_id, vote_type) VALUES (%s,%s,%s,%s)",
+                    (user_id, target_type, target_id, new_vote)
+                )
+                col = 'like_count' if new_vote == 'like' else 'dislike_count'
+                if target_type == 'discussion':
+                    cursor.execute(f"UPDATE qa_discussion SET {col} = {col} + 1 WHERE id=%s", (target_id,))
+                else:
+                    cursor.execute(f"UPDATE qa_comments SET {col} = {col} + 1 WHERE id=%s", (target_id,))
+
+            # 拿最新计数
+            if target_type == 'discussion':
+                cursor.execute("SELECT like_count, dislike_count FROM qa_discussion WHERE id=%s", (target_id,))
+            else:
+                cursor.execute("SELECT like_count, dislike_count FROM qa_comments WHERE id=%s", (target_id,))
+            row = cursor.fetchone()
+        connection.close()
+        return True, "投票成功", row['like_count'], row['dislike_count'], new_vote
+    except Exception as e:
+        print(f"投票错误: {e}")
+        return False, f"投票失败: {str(e)}", 0, 0, None
+
+
+def get_user_votes(user_id, target_type, target_ids):
+    """
+    批量获取某用户对一组 target_id 的投票状态
+    :return: {target_id: 'like'/'dislike'/None}
+    """
+    if not target_ids:
+        return {}
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            placeholders = ','.join(['%s'] * len(target_ids))
+            cursor.execute(
+                f"""SELECT target_id, vote_type FROM qa_likes
+                    WHERE user_id=%s AND target_type=%s AND target_id IN ({placeholders})""",
+                [user_id, target_type] + list(target_ids)
+            )
+            rows = cursor.fetchall()
+        connection.close()
+        result = {tid: None for tid in target_ids}
+        for r in rows:
+            result[r['target_id']] = r['vote_type']
+        return result
+    except Exception as e:
+        print(f"获取投票状态错误: {e}")
+        return {tid: None for tid in target_ids}
+
+
+def get_qa_comments_extended(discussion_id, user_id=None):
+    """获取评论列表（带点赞统计、@提及解析）"""
+    import re
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT id, discussion_id, user_id, username, content,
+                          created_at, like_count, dislike_count
+                   FROM qa_comments WHERE discussion_id = %s ORDER BY created_at ASC""",
+                (discussion_id,)
+            )
+            comments = cursor.fetchall()
+            comment_list = []
+            ids = [c['id'] for c in comments]
+            votes_map = get_user_votes(user_id, 'comment', ids) if user_id and ids else {i: None for i in ids}
+            for c in comments:
+                mentioned = re.findall(r'@([\w一-龥]{1,30})', c['content'] or '')
+                comment_list.append({
+                    'id': c['id'],
+                    'discussion_id': c['discussion_id'],
+                    'user_id': c['user_id'],
+                    'username': c['username'],
+                    'content': c['content'],
+                    'created_at': c['created_at'].isoformat() if c['created_at'] else None,
+                    'like_count': c.get('like_count', 0) or 0,
+                    'dislike_count': c.get('dislike_count', 0) or 0,
+                    'user_vote': votes_map.get(c['id']),
+                    'mentioned_users': mentioned,
+                })
+        connection.close()
+        return comment_list
+    except Exception as e:
+        print(f"获取评论(扩展)错误: {e}")
+        return []
+
+
+def toggle_favorite(user_id, discussion_id):
+    """收藏/取消收藏讨论。返回 (success, message, is_favorited)"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM qa_discussion WHERE id=%s", (discussion_id,))
+            if not cursor.fetchone():
+                connection.close()
+                return False, "讨论不存在", False
+            cursor.execute(
+                "SELECT id FROM qa_favorites WHERE user_id=%s AND discussion_id=%s",
+                (user_id, discussion_id)
+            )
+            existing = cursor.fetchone()
+            if existing:
+                cursor.execute("DELETE FROM qa_favorites WHERE id=%s", (existing['id'],))
+                connection.close()
+                return True, "已取消收藏", False
+            else:
+                cursor.execute(
+                    "INSERT INTO qa_favorites (user_id, discussion_id) VALUES (%s, %s)",
+                    (user_id, discussion_id)
+                )
+                connection.close()
+                return True, "收藏成功", True
+    except Exception as e:
+        print(f"收藏切换错误: {e}")
+        return False, f"操作失败: {str(e)}", False
+
+
+def is_favorited(user_id, discussion_id):
+    """是否已收藏"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id FROM qa_favorites WHERE user_id=%s AND discussion_id=%s",
+                (user_id, discussion_id)
+            )
+            row = cursor.fetchone()
+        connection.close()
+        return row is not None
+    except Exception as e:
+        print(f"查询收藏状态错误: {e}")
+        return False
+
+
+def get_user_favorited_ids(user_id, discussion_ids):
+    """批量查询某用户对一组讨论的收藏状态"""
+    if not discussion_ids:
+        return {}
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            placeholders = ','.join(['%s'] * len(discussion_ids))
+            cursor.execute(
+                f"""SELECT discussion_id FROM qa_favorites
+                    WHERE user_id=%s AND discussion_id IN ({placeholders})""",
+                [user_id] + list(discussion_ids)
+            )
+            rows = cursor.fetchall()
+        connection.close()
+        result = {tid: False for tid in discussion_ids}
+        for r in rows:
+            result[r['discussion_id']] = True
+        return result
+    except Exception as e:
+        print(f"批量查询收藏状态错误: {e}")
+        return {tid: False for tid in discussion_ids}
+
+
+def get_user_profile(username):
+    """
+    获取个人主页数据：用户信息、发布数、评论数、收藏数、获赞总数
+    """
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id, username, email, role, created_at FROM users WHERE username=%s", (username,))
+            user = cursor.fetchone()
+            if not user:
+                connection.close()
+                return None
+            uid = user['id']
+
+            cursor.execute("SELECT COUNT(*) AS c FROM qa_discussion WHERE user_id=%s", (uid,))
+            discussion_count = cursor.fetchone()['c'] or 0
+
+            cursor.execute("SELECT COUNT(*) AS c FROM qa_comments WHERE user_id=%s", (uid,))
+            comment_count = cursor.fetchone()['c'] or 0
+
+            cursor.execute("SELECT COUNT(*) AS c FROM qa_favorites WHERE user_id=%s", (uid,))
+            favorite_count = cursor.fetchone()['c'] or 0
+
+            # 累计获得点赞
+            cursor.execute(
+                "SELECT IFNULL(SUM(like_count),0) AS total_likes FROM qa_discussion WHERE user_id=%s",
+                (uid,)
+            )
+            disc_likes = cursor.fetchone()['total_likes'] or 0
+            cursor.execute(
+                "SELECT IFNULL(SUM(like_count),0) AS total_likes FROM qa_comments WHERE user_id=%s",
+                (uid,)
+            )
+            cmt_likes = cursor.fetchone()['total_likes'] or 0
+            total_likes = disc_likes + cmt_likes
+
+            cursor.execute(
+                "SELECT IFNULL(SUM(view_count),0) AS total_views FROM qa_discussion WHERE user_id=%s",
+                (uid,)
+            )
+            total_views = cursor.fetchone()['total_views'] or 0
+
+        connection.close()
+        # 把 Decimal 转成 int，避免前端类型不一致
+        return {
+            'user': {
+                'id': user['id'],
+                'username': user['username'],
+                'email': user.get('email'),
+                'role': user.get('role', 'user'),
+                'created_at': user['created_at'].isoformat() if user.get('created_at') else None,
+            },
+            'stats': {
+                'discussion_count': int(discussion_count),
+                'comment_count': int(comment_count),
+                'favorite_count': int(favorite_count),
+                'total_likes': int(total_likes),
+                'total_views': int(total_views),
+            }
+        }
+    except Exception as e:
+        print(f"获取个人主页数据错误: {e}")
+        return None
+
+
+def get_user_discussions(user_id, limit=20, offset=0):
+    """获取某用户发布的讨论列表"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT id, user_id, username, content, created_at, updated_at,
+                          view_count, like_count, dislike_count
+                   FROM qa_discussion WHERE user_id=%s
+                   ORDER BY created_at DESC LIMIT %s OFFSET %s""",
+                (user_id, limit, offset)
+            )
+            rows = cursor.fetchall()
+            result = []
+            for d in rows:
+                cursor.execute("SELECT COUNT(*) AS c FROM qa_comments WHERE discussion_id=%s", (d['id'],))
+                ccnt = cursor.fetchone()['c'] or 0
+                result.append({
+                    'id': d['id'],
+                    'user_id': d['user_id'],
+                    'username': d['username'],
+                    'content': d['content'],
+                    'created_at': d['created_at'].isoformat() if d['created_at'] else None,
+                    'view_count': d.get('view_count', 0) or 0,
+                    'like_count': d.get('like_count', 0) or 0,
+                    'dislike_count': d.get('dislike_count', 0) or 0,
+                    'comment_count': ccnt,
+                })
+        connection.close()
+        return result
+    except Exception as e:
+        print(f"获取用户讨论列表错误: {e}")
+        return []
+
+
+def get_user_comments(user_id, limit=20, offset=0):
+    """获取某用户发表的评论列表（含所属讨论预览）"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT c.id, c.discussion_id, c.user_id, c.username, c.content,
+                          c.created_at, c.like_count, c.dislike_count,
+                          LEFT(d.content, 80) AS discussion_preview
+                   FROM qa_comments c
+                   JOIN qa_discussion d ON c.discussion_id = d.id
+                   WHERE c.user_id=%s
+                   ORDER BY c.created_at DESC LIMIT %s OFFSET %s""",
+                (user_id, limit, offset)
+            )
+            rows = cursor.fetchall()
+            result = []
+            for c in rows:
+                result.append({
+                    'id': c['id'],
+                    'discussion_id': c['discussion_id'],
+                    'user_id': c['user_id'],
+                    'username': c['username'],
+                    'content': c['content'],
+                    'created_at': c['created_at'].isoformat() if c['created_at'] else None,
+                    'like_count': c.get('like_count', 0) or 0,
+                    'dislike_count': c.get('dislike_count', 0) or 0,
+                    'discussion_preview': c.get('discussion_preview', ''),
+                })
+        connection.close()
+        return result
+    except Exception as e:
+        print(f"获取用户评论列表错误: {e}")
+        return []
+
+
+def get_user_favorites(user_id, limit=20, offset=0):
+    """获取某用户收藏的讨论列表"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT d.id, d.user_id, d.username, d.content, d.created_at,
+                          d.view_count, d.like_count, d.dislike_count,
+                          f.created_at AS favorited_at
+                   FROM qa_favorites f
+                   JOIN qa_discussion d ON f.discussion_id = d.id
+                   WHERE f.user_id=%s
+                   ORDER BY f.created_at DESC LIMIT %s OFFSET %s""",
+                (user_id, limit, offset)
+            )
+            rows = cursor.fetchall()
+            result = []
+            for d in rows:
+                cursor.execute("SELECT COUNT(*) AS c FROM qa_comments WHERE discussion_id=%s", (d['id'],))
+                ccnt = cursor.fetchone()['c'] or 0
+                result.append({
+                    'id': d['id'],
+                    'user_id': d['user_id'],
+                    'username': d['username'],
+                    'content': d['content'],
+                    'created_at': d['created_at'].isoformat() if d['created_at'] else None,
+                    'view_count': d.get('view_count', 0) or 0,
+                    'like_count': d.get('like_count', 0) or 0,
+                    'dislike_count': d.get('dislike_count', 0) or 0,
+                    'comment_count': ccnt,
+                    'favorited_at': d['favorited_at'].isoformat() if d['favorited_at'] else None,
+                })
+        connection.close()
+        return result
+    except Exception as e:
+        print(f"获取用户收藏列表错误: {e}")
+        return []
+

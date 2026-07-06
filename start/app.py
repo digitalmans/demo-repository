@@ -25,7 +25,13 @@ from database import (
     get_tts_audio_cache, save_tts_audio_cache,
     save_qa_discussion, get_qa_discussions, get_qa_discussion_count,
     delete_qa_discussion,
-    save_qa_comment, get_qa_comments, delete_qa_comment
+    save_qa_comment, get_qa_comments, delete_qa_comment,
+    # 增强功能
+    get_qa_discussions_extended, get_qa_discussion_count_extended,
+    get_qa_discussion_detail, vote_qa_target, get_user_votes,
+    get_qa_comments_extended, toggle_favorite, is_favorited,
+    get_user_favorited_ids, get_user_profile,
+    get_user_discussions, get_user_comments, get_user_favorites
 )
 
 # 添加 voice_assistant 目录到路径，以便导入 asr 和 tts 模块
@@ -290,8 +296,9 @@ def qa_robot():
 @login_required
 def qa_discussion():
     """QA讨论区页面（需要登录）"""
-    return render_template('voice_assistant.html', 
+    return render_template('voice_assistant.html',
                          username=session.get('username'),
+                         user_id=session.get('user_id'),
                          current_view='qa_discussion')
 
 
@@ -1152,19 +1159,226 @@ def api_qa_discussion_comment_delete(comment_id):
     try:
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': '未登录'}), 401
-        
+
         is_admin = session.get('role') == 'admin'
         user_id = session.get('user_id')
-        
+
         success, message = delete_qa_comment(comment_id, user_id, is_admin)
-        
+
         if success:
             return jsonify({'success': True, 'message': message})
         else:
             return jsonify({'success': False, 'error': message}), 400
-    
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# 讨论区增强 API：列表(支持排序/搜索)、详情、点赞/点踩、收藏、个人主页
+# ============================================================
+
+@app.route('/api/qa_discussion/feed', methods=['GET'])
+@login_required
+def api_qa_discussion_feed():
+    """讨论区 Feed：支持最新/最热/搜索"""
+    try:
+        sort = request.args.get('sort', 'latest')  # 'latest' | 'hot'
+        limit = min(request.args.get('limit', 20, type=int), 100)
+        offset = max(request.args.get('offset', 0, type=int), 0)
+        keyword = request.args.get('q', '').strip() or None
+
+        user_id = session.get('user_id')
+        discussions = get_qa_discussions_extended(sort=sort, limit=limit, offset=offset, keyword=keyword)
+        total = get_qa_discussion_count_extended(keyword=keyword)
+
+        # 批量补充：当前用户对这些讨论的投票/收藏状态
+        ids = [d['id'] for d in discussions]
+        vote_map = get_user_votes(user_id, 'discussion', ids) if ids else {}
+        fav_map = get_user_favorited_ids(user_id, ids) if ids else {}
+
+        for d in discussions:
+            d['user_vote'] = vote_map.get(d['id'])
+            d['is_favorited'] = fav_map.get(d['id'], False)
+
+        return jsonify({
+            'success': True,
+            'discussions': discussions,
+            'total': total,
+            'has_more': offset + len(discussions) < total,
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/qa_discussion/<int:discussion_id>/detail', methods=['GET'])
+@login_required
+def api_qa_discussion_detail(discussion_id):
+    """获取讨论详情（增加浏览量）"""
+    try:
+        user_id = session.get('user_id')
+        disc = get_qa_discussion_detail(discussion_id, increment_view=True)
+        if not disc:
+            return jsonify({'success': False, 'error': '讨论不存在'}), 404
+        # 当前用户的投票/收藏状态
+        votes = get_user_votes(user_id, 'discussion', [discussion_id])
+        disc['user_vote'] = votes.get(discussion_id)
+        disc['is_favorited'] = is_favorited(user_id, discussion_id)
+        return jsonify({'success': True, 'discussion': disc})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/qa_discussion/<int:discussion_id>/vote', methods=['POST'])
+@login_required
+def api_qa_discussion_vote(discussion_id):
+    """对讨论点赞/点踩/取消"""
+    try:
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+        vote_type = data.get('vote_type', '')  # 'like' | 'dislike' | 'cancel'
+        if vote_type not in ('like', 'dislike', 'cancel'):
+            return jsonify({'success': False, 'error': 'vote_type 必须为 like/dislike/cancel'}), 400
+        ok, msg, lc, dc, user_vote = vote_qa_target(user_id, 'discussion', discussion_id, vote_type)
+        return jsonify({
+            'success': ok,
+            'message': msg,
+            'like_count': lc,
+            'dislike_count': dc,
+            'user_vote': user_vote,
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/qa_discussion/comment/<int:comment_id>/vote', methods=['POST'])
+@login_required
+def api_qa_comment_vote(comment_id):
+    """对评论点赞/点踩/取消"""
+    try:
+        user_id = session.get('user_id')
+        data = request.get_json() or {}
+        vote_type = data.get('vote_type', '')
+        if vote_type not in ('like', 'dislike', 'cancel'):
+            return jsonify({'success': False, 'error': 'vote_type 必须为 like/dislike/cancel'}), 400
+        ok, msg, lc, dc, user_vote = vote_qa_target(user_id, 'comment', comment_id, vote_type)
+        return jsonify({
+            'success': ok,
+            'message': msg,
+            'like_count': lc,
+            'dislike_count': dc,
+            'user_vote': user_vote,
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/qa_discussion/<int:discussion_id>/favorite', methods=['POST'])
+@login_required
+def api_qa_discussion_favorite(discussion_id):
+    """收藏/取消收藏讨论"""
+    try:
+        user_id = session.get('user_id')
+        ok, msg, is_fav = toggle_favorite(user_id, discussion_id)
+        return jsonify({'success': ok, 'message': msg, 'is_favorited': is_fav})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/qa_discussion/<int:discussion_id>/comments_extended', methods=['GET'])
+@login_required
+def api_qa_discussion_comments_extended(discussion_id):
+    """获取评论列表（带点赞、@提及）"""
+    try:
+        user_id = session.get('user_id')
+        comments = get_qa_comments_extended(discussion_id, user_id=user_id)
+        return jsonify({'success': True, 'comments': comments})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ---------- 个人主页 ----------
+
+@app.route('/user/<username>')
+@login_required
+def user_profile_page(username):
+    """个人主页"""
+    return render_template(
+        'voice_assistant.html',
+        username=session.get('username'),
+        user_id=session.get('user_id'),
+        current_view='user_profile',
+        profile_username=username,
+    )
+
+
+@app.route('/api/user/<username>/profile', methods=['GET'])
+@login_required
+def api_user_profile(username):
+    """获取个人主页概要"""
+    profile = get_user_profile(username)
+    if not profile:
+        return jsonify({'success': False, 'error': '用户不存在'}), 404
+    return jsonify({'success': True, 'profile': profile})
+
+
+@app.route('/api/user/<username>/discussions', methods=['GET'])
+@login_required
+def api_user_discussions(username):
+    """个人主页：发布的讨论"""
+    try:
+        limit = min(request.args.get('limit', 20, type=int), 100)
+        offset = max(request.args.get('offset', 0, type=int), 0)
+        viewer_id = session.get('user_id')
+        profile = get_user_profile(username)
+        if not profile:
+            return jsonify({'success': False, 'error': '用户不存在'}), 404
+        items = get_user_discussions(profile['user']['id'], limit=limit, offset=offset)
+        ids = [i['id'] for i in items]
+        fav_map = get_user_favorited_ids(viewer_id, ids) if ids else {}
+        for it in items:
+            it['is_favorited'] = fav_map.get(it['id'], False)
+        return jsonify({'success': True, 'discussions': items})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/user/<username>/comments', methods=['GET'])
+@login_required
+def api_user_comments(username):
+    """个人主页：发表的评论"""
+    try:
+        limit = min(request.args.get('limit', 20, type=int), 100)
+        offset = max(request.args.get('offset', 0, type=int), 0)
+        profile = get_user_profile(username)
+        if not profile:
+            return jsonify({'success': False, 'error': '用户不存在'}), 404
+        items = get_user_comments(profile['user']['id'], limit=limit, offset=offset)
+        return jsonify({'success': True, 'comments': items})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/user/<username>/favorites', methods=['GET'])
+@login_required
+def api_user_favorites(username):
+    """个人主页：收藏的讨论（仅本人可看）"""
+    try:
+        viewer = session.get('username')
+        if viewer != username and session.get('role') != 'admin':
+            return jsonify({'success': False, 'error': '无权查看他人收藏'}), 403
+        limit = min(request.args.get('limit', 20, type=int), 100)
+        offset = max(request.args.get('offset', 0, type=int), 0)
+        profile = get_user_profile(username)
+        if not profile:
+            return jsonify({'success': False, 'error': '用户不存在'}), 404
+        items = get_user_favorites(profile['user']['id'], limit=limit, offset=offset)
+        for it in items:
+            it['is_favorited'] = True
+        return jsonify({'success': True, 'favorites': items})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 
 if __name__ == '__main__':

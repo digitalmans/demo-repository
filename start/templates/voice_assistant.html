@@ -177,6 +177,8 @@
                 {% include 'qa_discussion_content.html' %}
             {% elif current_view == 'digital_human' %}
                 {% include 'digital_human_content.html' %}
+            {% elif current_view == 'user_profile' %}
+                {% include 'user_profile.html' %}
             {% else %}
                 {% include 'qa_robot_content.html' %}
             {% endif %}
@@ -198,6 +200,9 @@
                 </a>
                 <a href="{{ url_for('qa_discussion') }}" class="switch-btn {% if current_view == 'qa_discussion' %}active{% endif %}" id="qa-discussion-btn">
                     💬 讨论区
+                </a>
+                <a href="{{ url_for('user_profile_page', username=session.get('username')) }}" class="switch-btn {% if current_view == 'user_profile' %}active{% endif %}" id="user-profile-btn">
+                    🙋 我的主页
                 </a>
             </div>
             

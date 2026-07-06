@@ -1,0 +1,252 @@
+<!-- 个人主页内容 -->
+<div class="user-profile-container" style="height: calc(100vh - 60px); overflow-y: auto; padding: 24px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div style="max-width: 920px; margin: 0 auto;">
+        <!-- 顶部用户卡片 -->
+        <div class="profile-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; gap: 24px; align-items: center; margin-bottom: 20px;">
+            <div id="profile-avatar" style="width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; flex-shrink: 0;">
+                ?
+            </div>
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h2 id="profile-username" style="margin: 0; color: #333; font-size: 24px;">加载中...</h2>
+                    <span id="profile-role-badge" style="display:none; background: linear-gradient(135deg, #ff9966, #ff5e62); color: white; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">管理员</span>
+                </div>
+                <div id="profile-meta" style="color: #999; font-size: 13px; margin-top: 6px;"></div>
+            </div>
+            <div id="profile-action-area"></div>
+        </div>
+
+        <!-- 统计指标 -->
+        <div class="profile-stats" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;">
+            <div class="stat-card" style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <div style="font-size: 26px; font-weight: 700; color: #667eea;" id="stat-discussions">0</div>
+                <div style="color: #999; font-size: 12px; margin-top: 4px;">发布</div>
+            </div>
+            <div class="stat-card" style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <div style="font-size: 26px; font-weight: 700; color: #667eea;" id="stat-comments">0</div>
+                <div style="color: #999; font-size: 12px; margin-top: 4px;">评论</div>
+            </div>
+            <div class="stat-card" style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <div style="font-size: 26px; font-weight: 700; color: #f5576c;" id="stat-likes">0</div>
+                <div style="color: #999; font-size: 12px; margin-top: 4px;">累计获赞</div>
+            </div>
+            <div class="stat-card" style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <div style="font-size: 26px; font-weight: 700; color: #ff9966;" id="stat-views">0</div>
+                <div style="color: #999; font-size: 12px; margin-top: 4px;">累计浏览</div>
+            </div>
+            <div class="stat-card" style="background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <div style="font-size: 26px; font-weight: 700; color: #ffb300;" id="stat-favorites">0</div>
+                <div style="color: #999; font-size: 12px; margin-top: 4px;" id="stat-favorites-label">收藏</div>
+            </div>
+        </div>
+
+        <!-- Tab 切换 -->
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; background: white; padding: 6px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <button class="profile-tab active" data-tab="discussions"
+                    style="flex:1; padding: 10px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                📝 发布的讨论
+            </button>
+            <button class="profile-tab" data-tab="comments"
+                    style="flex:1; padding: 10px; border: none; background: transparent; color: #555; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                💬 发表的评论
+            </button>
+            <button class="profile-tab" data-tab="favorites"
+                    style="flex:1; padding: 10px; border: none; background: transparent; color: #555; border-radius: 8px; cursor: pointer; font-weight: 600;" id="fav-tab">
+                ⭐ 收藏
+            </button>
+        </div>
+
+        <!-- 内容区 -->
+        <div id="profile-content" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-height: 240px;">
+            <div style="text-align: center; padding: 40px; color: #999;">
+                <div class="loading"></div>
+                <p>加载中...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const profileUsername = {{ profile_username|tojson }};
+const currentUsername = {{ session.get('username','')|tojson }};
+const isSelf = currentUsername === profileUsername;
+let currentTab = 'discussions';
+
+document.querySelectorAll('.profile-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.profile-tab').forEach(b => {
+            b.style.background = 'transparent';
+            b.style.color = '#555';
+            b.classList.remove('active');
+        });
+        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        btn.style.color = 'white';
+        btn.classList.add('active');
+        currentTab = btn.dataset.tab;
+        loadTabContent();
+    });
+});
+
+// 非本人隐藏收藏 tab
+if (!isSelf) {
+    // 收藏只对本人可见
+    document.getElementById('fav-tab').style.display = 'none';
+}
+
+async function loadProfile() {
+    try {
+        const r = await fetch(`/api/user/${encodeURIComponent(profileUsername)}/profile`);
+        const data = await r.json();
+        if (data.success) {
+            const u = data.profile.user;
+            const s = data.profile.stats;
+            // 头像取首字符
+            document.getElementById('profile-avatar').textContent = (u.username || '?').charAt(0).toUpperCase();
+            document.getElementById('profile-username').textContent = u.username;
+            if (u.role === 'admin') document.getElementById('profile-role-badge').style.display = 'inline-block';
+            const joinDate = u.created_at ? new Date(u.created_at).toLocaleDateString('zh-CN') : '';
+            document.getElementById('profile-meta').textContent =
+                (joinDate ? '📅 加入于 ' + joinDate + ' · ' : '') + (u.email ? '✉️ ' + u.email : '');
+            document.getElementById('stat-discussions').textContent = s.discussion_count;
+            document.getElementById('stat-comments').textContent = s.comment_count;
+            document.getElementById('stat-likes').textContent = s.total_likes;
+            document.getElementById('stat-views').textContent = s.total_views;
+            document.getElementById('stat-favorites').textContent = s.favorite_count;
+            // 操作区
+            if (isSelf) {
+                document.getElementById('profile-action-area').innerHTML = `
+                    <a href="/qa_discussion" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600;">✍️ 去发帖</a>
+                `;
+            }
+        } else {
+            document.getElementById('profile-content').innerHTML =
+                '<div style="text-align:center;padding:40px;color:#f5576c;">' + (data.error || '用户不存在') + '</div>';
+        }
+    } catch (err) {
+        document.getElementById('profile-content').innerHTML =
+            '<div style="text-align:center;padding:40px;color:#f5576c;">网络错误: ' + err.message + '</div>';
+    }
+}
+
+async function loadTabContent() {
+    const container = document.getElementById('profile-content');
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:#999;">加载中...</div>';
+    try {
+        if (currentTab === 'discussions') {
+            const r = await fetch(`/api/user/${encodeURIComponent(profileUsername)}/discussions?limit=50`);
+            const data = await r.json();
+            if (data.success) renderDiscussions(data.discussions);
+        } else if (currentTab === 'comments') {
+            const r = await fetch(`/api/user/${encodeURIComponent(profileUsername)}/comments?limit=50`);
+            const data = await r.json();
+            if (data.success) renderUserComments(data.comments);
+        } else if (currentTab === 'favorites') {
+            if (!isSelf) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">收藏仅本人可见</div>';
+                return;
+            }
+            const r = await fetch(`/api/user/${encodeURIComponent(profileUsername)}/favorites?limit=50`);
+            const data = await r.json();
+            if (data.success) renderFavorites(data.favorites);
+        }
+    } catch (err) {
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:#f5576c;">网络错误: ' + err.message + '</div>';
+    }
+}
+
+function renderDiscussions(items) {
+    const container = document.getElementById('profile-content');
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">还没有发布过讨论～</div>';
+        return;
+    }
+    container.innerHTML = items.map(d => `
+        <div class="profile-item" style="background:#f9f9f9;padding:14px;border-radius:8px;margin-bottom:12px;border-left:3px solid #667eea;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
+                <span style="color:#999;font-size:12px;">${formatTime(d.created_at)}</span>
+                <span style="color:#999;font-size:12px;">👁️ ${d.view_count||0}</span>
+            </div>
+            <div style="color:#333;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:8px;">${renderContent(d.content)}</div>
+            <div style="display:flex;gap:16px;font-size:13px;color:#999;align-items:center;">
+                <span>👍 ${d.like_count||0}</span>
+                <span>👎 ${d.dislike_count||0}</span>
+                <span>💬 ${d.comment_count||0}</span>
+                <a href="/qa_discussion" style="margin-left:auto;color:#667eea;text-decoration:none;font-weight:600;">查看 →</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderUserComments(items) {
+    const container = document.getElementById('profile-content');
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">还没有评论过～</div>';
+        return;
+    }
+    container.innerHTML = items.map(c => `
+        <div class="profile-item" style="background:#f9f9f9;padding:14px;border-radius:8px;margin-bottom:12px;border-left:3px solid #667eea;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
+                <span style="color:#999;font-size:12px;">${formatTime(c.created_at)}</span>
+                <span style="color:#999;font-size:12px;">👍 ${c.like_count||0}</span>
+            </div>
+            <div style="background:white;padding:8px 12px;border-radius:6px;margin-bottom:8px;font-size:13px;color:#666;border-left:2px solid #ddd;">
+                回复于：${renderContent(c.discussion_preview || '...')}
+            </div>
+            <div style="color:#333;line-height:1.5;white-space:pre-wrap;word-break:break-word;">${renderContent(c.content)}</div>
+        </div>
+    `).join('');
+}
+
+function renderFavorites(items) {
+    const container = document.getElementById('profile-content');
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">还没有收藏过～</div>';
+        return;
+    }
+    container.innerHTML = items.map(d => `
+        <div class="profile-item" style="background:#fff8e1;padding:14px;border-radius:8px;margin-bottom:12px;border-left:3px solid #ffb300;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
+                <a href="/user/${encodeURIComponent(d.username)}" style="color:#667eea;font-weight:600;font-size:13px;text-decoration:none;">@${escapeHtml(d.username)}</a>
+                <span style="color:#ffb300;font-size:12px;">⭐ 收藏于 ${formatTime(d.favorited_at)}</span>
+            </div>
+            <div style="color:#333;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:8px;">${renderContent(d.content)}</div>
+            <div style="display:flex;gap:16px;font-size:13px;color:#999;align-items:center;">
+                <span>👍 ${d.like_count||0}</span>
+                <span>💬 ${d.comment_count||0}</span>
+                <span>👁️ ${d.view_count||0}</span>
+                <a href="/qa_discussion" style="margin-left:auto;color:#667eea;text-decoration:none;font-weight:600;">查看 →</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderContent(text) {
+    if (!text) return '';
+    const safe = escapeHtml(text);
+    return safe.replace(/@([\w一-龥]{1,30})/g, '<span style="color:#667eea;font-weight:600;">@$1</span>');
+}
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+function formatTime(timeStr) {
+    if (!timeStr) return '';
+    const date = new Date(timeStr);
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return minutes + '分钟前';
+    if (hours < 24) return hours + '小时前';
+    if (days < 7) return days + '天前';
+    return date.toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    loadProfile();
+    loadTabContent();
+});
+</script>

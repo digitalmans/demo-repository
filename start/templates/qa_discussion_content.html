@@ -1,18 +1,39 @@
-<!-- QA讨论区内容 -->
+<!-- QA讨论区内容（社区增强版） -->
 <div class="qa-discussion-container" style="display: flex; height: calc(100vh - 60px); gap: 20px; padding: 20px;">
-    <!-- 左侧：讨论列表 -->
+    <!-- 左侧：Feed 列表 -->
     <div class="discussion-list" style="flex: 1; background: white; border-radius: 10px; padding: 20px; overflow-y: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h2 style="margin-top: 0; color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
-            💬 讨论区
-        </h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 15px;">
+            <h2 style="margin: 0; color: #667eea;">💬 讨论区</h2>
+            <div style="font-size: 13px; color: #999;">
+                共 <span id="discussion-total">0</span> 条
+            </div>
+        </div>
+
+        <!-- 排序 Tab + 搜索框 -->
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+            <div id="sort-tabs" style="display: flex; gap: 6px;">
+                <button class="sort-tab active" data-sort="latest" style="padding: 6px 14px; border: none; background: #667eea; color: white; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 600;">🕐 最新</button>
+                <button class="sort-tab" data-sort="hot" style="padding: 6px 14px; border: 1px solid #ddd; background: white; color: #555; border-radius: 16px; cursor: pointer; font-size: 13px; font-weight: 600;">🔥 最热</button>
+            </div>
+            <div style="flex: 1; min-width: 180px; position: relative;">
+                <input type="text" id="search-input" placeholder="🔍 搜索讨论内容/作者"
+                       style="width: 100%; padding: 7px 12px; border: 2px solid #e0e0e0; border-radius: 16px; font-size: 13px; outline: none;"
+                       onkeydown="if(event.key==='Enter'){doSearch()}">
+            </div>
+        </div>
+
         <div id="discussions-container">
             <div style="text-align: center; padding: 40px; color: #999;">
                 <div class="loading"></div>
                 <p>加载中...</p>
             </div>
         </div>
+
+        <div id="load-more-wrapper" style="text-align: center; margin-top: 12px; display: none;">
+            <button onclick="loadMore()" id="load-more-btn" style="padding: 8px 24px; background: white; border: 2px solid #667eea; color: #667eea; border-radius: 20px; cursor: pointer; font-weight: 600;">加载更多</button>
+        </div>
     </div>
-    
+
     <!-- 右侧：发布讨论 -->
     <div class="discussion-form" style="width: 400px; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <h2 style="margin-top: 0; color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
@@ -21,19 +42,19 @@
         <form id="discussion-form" onsubmit="submitDiscussion(event)">
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">内容 *</label>
-                <textarea 
-                    id="discussion-content" 
-                    required 
+                <textarea
+                    id="discussion-content"
+                    required
                     maxlength="5000"
-                    placeholder="请输入您想讨论的内容..."
+                    placeholder="说点什么吧～ 输入 @用户名 可提及他人"
                     style="width: 100%; min-height: 300px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"
                 ></textarea>
                 <div style="text-align: right; color: #999; font-size: 12px; margin-top: 5px;">
                     <span id="content-length">0</span>/5000
                 </div>
             </div>
-            <button 
-                type="submit" 
+            <button
+                type="submit"
                 id="submit-discussion-btn"
                 style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;"
             >
@@ -46,30 +67,30 @@
 
 <!-- 评论模态框 -->
 <div id="comment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 10px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="background: white; border-radius: 10px; padding: 30px; max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #667eea;">💬 评论</h2>
+            <h2 style="margin: 0; color: #667eea;">💬 讨论详情</h2>
             <button onclick="closeCommentModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
         </div>
         <div id="discussion-detail" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
-        <div id="comments-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;"></div>
+        <div id="comments-list" style="max-height: 360px; overflow-y: auto; margin-bottom: 20px;"></div>
         <form id="comment-form" onsubmit="submitComment(event)">
-            <textarea 
-                id="comment-content" 
-                required 
+            <textarea
+                id="comment-content"
+                required
                 maxlength="1000"
-                placeholder="请输入您的评论..."
+                placeholder="写下你的评论，输入 @用户名 可提及他人..."
                 style="width: 100%; min-height: 100px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit; margin-bottom: 10px;"
             ></textarea>
             <div style="display: flex; gap: 10px;">
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     style="flex: 1; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;"
                 >
                     发表评论
                 </button>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onclick="closeCommentModal()"
                     style="padding: 10px 20px; background: #f5f5f5; color: #333; border: none; border-radius: 8px; cursor: pointer;"
                 >
@@ -82,7 +103,14 @@
 
 <script>
 let currentDiscussionId = null;
+let currentDiscussion = null;
+let currentSort = 'latest';
+let currentKeyword = '';
+let currentOffset = 0;
+let hasMore = false;
+const pageSize = 20;
 const currentUserId = {{ session.get('user_id') if session.get('user_id') else 0 }};
+const currentUsername = {{ session.get('username','')|tojson }};
 const isAdmin = {{ 'true' if session.get('role') == 'admin' else 'false' }};
 
 // 字符计数
@@ -90,271 +118,437 @@ document.getElementById('discussion-content').addEventListener('input', function
     document.getElementById('content-length').textContent = this.value.length;
 });
 
-// 加载讨论列表
-async function loadDiscussions() {
+// Tab 切换
+document.querySelectorAll('.sort-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.sort-tab').forEach(b => {
+            b.style.background = 'white';
+            b.style.color = '#555';
+            b.style.border = '1px solid #ddd';
+            b.classList.remove('active');
+        });
+        btn.style.background = '#667eea';
+        btn.style.color = 'white';
+        btn.style.border = 'none';
+        btn.classList.add('active');
+        currentSort = btn.dataset.sort;
+        currentOffset = 0;
+        loadDiscussions(true);
+    });
+});
+
+function doSearch() {
+    currentKeyword = document.getElementById('search-input').value.trim();
+    currentOffset = 0;
+    loadDiscussions(true);
+}
+
+async function loadDiscussions(reset=false) {
     try {
-        const response = await fetch('/api/qa_discussion/list?limit=50&offset=0');
+        const params = new URLSearchParams({
+            sort: currentSort,
+            limit: pageSize,
+            offset: currentOffset,
+        });
+        if (currentKeyword) params.set('q', currentKeyword);
+        const response = await fetch('/api/qa_discussion/feed?' + params.toString());
         const data = await response.json();
-        
         if (data.success) {
-            displayDiscussions(data.discussions);
+            currentOffset += data.discussions.length;
+            hasMore = data.has_more;
+            document.getElementById('discussion-total').textContent = data.total;
+            displayDiscussions(data.discussions, reset);
+            document.getElementById('load-more-wrapper').style.display = hasMore ? 'block' : 'none';
         } else {
-            document.getElementById('discussions-container').innerHTML = 
+            document.getElementById('discussions-container').innerHTML =
                 '<div style="text-align: center; padding: 40px; color: #f5576c;">加载失败: ' + (data.error || '未知错误') + '</div>';
         }
     } catch (error) {
-        document.getElementById('discussions-container').innerHTML = 
+        document.getElementById('discussions-container').innerHTML =
             '<div style="text-align: center; padding: 40px; color: #f5576c;">网络错误: ' + error.message + '</div>';
     }
 }
 
-// 显示讨论列表
-function displayDiscussions(discussions) {
-    const container = document.getElementById('discussions-container');
-    
-    if (discussions.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">暂无讨论，快来发布第一条吧！</div>';
-        return;
-    }
-    
-    container.innerHTML = discussions.map(disc => `
-        <div class="discussion-item" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea; cursor: pointer; transition: all 0.3s;" 
-             onmouseover="this.style.background='#f0f0f0'" 
-             onmouseout="this.style.background='#f9f9f9'"
-             onclick="openCommentModal(${disc.id})">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                <div>
-                    <strong style="color: #667eea;">${escapeHtml(disc.username)}</strong>
-                    <span style="color: #999; font-size: 12px; margin-left: 10px;">${formatTime(disc.created_at)}</span>
-                </div>
-                ${(disc.user_id === currentUserId || isAdmin) ? 
-                    `<button onclick="event.stopPropagation(); deleteDiscussion(${disc.id})" style="background: #f5576c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">删除</button>` : 
-                    ''}
-            </div>
-            <div style="color: #333; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${escapeHtml(disc.content)}</div>
-            <div style="margin-top: 10px; color: #999; font-size: 12px;">
-                💬 ${disc.comment_count || 0} 条评论
-            </div>
-        </div>
-    `).join('');
+function loadMore() {
+    loadDiscussions(false);
 }
 
-// 提交讨论
+function displayDiscussions(discussions, reset=false) {
+    const container = document.getElementById('discussions-container');
+    if (reset) container.innerHTML = '';
+    if (discussions.length === 0 && reset) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">' +
+            (currentKeyword ? '没有匹配的讨论，换个关键词试试？' : '暂无讨论，快来发布第一条吧！') + '</div>';
+        return;
+    }
+    if (discussions.length === 0) return;
+    const html = discussions.map(renderDiscussionCard).join('');
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+function renderDiscussionCard(disc) {
+    const liked = disc.user_vote === 'like';
+    const disliked = disc.user_vote === 'dislike';
+    const favorited = disc.is_favorited;
+    const hotBadge = currentSort === 'hot'
+        ? `<span style="background: linear-gradient(135deg,#ff9966,#ff5e62); color:white; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; margin-left:6px;">🔥 ${(disc.hot_score||0).toFixed(1)}</span>`
+        : '';
+    return `
+    <div class="discussion-item" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea; cursor: pointer; transition: all 0.3s;"
+         onmouseover="this.style.background='#f0f0f0'"
+         onmouseout="this.style.background='#f9f9f9'"
+         onclick="openCommentModal(${disc.id})">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+            <div>
+                <a href="/user/${encodeURIComponent(disc.username)}" onclick="event.stopPropagation()"
+                   style="color: #667eea; font-weight: 600; text-decoration: none;">${escapeHtml(disc.username)}</a>
+                <span style="color: #999; font-size: 12px; margin-left: 10px;">${formatTime(disc.created_at)}</span>
+                ${hotBadge}
+            </div>
+            ${(disc.user_id === currentUserId || isAdmin) ?
+                `<button onclick="event.stopPropagation(); deleteDiscussion(${disc.id})" style="background: #f5576c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">删除</button>` :
+                ''}
+        </div>
+        <div style="color: #333; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${renderContentWithMentions(disc.content)}</div>
+        <div style="display: flex; align-items: center; gap: 16px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e0e0e0; font-size: 13px; color: #999;">
+            <span onclick="event.stopPropagation(); voteDiscussion(${disc.id}, 'like', this)"
+                  class="action-btn ${liked ? 'active-like' : ''}" data-target-id="${disc.id}" data-type="discussion">
+                👍 <span class="like-count">${disc.like_count || 0}</span>
+            </span>
+            <span onclick="event.stopPropagation(); voteDiscussion(${disc.id}, 'dislike', this)"
+                  class="action-btn ${disliked ? 'active-dislike' : ''}" data-target-id="${disc.id}" data-type="discussion">
+                👎 <span class="dislike-count">${disc.dislike_count || 0}</span>
+            </span>
+            <span>💬 ${disc.comment_count || 0} 评论</span>
+            <span>👁️ ${disc.view_count || 0}</span>
+            <span style="margin-left: auto;" onclick="event.stopPropagation(); toggleFavorite(${disc.id}, this)"
+                  class="action-btn fav-btn ${favorited ? 'active-fav' : ''}" data-target-id="${disc.id}">
+                ${favorited ? '★ 已收藏' : '☆ 收藏'}
+            </span>
+        </div>
+    </div>
+    `;
+}
+
 async function submitDiscussion(event) {
     event.preventDefault();
-    
     const content = document.getElementById('discussion-content').value.trim();
     const btn = document.getElementById('submit-discussion-btn');
     const msgDiv = document.getElementById('discussion-message');
-    
-    if (!content) {
-        msgDiv.innerHTML = '<span style="color: red;">内容不能为空</span>';
-        return;
-    }
-    
-    btn.disabled = true;
-    btn.textContent = '发布中...';
+    if (!content) { msgDiv.innerHTML = '<span style="color: red;">内容不能为空</span>'; return; }
+    btn.disabled = true; btn.textContent = '发布中...';
     msgDiv.innerHTML = '<span style="color: blue;">发布中...</span>';
-    
     try {
         const response = await fetch('/api/qa_discussion/submit', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({content: content})
         });
-        
         const data = await response.json();
-        
         if (data.success) {
             msgDiv.innerHTML = '<span style="color: green;">发布成功！</span>';
             document.getElementById('discussion-content').value = '';
             document.getElementById('content-length').textContent = '0';
-            setTimeout(() => {
-                msgDiv.innerHTML = '';
-                loadDiscussions();
-            }, 1000);
+            currentOffset = 0;
+            setTimeout(() => { msgDiv.innerHTML = ''; loadDiscussions(true); }, 800);
         } else {
             msgDiv.innerHTML = '<span style="color: red;">发布失败: ' + (data.error || '未知错误') + '</span>';
         }
     } catch (error) {
         msgDiv.innerHTML = '<span style="color: red;">网络错误: ' + error.message + '</span>';
     } finally {
-        btn.disabled = false;
-        btn.textContent = '发布讨论';
+        btn.disabled = false; btn.textContent = '发布讨论';
     }
 }
 
-// 打开评论模态框
 async function openCommentModal(discussionId) {
     currentDiscussionId = discussionId;
     document.getElementById('comment-modal').style.display = 'flex';
-    
-    // 加载讨论详情和评论
-    await loadDiscussionDetail(discussionId);
-    await loadComments(discussionId);
-}
-
-// 加载讨论详情
-async function loadDiscussionDetail(discussionId) {
+    document.getElementById('comments-list').innerHTML = '<div style="text-align:center;padding:20px;color:#999;">加载中...</div>';
     try {
-        const response = await fetch('/api/qa_discussion/list?limit=100&offset=0');
-        const data = await response.json();
-        
+        const r = await fetch(`/api/qa_discussion/${discussionId}/detail`);
+        const data = await r.json();
         if (data.success) {
-            const disc = data.discussions.find(d => d.id === discussionId);
-            if (disc) {
-                document.getElementById('discussion-detail').innerHTML = `
-                    <div style="margin-bottom: 10px;">
-                        <strong style="color: #667eea;">${escapeHtml(disc.username)}</strong>
-                        <span style="color: #999; font-size: 12px; margin-left: 10px;">${formatTime(disc.created_at)}</span>
-                    </div>
-                    <div style="color: #333; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${escapeHtml(disc.content)}</div>
-                `;
-            }
+            currentDiscussion = data.discussion;
+            renderDiscussionDetail(data.discussion);
         }
-    } catch (error) {
-        console.error('加载讨论详情失败:', error);
+        const cr = await fetch(`/api/qa_discussion/${discussionId}/comments_extended`);
+        const cdata = await cr.json();
+        if (cdata.success) displayComments(cdata.comments);
+    } catch (err) {
+        console.error(err);
     }
 }
 
-// 加载评论
-async function loadComments(discussionId) {
-    try {
-        const response = await fetch(`/api/qa_discussion/${discussionId}/comments`);
-        const data = await response.json();
-        
-        if (data.success) {
-            displayComments(data.comments);
-        }
-    } catch (error) {
-        console.error('加载评论失败:', error);
-    }
+function renderDiscussionDetail(disc) {
+    const liked = disc.user_vote === 'like';
+    const disliked = disc.user_vote === 'dislike';
+    const favorited = disc.is_favorited;
+    document.getElementById('discussion-detail').innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <div>
+                <a href="/user/${encodeURIComponent(disc.username)}" style="color:#667eea;font-weight:600;text-decoration:none;">${escapeHtml(disc.username)}</a>
+                <span style="color:#999;font-size:12px;margin-left:8px;">${formatTime(disc.created_at)}</span>
+            </div>
+            <div style="font-size:12px;color:#999;">👁️ ${disc.view_count || 0} 浏览</div>
+        </div>
+        <div style="color:#333;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:12px;">${renderContentWithMentions(disc.content)}</div>
+        <div style="display:flex;align-items:center;gap:14px;padding-top:8px;border-top:1px dashed #e0e0e0;font-size:13px;color:#999;">
+            <span class="action-btn ${liked ? 'active-like' : ''}" onclick="voteDiscussion(${disc.id}, 'like', this)">
+                👍 <span class="like-count">${disc.like_count || 0}</span>
+            </span>
+            <span class="action-btn ${disliked ? 'active-dislike' : ''}" onclick="voteDiscussion(${disc.id}, 'dislike', this)">
+                👎 <span class="dislike-count">${disc.dislike_count || 0}</span>
+            </span>
+            <span>💬 ${disc.comment_count || 0}</span>
+            <span style="margin-left:auto;" class="action-btn fav-btn ${favorited ? 'active-fav' : ''}" onclick="toggleFavorite(${disc.id}, this)">
+                ${favorited ? '★ 已收藏' : '☆ 收藏'}
+            </span>
+        </div>
+    `;
 }
 
-// 显示评论
 function displayComments(comments) {
     const container = document.getElementById('comments-list');
-    
     if (comments.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">暂无评论</div>';
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">暂无评论，做第一个发言的人吧！</div>';
         return;
     }
-    
-    container.innerHTML = comments.map(comment => `
-        <div style="background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #667eea;">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+    container.innerHTML = comments.map(c => {
+        const liked = c.user_vote === 'like';
+        const disliked = c.user_vote === 'dislike';
+        return `
+        <div style="background:#f9f9f9;padding:12px;border-radius:8px;margin-bottom:10px;border-left:3px solid #667eea;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
                 <div>
-                    <strong style="color: #667eea; font-size: 14px;">${escapeHtml(comment.username)}</strong>
-                    <span style="color: #999; font-size: 11px; margin-left: 8px;">${formatTime(comment.created_at)}</span>
+                    <a href="/user/${encodeURIComponent(c.username)}" style="color:#667eea;font-weight:600;font-size:14px;text-decoration:none;">${escapeHtml(c.username)}</a>
+                    <span style="color:#999;font-size:11px;margin-left:8px;">${formatTime(c.created_at)}</span>
                 </div>
-                ${(comment.user_id === currentUserId || isAdmin) ? 
-                    `<button onclick="deleteComment(${comment.id})" style="background: #f5576c; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">删除</button>` : 
+                ${(c.user_id === currentUserId || isAdmin) ?
+                    `<button onclick="deleteComment(${c.id})" style="background:#f5576c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">删除</button>` :
                     ''}
             </div>
-            <div style="color: #333; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">${escapeHtml(comment.content)}</div>
+            <div style="color:#333;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;margin-bottom:6px;">${renderContentWithMentions(c.content)}</div>
+            <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:#999;">
+                <span class="action-btn ${liked ? 'active-like' : ''}" onclick="voteComment(${c.id}, 'like', this)">
+                    👍 <span class="like-count">${c.like_count || 0}</span>
+                </span>
+                <span class="action-btn ${disliked ? 'active-dislike' : ''}" onclick="voteComment(${c.id}, 'dislike', this)">
+                    👎 <span class="dislike-count">${c.dislike_count || 0}</span>
+                </span>
+                <span class="action-btn" onclick="replyTo('${escapeAttr(c.username)}')">💬 回复</span>
+            </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-// 提交评论
+function replyTo(username) {
+    const ta = document.getElementById('comment-content');
+    ta.value = '@' + username + ' ' + ta.value;
+    ta.focus();
+}
+
 async function submitComment(event) {
     event.preventDefault();
-    
     if (!currentDiscussionId) return;
-    
     const content = document.getElementById('comment-content').value.trim();
     const btn = event.target.querySelector('button[type="submit"]');
-    
-    if (!content) {
-        alert('评论内容不能为空');
-        return;
-    }
-    
-    btn.disabled = true;
-    btn.textContent = '发表中...';
-    
+    if (!content) { alert('评论内容不能为空'); return; }
+    btn.disabled = true; btn.textContent = '发表中...';
     try {
         const response = await fetch(`/api/qa_discussion/${currentDiscussionId}/comment`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({content: content})
         });
-        
         const data = await response.json();
-        
         if (data.success) {
             document.getElementById('comment-content').value = '';
-            await loadComments(currentDiscussionId);
-            await loadDiscussions(); // 刷新讨论列表以更新评论数
+            // 重新加载评论与详情（评论数可能变化）
+            const cr = await fetch(`/api/qa_discussion/${currentDiscussionId}/comments_extended`);
+            const cdata = await cr.json();
+            if (cdata.success) displayComments(cdata.comments);
+            const dr = await fetch(`/api/qa_discussion/${currentDiscussionId}/detail`);
+            const ddata = await dr.json();
+            if (ddata.success) renderDiscussionDetail(ddata.discussion);
         } else {
             alert('评论失败: ' + (data.error || '未知错误'));
         }
     } catch (error) {
         alert('网络错误: ' + error.message);
     } finally {
-        btn.disabled = false;
-        btn.textContent = '发表评论';
+        btn.disabled = false; btn.textContent = '发表评论';
     }
 }
 
-// 删除讨论
 async function deleteDiscussion(discussionId) {
     if (!confirm('确定要删除这条讨论吗？')) return;
-    
     try {
-        const response = await fetch(`/api/qa_discussion/${discussionId}`, {
-            method: 'DELETE'
-        });
-        
+        const response = await fetch(`/api/qa_discussion/${discussionId}`, { method: 'DELETE' });
         const data = await response.json();
-        
-        if (data.success) {
-            alert('删除成功');
-            loadDiscussions();
-        } else {
-            alert('删除失败: ' + (data.error || '未知错误'));
-        }
-    } catch (error) {
-        alert('网络错误: ' + error.message);
-    }
+        if (data.success) { loadDiscussions(true); }
+        else { alert('删除失败: ' + (data.error || '未知错误')); }
+    } catch (error) { alert('网络错误: ' + error.message); }
 }
 
-// 删除评论
 async function deleteComment(commentId) {
     if (!confirm('确定要删除这条评论吗？')) return;
-    
     try {
-        const response = await fetch(`/api/qa_discussion/comment/${commentId}`, {
-            method: 'DELETE'
-        });
-        
+        const response = await fetch(`/api/qa_discussion/comment/${commentId}`, { method: 'DELETE' });
         const data = await response.json();
-        
-        if (data.success) {
-            await loadComments(currentDiscussionId);
-            await loadDiscussions();
+        if (data.success && currentDiscussionId) {
+            const cr = await fetch(`/api/qa_discussion/${currentDiscussionId}/comments_extended`);
+            const cdata = await cr.json();
+            if (cdata.success) displayComments(cdata.comments);
+            const dr = await fetch(`/api/qa_discussion/${currentDiscussionId}/detail`);
+            const ddata = await dr.json();
+            if (ddata.success) renderDiscussionDetail(ddata.discussion);
         } else {
             alert('删除失败: ' + (data.error || '未知错误'));
         }
-    } catch (error) {
-        alert('网络错误: ' + error.message);
-    }
+    } catch (error) { alert('网络错误: ' + error.message); }
 }
 
-// 关闭评论模态框
 function closeCommentModal() {
     document.getElementById('comment-modal').style.display = 'none';
     currentDiscussionId = null;
+    currentDiscussion = null;
     document.getElementById('comment-content').value = '';
 }
 
-// 工具函数
+// ===== 投票（点赞/点踩）=====
+async function voteDiscussion(discId, voteType, el) {
+    // 如果已点同款，则视为取消
+    const isLiked = el.classList.contains('active-like');
+    const isDisliked = el.classList.contains('active-dislike');
+    let realVote = voteType;
+    if ((voteType === 'like' && isLiked) || (voteType === 'dislike' && isDisliked)) {
+        realVote = 'cancel';
+    }
+    try {
+        const r = await fetch(`/api/qa_discussion/${discId}/vote`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({vote_type: realVote})
+        });
+        const data = await r.json();
+        if (data.success) {
+            updateVoteUI(discId, 'discussion', data.like_count, data.dislike_count, data.user_vote);
+        } else {
+            alert('操作失败: ' + (data.error || ''));
+        }
+    } catch (err) { alert('网络错误: ' + err.message); }
+}
+
+async function voteComment(commentId, voteType, el) {
+    const isLiked = el.classList.contains('active-like');
+    const isDisliked = el.classList.contains('active-dislike');
+    let realVote = voteType;
+    if ((voteType === 'like' && isLiked) || (voteType === 'dislike' && isDisliked)) {
+        realVote = 'cancel';
+    }
+    try {
+        const r = await fetch(`/api/qa_discussion/comment/${commentId}/vote`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({vote_type: realVote})
+        });
+        const data = await r.json();
+        if (data.success) {
+            updateVoteUI(commentId, 'comment', data.like_count, data.dislike_count, data.user_vote);
+        } else {
+            alert('操作失败: ' + (data.error || ''));
+        }
+    } catch (err) { alert('网络错误: ' + err.message); }
+}
+
+function updateVoteUI(targetId, targetType, likeCount, dislikeCount, userVote) {
+    // 更新详情模态框内
+    const detailBox = document.getElementById('discussion-detail');
+    if (detailBox) {
+        const likeEl = detailBox.querySelector('.action-btn .like-count');
+        const dislikeEl = detailBox.querySelector('.action-btn .dislike-count');
+        const btns = detailBox.querySelectorAll('.action-btn');
+        if (btns.length >= 2) {
+            btns[0].querySelector('.like-count').textContent = likeCount;
+            btns[1].querySelector('.dislike-count').textContent = dislikeCount;
+            btns[0].classList.toggle('active-like', userVote === 'like');
+            btns[1].classList.toggle('active-dislike', userVote === 'dislike');
+        }
+    }
+    // 更新列表中对应卡片
+    const cards = document.querySelectorAll('.discussion-item');
+    cards.forEach(card => {
+        const likeSpan = card.querySelector('.action-btn .like-count');
+        if (!likeSpan) return;
+        // 简单匹配：discussion 卡片 / comment 在模态框内
+        if (targetType === 'discussion') {
+            // 用 onclick 中的 ID 来匹配
+            const onclickAttr = card.getAttribute('onclick') || '';
+            if (onclickAttr.includes(`openCommentModal(${targetId})`)) {
+                card.querySelector('.action-btn:nth-child(1) .like-count').textContent = likeCount;
+                card.querySelector('.action-btn:nth-child(2) .dislike-count').textContent = dislikeCount;
+                card.querySelector('.action-btn:nth-child(1)').classList.toggle('active-like', userVote === 'like');
+                card.querySelector('.action-btn:nth-child(2)').classList.toggle('active-dislike', userVote === 'dislike');
+            }
+        } else if (targetType === 'comment') {
+            // 评论更新只影响模态框
+        }
+    });
+    // 评论卡片单独更新（在模态框中）
+    if (targetType === 'comment') {
+        const commentCards = document.querySelectorAll('#comments-list > div');
+        commentCards.forEach(cc => {
+            const btn = cc.querySelector(`.action-btn .like-count`);
+            if (btn && cc.outerHTML.includes(`voteComment(${targetId}`)) {
+                cc.querySelector('.action-btn:nth-child(1) .like-count').textContent = likeCount;
+                cc.querySelector('.action-btn:nth-child(2) .dislike-count').textContent = dislikeCount;
+                cc.querySelector('.action-btn:nth-child(1)').classList.toggle('active-like', userVote === 'like');
+                cc.querySelector('.action-btn:nth-child(2)').classList.toggle('active-dislike', userVote === 'dislike');
+            }
+        });
+    }
+}
+
+// ===== 收藏 =====
+async function toggleFavorite(discId, el) {
+    try {
+        const r = await fetch(`/api/qa_discussion/${discId}/favorite`, { method: 'POST' });
+        const data = await r.json();
+        if (data.success) {
+            // 更新所有位置上的同一讨论的收藏按钮
+            const allFavBtns = document.querySelectorAll(`.fav-btn`);
+            allFavBtns.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`toggleFavorite(${discId}`)) {
+                    if (data.is_favorited) {
+                        btn.classList.add('active-fav');
+                        btn.innerHTML = '★ 已收藏';
+                    } else {
+                        btn.classList.remove('active-fav');
+                        btn.innerHTML = '☆ 收藏';
+                    }
+                }
+            });
+        } else {
+            alert('操作失败: ' + (data.error || ''));
+        }
+    } catch (err) { alert('网络错误: ' + err.message); }
+}
+
+// ===== 工具函数 =====
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
-
+function escapeAttr(text) {
+    return String(text).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+function renderContentWithMentions(text) {
+    if (!text) return '';
+    // 转义后再把 @xxx 高亮
+    const safe = escapeHtml(text);
+    return safe.replace(/@([\w一-龥]{1,30})/g, '<span style="color:#667eea;font-weight:600;">@$1</span>');
+}
 function formatTime(timeStr) {
     if (!timeStr) return '';
     const date = new Date(timeStr);
@@ -363,18 +557,31 @@ function formatTime(timeStr) {
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-    
     if (minutes < 1) return '刚刚';
     if (minutes < 60) return minutes + '分钟前';
     if (hours < 24) return hours + '小时前';
     if (days < 7) return days + '天前';
-    return date.toLocaleString('zh-CN', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'});
+    return date.toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
 
-// 页面加载时获取讨论列表
+// 启动时加载
 window.addEventListener('DOMContentLoaded', () => {
-    loadDiscussions();
-    // 每30秒自动刷新
-    setInterval(loadDiscussions, 30000);
+    loadDiscussions(true);
+    // 每60s自动刷新列表
+    setInterval(() => { currentOffset = 0; loadDiscussions(true); }, 60000);
 });
 </script>
+
+<style>
+.action-btn {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    user-select: none;
+}
+.action-btn:hover { background: rgba(102, 126, 234, 0.1); }
+.action-btn.active-like { color: #f5576c; font-weight: 700; }
+.action-btn.active-dislike { color: #888; font-weight: 700; }
+.action-btn.active-fav { color: #ffb300; font-weight: 700; }
+</style>
