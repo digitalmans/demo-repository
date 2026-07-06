@@ -179,6 +179,10 @@
                 {% include 'digital_human_content.html' %}
             {% elif current_view == 'user_profile' %}
                 {% include 'user_profile.html' %}
+            {% elif current_view == 'feature_experience' %}
+                <div class="feature-experience-container" style="padding: 30px; color: white; text-align: center;">
+                    <!-- 界面暂时不包含任何内容 -->
+                </div>
             {% else %}
                 {% include 'qa_robot_content.html' %}
             {% endif %}
@@ -197,6 +201,9 @@
                 </a>
                 <a href="{{ url_for('digital_human') }}" class="switch-btn {% if current_view == 'digital_human' %}active{% endif %}" id="digital-human-btn">
                     👤 3D 数字人
+                </a>
+                <a href="{{ url_for('feature_experience') }}" class="switch-btn {% if current_view == 'feature_experience' %}active{% endif %}" id="feature-experience-btn">
+                    ✨ 功能体验
                 </a>
                 <a href="{{ url_for('qa_discussion') }}" class="switch-btn {% if current_view == 'qa_discussion' %}active{% endif %}" id="qa-discussion-btn">
                     💬 讨论区
