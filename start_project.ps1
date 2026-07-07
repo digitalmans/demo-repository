@@ -55,9 +55,9 @@ while ($true) {
         "1" {
             Write-Host "正在启动 [Nexus 3D 互动系统]..." -ForegroundColor Green
             # 1. ASR
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; python speech_provider.py"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; & '$PSScriptRoot\venv\Scripts\python.exe' speech_provider.py"
             # 2. WebSocket
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; python interactive_server.py"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; & '$PSScriptRoot\venv\Scripts\python.exe' interactive_server.py"
             # 3. Frontend
             Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\frontend2'; npm run dev"
             Write-Host "启动指令已下发到各独立终端，请注意检查弹出窗口。" -ForegroundColor Cyan
@@ -65,7 +65,7 @@ while ($true) {
         }
         "2" {
             Write-Host "正在启动 [2Dto3D 转换后台]..." -ForegroundColor Green
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\2Dto3D'; python backend/run.py"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\2Dto3D'; & '$PSScriptRoot\venv\Scripts\python.exe' backend/run.py"
             Write-Host "启动指令已下发到独立终端，2Dto3D 默认运行在 http://127.0.0.1:8002" -ForegroundColor Cyan
             Read-Host "按任意键返回菜单"
         }
@@ -75,7 +75,7 @@ while ($true) {
             $ref_audio = Read-Host "（可选）输入参考音频路径 (留空使用默认)"
             $ref_text = Read-Host "（可选）输入参考音频的文本内容"
             
-            $cmd = "python api.py"
+            $cmd = "& '$PSScriptRoot\venv\Scripts\python.exe' api.py"
             if ($ref_audio) {
                 $cmd += " -dr `"$ref_audio`""
             }
@@ -91,15 +91,15 @@ while ($true) {
         "4" {
             Write-Host "正在启动系统所有服务..." -ForegroundColor Green
             # ASR
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; python speech_provider.py"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; & '$PSScriptRoot\venv\Scripts\python.exe' speech_provider.py"
             # WebSocket
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; python interactive_server.py"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\backend2'; & '$PSScriptRoot\venv\Scripts\python.exe' interactive_server.py"
             # Frontend
             Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\frontend2'; npm run dev"
             # 2Dto3D
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\2Dto3D'; python backend/run.py"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\2Dto3D'; & '$PSScriptRoot\venv\Scripts\python.exe' backend/run.py"
             # GPT-SoVITS
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\GPT-SoVITS'; python api.py"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\GPT-SoVITS'; & '$PSScriptRoot\venv\Scripts\python.exe' api.py"
             
             Write-Host "已在五个独立终端中启动所有关联服务！" -ForegroundColor Cyan
             Read-Host "按任意键返回菜单"
