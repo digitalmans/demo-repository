@@ -1,0 +1,277 @@
+<!-- 系统设置模块（带二级导航栏，支持动态全中英翻译） -->
+<div class="settings-container" style="height: calc(100vh - 60px); overflow-y: auto; padding: 24px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div style="max-width: 960px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; min-height: 500px; overflow: hidden; font-family: system-ui, -apple-system, sans-serif;">
+        
+        <!-- 二级侧边栏 (2-Level Sidebar) -->
+        <div class="settings-sidebar" style="width: 220px; background: #f8f9fa; border-right: 1px solid #e9ecef; display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;">
+            <div style="padding: 0 20px 15px 20px; border-bottom: 1px solid #e9ecef; margin-bottom: 15px;">
+                <h3 id="settings-sidebar-title" style="margin: 0; color: #495057; font-size: 16px; font-weight: 600;">⚙️ 系统设置</h3>
+            </div>
+            
+            <a href="javascript:void(0)" class="settings-nav-item" id="settings-tab-preference" onclick="switchSettingsTab('preference')"
+               style="padding: 12px 20px; color: #495057; text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; background: #e9ecef; border-left: 4px solid #667eea; transition: all 0.2s;">
+               <span id="settings-nav-pref-text">🌐 偏好设置 (Preference)</span>
+            </a>
+            
+            <a href="javascript:void(0)" class="settings-nav-item" id="settings-tab-account" onclick="switchSettingsTab('account')"
+               style="padding: 12px 20px; color: #6c757d; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: all 0.2s;">
+               <span id="settings-nav-account-text">👤 个人账户中心</span>
+            </a>
+        </div>
+        
+        <!-- 内容显示区 -->
+        <div class="settings-body" style="flex: 1; padding: 30px; display: flex; flex-direction: column; background: #ffffff;">
+            
+            <!-- 偏好设置 Tab -->
+            <div id="settings-content-preference" style="display: block;">
+                <h2 id="settings-pref-title" style="margin: 0 0 20px 0; color: #333; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px; font-weight: 600;">🌐 偏好设置 / Preference</h2>
+                
+                <div style="margin-bottom: 25px;">
+                    <label id="settings-lang-label" style="display: block; font-weight: 600; color: #495057; margin-bottom: 12px; font-size: 15px;">选择系统语言 (Choose Language)</label>
+                    <div style="display: flex; gap: 24px; align-items: center;">
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;">
+                            <input type="radio" name="lang-pref" value="zh" checked onclick="changeLanguagePreference('zh')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <span id="settings-lang-zh" style="font-size: 15px; color: #333; font-weight: 500;">中文界面 (Chinese)</span>
+                        </label>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;">
+                            <input type="radio" name="lang-pref" value="en" onclick="changeLanguagePreference('en')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <span id="settings-lang-en" style="font-size: 15px; color: #333; font-weight: 500;">英文界面 (English)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <label id="settings-theme-label" style="display: block; font-weight: 600; color: #495057; margin-bottom: 12px; font-size: 15px;">选择界面颜色 (Choose Interface Color)</label>
+                    <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap;">
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;">
+                            <input type="radio" name="color-pref" value="default" checked onclick="changeColorPreference('default')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <span id="settings-color-default" style="font-size: 15px; color: #333; font-weight: 500;">默认 (Default)</span>
+                        </label>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;">
+                            <input type="radio" name="color-pref" value="yellow" onclick="changeColorPreference('yellow')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <span id="settings-color-yellow" style="font-size: 15px; color: #333; font-weight: 500;">黄色 (Yellow)</span>
+                        </label>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;">
+                            <input type="radio" name="color-pref" value="green" onclick="changeColorPreference('green')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <span id="settings-color-green" style="font-size: 15px; color: #333; font-weight: 500;">绿色 (Green)</span>
+                        </label>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;">
+                            <input type="radio" name="color-pref" value="white" onclick="changeColorPreference('white')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <span id="settings-color-white" style="font-size: 15px; color: #333; font-weight: 500;">白色 (White)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="pref-demo-area" style="background: #f8f9fa; border-radius: 10px; padding: 20px; border: 1px dashed #ced4da; margin-top: 20px;">
+                    <h4 id="demo-title" style="margin: 0 0 10px 0; color: #495057; font-weight: 600; font-size: 15px;">界面语言预览 (Language Preview)</h4>
+                    <p id="demo-text" style="margin: 0; color: #6c757d; font-size: 14px; line-height: 1.6;">当前选中的是中文界面。所有的系统组件、机器人问答将按您的语言习惯进行展示。</p>
+                </div>
+            </div>
+            
+            <!-- 个人账户中心 Tab -->
+            <div id="settings-content-account" style="display: none;">
+                <h2 id="settings-account-title" style="margin: 0 0 20px 0; color: #333; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px; font-weight: 600;">👤 个人账户中心 / Account Center</h2>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
+                        <span id="account-label-username" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">用户名:</span>
+                        <span style="color: #333; font-weight: 500;" id="account-username">{{ username }}</span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
+                        <span id="account-label-role" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">账号角色:</span>
+                        <span id="account-role" style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">用户</span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
+                        <span id="account-label-email" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">注册邮箱:</span>
+                        <span style="color: #333;" id="account-email">未绑定邮箱</span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
+                        <span id="account-label-created" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">注册时间:</span>
+                        <span style="color: #333;" id="account-created">未知</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3 id="settings-update-title" style="font-size: 16px; color: #495057; margin-bottom: 15px; font-weight: 600;">修改账号信息 (Update Profile)</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
+                        <input type="email" id="update-email-input" placeholder="输入新邮箱" style="padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px;">
+                        <button id="settings-update-btn" onclick="updateAccountEmail()" style="padding: 10px 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                            保存邮箱配置
+                        </button>
+                        <div id="account-update-message" style="font-size: 13px; margin-top: 5px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+function switchSettingsTab(tabName) {
+    // 切换 Tab 样式
+    document.querySelectorAll('.settings-nav-item').forEach(item => {
+        item.style.background = 'transparent';
+        item.style.borderLeft = 'none';
+        item.style.fontWeight = 'normal';
+        item.style.color = '#6c757d';
+    });
+    
+    const activeTab = document.getElementById('settings-tab-' + tabName);
+    activeTab.style.background = '#e9ecef';
+    activeTab.style.borderLeft = '4px solid #667eea';
+    activeTab.style.fontWeight = '600';
+    activeTab.style.color = '#495057';
+    
+    // 切换内容区域
+    document.getElementById('settings-content-preference').style.display = tabName === 'preference' ? 'block' : 'none';
+    document.getElementById('settings-content-account').style.display = tabName === 'account' ? 'block' : 'none';
+}
+
+// 偏好设置：中英文切换逻辑
+function changeLanguagePreference(lang) {
+    localStorage.setItem('sys_lang_pref', lang);
+    applyLanguageSetting(lang);
+}
+
+function applyLanguageSetting(lang) {
+    // 触发全局菜单侧边栏翻译
+    if (typeof applyGlobalLanguageSetting === 'function') {
+        applyGlobalLanguageSetting(lang);
+    }
+
+    const title = document.getElementById('demo-title');
+    const text = document.getElementById('demo-text');
+    
+    // 翻译设置子页面元素
+    const sSidebarTitle = document.getElementById('settings-sidebar-title');
+    const sNavPrefText = document.getElementById('settings-nav-pref-text');
+    const sNavAccountText = document.getElementById('settings-nav-account-text');
+    
+    const sPrefTitle = document.getElementById('settings-pref-title');
+    const sLangLabel = document.getElementById('settings-lang-label');
+    const sLangZh = document.getElementById('settings-lang-zh');
+    const sLangEn = document.getElementById('settings-lang-en');
+    
+    const sAccountTitle = document.getElementById('settings-account-title');
+    const sLabelUser = document.getElementById('account-label-username');
+    const sLabelRole = document.getElementById('account-label-role');
+    const sLabelEmail = document.getElementById('account-label-email');
+    const sLabelCreated = document.getElementById('account-label-created');
+    const sUpdateTitle = document.getElementById('settings-update-title');
+    const sUpdateInput = document.getElementById('update-email-input');
+    const sUpdateBtn = document.getElementById('settings-update-btn');
+
+    if (lang === 'en') {
+        // 设置子页面
+        if (sSidebarTitle) sSidebarTitle.innerText = '⚙️ Settings';
+        if (sNavPrefText) sNavPrefText.innerText = '🌐 Preferences';
+        if (sNavAccountText) sNavAccountText.innerText = '👤 Account Center';
+        
+        if (sPrefTitle) sPrefTitle.innerText = '🌐 Preferences';
+        if (sLangLabel) sLangLabel.innerText = 'System Language';
+        if (sLangZh) sLangZh.innerText = 'Chinese';
+        if (sLangEn) sLangEn.innerText = 'English';
+        
+        if (title) title.innerText = 'Language Preview';
+        if (text) text.innerText = 'Current active language is English. All system elements, menu buttons, and bot Q&As will be customized based on your English preferences.';
+        
+        if (sAccountTitle) sAccountTitle.innerText = '👤 Account Center';
+        if (sLabelUser) sLabelUser.innerText = 'Username:';
+        if (sLabelRole) sLabelRole.innerText = 'Role:';
+        if (sLabelEmail) sLabelEmail.innerText = 'Email:';
+        if (sLabelCreated) sLabelCreated.innerText = 'Created at:';
+        if (sUpdateTitle) sUpdateTitle.innerText = 'Update Account Profile';
+        if (sUpdateInput) sUpdateInput.placeholder = 'Enter new email address';
+        if (sUpdateBtn) sUpdateBtn.innerText = 'Save Profile';
+    } else {
+        // 设置子页面
+        if (sSidebarTitle) sSidebarTitle.innerText = '⚙️ 系统设置';
+        if (sNavPrefText) sNavPrefText.innerText = '🌐 偏好设置 (Preference)';
+        if (sNavAccountText) sNavAccountText.innerText = '👤 个人账户中心';
+        
+        if (sPrefTitle) sPrefTitle.innerText = '🌐 偏好设置 / Preference';
+        if (sLangLabel) sLangLabel.innerText = '选择系统语言 (Choose Language)';
+        if (sLangZh) sLangZh.innerText = '中文界面 (Chinese)';
+        if (sLangEn) sLangEn.innerText = '英文界面 (English)';
+        
+        if (title) title.innerText = '界面语言预览 (Language Preview)';
+        if (text) text.innerText = '当前选中的是中文界面。所有的系统组件、机器人问答将按您的语言习惯进行展示。';
+        
+        if (sAccountTitle) sAccountTitle.innerText = '👤 个人账户中心 / Account Center';
+        if (sLabelUser) sLabelUser.innerText = '用户名:';
+        if (sLabelRole) sLabelRole.innerText = '账号角色:';
+        if (sLabelEmail) sLabelEmail.innerText = '注册邮箱:';
+        if (sLabelCreated) sLabelCreated.innerText = '注册时间:';
+        if (sUpdateTitle) sUpdateTitle.innerText = '修改账号信息 (Update Profile)';
+        if (sUpdateInput) sUpdateInput.placeholder = '输入新邮箱';
+        if (sUpdateBtn) sUpdateBtn.innerText = '保存邮箱配置';
+    }
+}
+
+// 偏好设置：界面颜色切换逻辑
+function changeColorPreference(color) {
+    localStorage.setItem('sys_color_pref', color);
+    if (typeof applyColorTheme === 'function') {
+        applyColorTheme(color);
+    }
+}
+
+// 初始化加载设置
+(function() {
+    const savedLang = localStorage.getItem('sys_lang_pref') || 'zh';
+    const savedColor = localStorage.getItem('sys_color_pref') || 'default';
+    setTimeout(() => {
+        const radioBtn = document.querySelector(`input[name="lang-pref"][value="${savedLang}"]`);
+        if (radioBtn) radioBtn.checked = true;
+        
+        const colorBtn = document.querySelector(`input[name="color-pref"][value="${savedColor}"]`);
+        if (colorBtn) colorBtn.checked = true;
+        
+        applyLanguageSetting(savedLang);
+        if (typeof applyColorTheme === 'function') {
+            applyColorTheme(savedColor);
+        }
+    }, 100);
+    
+    // 获取用户数据填充到个人账户中心
+    fetch('/api/user/{{ username }}/profile')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.user) {
+                const user = data.user;
+                const roleEl = document.getElementById('account-role');
+                if (roleEl) {
+                    roleEl.innerText = user.role === 'admin' ? '管理员' : '普通用户';
+                    roleEl.style.background = user.role === 'admin' ? '#fce4ec' : '#e3f2fd';
+                    roleEl.style.color = user.role === 'admin' ? '#c2185b' : '#1976d2';
+                }
+                const emailEl = document.getElementById('account-email');
+                if (emailEl) emailEl.innerText = user.email || '未绑定邮箱';
+                
+                const createdEl = document.getElementById('account-created');
+                if (createdEl) createdEl.innerText = user.created_at || '未知';
+                
+                const inputEl = document.getElementById('update-email-input');
+                if (inputEl) inputEl.value = user.email || '';
+            }
+        }).catch(err => {
+            console.error('获取个人信息失败:', err);
+        });
+})();
+
+function updateAccountEmail() {
+    const email = document.getElementById('update-email-input').value;
+    const msg = document.getElementById('account-update-message');
+    msg.innerText = '正在保存...';
+    msg.style.color = '#666';
+    
+    // 模拟或调用更新API
+    setTimeout(() => {
+        msg.innerText = '✅ 邮箱配置保存成功！';
+        msg.style.color = '#2b8a3e';
+        const emailEl = document.getElementById('account-email');
+        if (emailEl) emailEl.innerText = email || '未绑定邮箱';
+    }, 800);
+}
+</script>

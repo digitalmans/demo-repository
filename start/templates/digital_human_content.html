@@ -1,54 +1,54 @@
 <!-- 3D 数字人问答模板 -->
 <div class="digital-human-wrapper" style="width: 100%; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <div class="dh-container" style="display: flex; height: 100%; width: 100%; background: #0b0b16; color: #fff;">
+    <div class="dh-container" style="display: flex; height: 100%; width: 100%; background: #f4f5f6; color: #333333;">
         
         <!-- 左侧：3D数字人渲染区 -->
-        <div class="dh-left-panel" style="flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid rgba(255, 255, 255, 0.1);">
+        <div class="dh-left-panel" style="flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid rgba(0, 0, 0, 0.1);">
             <!-- 三维视口 -->
             <div id="canvas-container" style="width: 100%; height: 100%; position: relative;"></div>
             
             <!-- 加载状态 -->
-            <div id="model-loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0b0b16; z-index: 100;">
-                <div class="dh-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: #00ffff; border-radius: 50%; animation: dh-spin 1s linear infinite;"></div>
-                <p style="margin-top: 20px; font-size: 1.1em; color: #00ffff; letter-spacing: 1px;">正在唤醒数字人... <span id="loading-percentage">0%</span></p>
+            <div id="model-loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f4f5f6; z-index: 100;">
+                <div class="dh-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(0, 0, 0, 0.1); border-top-color: #667eea; border-radius: 50%; animation: dh-spin 1s linear infinite;"></div>
+                <p style="margin-top: 20px; font-size: 1.1em; color: #667eea; letter-spacing: 1px;">正在唤醒数字人... <span id="loading-percentage">0%</span></p>
             </div>
 
             <!-- 控制面板与状态条 -->
-            <div class="dh-status-bar" style="position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(15, 15, 30, 0.7); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+            <div class="dh-status-bar" style="position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.1); display: flex; justify-content: space-between; align-items: center; z-index: 10;">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <div id="dh-status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #4CAF50; box-shadow: 0 0 10px #4CAF50;"></div>
-                    <span id="dh-status-text" style="font-weight: 600; font-size: 0.95em; color: rgba(255, 255, 255, 0.9);">状态: 空闲 (💤)</span>
+                    <span id="dh-status-text" style="font-weight: 600; font-size: 0.95em; color: #333333;">状态: 空闲 (💤)</span>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
-                    <label for="dh-speaker-select" style="font-size: 0.9em; color: rgba(255, 255, 255, 0.7);">🎤 发音人:</label>
-                    <select id="dh-speaker-select" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 6px; outline: none; cursor: pointer;">
-                        <option value="0" style="background: #0b0b16;">度小美（女声）</option>
-                        <option value="1" style="background: #0b0b16;">度小字（男声）</option>
-                        <option value="3" style="background: #0b0b16;">度逍遥（男声）</option>
-                        <option value="4" style="background: #0b0b16;">度丫丫（女声）</option>
+                    <label for="dh-speaker-select" style="font-size: 0.9em; color: #666666;">🎤 发音人:</label>
+                    <select id="dh-speaker-select" style="background: rgba(0,0,0,0.05); color: #333333; border: 1px solid rgba(0,0,0,0.15); padding: 5px 10px; border-radius: 6px; outline: none; cursor: pointer;">
+                        <option value="0" style="background: #ffffff; color: #333333;">度小美（女声）</option>
+                        <option value="1" style="background: #ffffff; color: #333333;">度小字（男声）</option>
+                        <option value="3" style="background: #ffffff; color: #333333;">度逍遥（男声）</option>
+                        <option value="4" style="background: #ffffff; color: #333333;">度丫丫（女声）</option>
                     </select>
                 </div>
             </div>
         </div>
 
         <!-- 右侧：控制与对话交互面板 -->
-        <div class="dh-right-panel" style="width: 420px; display: flex; flex-direction: column; background: rgba(15, 15, 30, 0.95); overflow: hidden;">
-            <div class="dh-panel-header" style="padding: 25px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: center; background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);">
-                <h2 style="font-size: 1.5em; font-weight: 700; margin: 0; color: #00ffff; display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <div class="dh-right-panel" style="width: 420px; display: flex; flex-direction: column; background: #ffffff; overflow: hidden; border-left: 1px solid rgba(0, 0, 0, 0.1);">
+            <div class="dh-panel-header" style="padding: 25px; border-bottom: 1px solid rgba(0, 0, 0, 0.1); text-align: center; background: linear-gradient(180deg, rgba(102, 126, 234, 0.05) 0%, transparent 100%);">
+                <h2 style="font-size: 1.5em; font-weight: 700; margin: 0; color: #667eea; display: flex; justify-content: center; align-items: center; gap: 10px;">
                     👤 3D 数字人助手
                 </h2>
-                <p style="font-size: 0.85em; color: rgba(255, 255, 255, 0.5); margin-top: 5px;">本地库检索 + ASR语音交互 + 自动发音动画</p>
+                <p style="font-size: 0.85em; color: #666666; margin-top: 5px;">本地库检索 + ASR语音交互 + 自动发音动画</p>
             </div>
 
             <!-- 聊天区 -->
             <div id="dh-chat-messages" style="flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px;">
-                <div class="dh-msg assistant" style="display: flex; flex-direction: column; max-width: 85%; align-self: flex-start; background: rgba(255, 255, 255, 0.05); padding: 12px 18px; border-radius: 12px 12px 12px 0; border: 1px solid rgba(255, 255, 255, 0.05);">
-                    <div style="font-size: 0.95em; line-height: 1.5; color: rgba(255, 255, 255, 0.9);">你好！我是 3D 数字人助手。你可以使用下方的文本框向我提问，或者点击麦克风按钮直接通过语音与我交流。</div>
+                <div class="dh-msg assistant" style="display: flex; flex-direction: column; max-width: 85%; align-self: flex-start; background: #f0f0f4; padding: 12px 18px; border-radius: 12px 12px 12px 0; border: 1px solid #e0e0ea;">
+                    <div style="font-size: 0.95em; line-height: 1.5; color: #333333;">你好！我是 3D 数字人助手。你可以使用下方的文本框向我提问，或者点击麦克风按钮直接通过语音与我交流。</div>
                 </div>
             </div>
 
             <!-- 控制与输入区 -->
-            <div class="dh-input-area" style="padding: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(10, 10, 20, 0.8); display: flex; flex-direction: column; gap: 12px;">
+            <div class="dh-input-area" style="padding: 20px; border-top: 1px solid rgba(0, 0, 0, 0.1); background: #fbfbfd; display: flex; flex-direction: column; gap: 12px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <!-- 麦克风语音按钮 -->
                     <button id="dh-mic-btn" style="width: 55px; height: 55px; border-radius: 50%; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); outline: none;">
@@ -65,18 +65,18 @@
                         type="text" 
                         id="dh-text-input" 
                         placeholder="在此输入问题..." 
-                        style="flex: 1; height: 50px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 25px; padding: 0 20px; color: white; outline: none; font-size: 0.95em; transition: border-color 0.3s;"
+                        style="flex: 1; height: 50px; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.15); border-radius: 25px; padding: 0 20px; color: #333333; outline: none; font-size: 0.95em; transition: border-color 0.3s;"
                     >
 
                     <!-- 发送按钮 -->
-                    <button id="dh-send-btn" style="width: 50px; height: 50px; border-radius: 50%; border: none; background: #00ffff; color: #0b0b16; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; outline: none;">
+                    <button id="dh-send-btn" style="width: 50px; height: 50px; border-radius: 50%; border: none; background: #667eea; color: #ffffff; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; outline: none;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>
                     </button>
                 </div>
-                <div id="dh-speech-temp-text" style="font-size: 0.82em; color: #00ffff; min-height: 15px; padding-left: 10px; display: none;"></div>
+                <div id="dh-speech-temp-text" style="font-size: 0.82em; color: #667eea; min-height: 15px; padding-left: 10px; display: none;"></div>
             </div>
         </div>
 
@@ -90,8 +90,8 @@
     }
     
     #dh-text-input:focus {
-        border-color: #00ffff !important;
-        box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+        border-color: #667eea !important;
+        box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
     }
     
     #dh-mic-btn.recording {
@@ -120,7 +120,7 @@
         background: transparent;
     }
     #dh-chat-messages::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.15);
         border-radius: 4px;
     }
 </style>
@@ -225,8 +225,8 @@ function initDigitalHuman() {
 
     // Scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a14);
-    scene.fog = new THREE.FogExp2(0x0a0a14, 0.15);
+    scene.background = new THREE.Color(0xffffff);
+    scene.fog = new THREE.FogExp2(0xffffff, 0.15);
 
     // Camera
     camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
@@ -258,23 +258,23 @@ function initDigitalHuman() {
     dirLight1.castShadow = true;
     scene.add(dirLight1);
 
-    // Colored accent lights (Sci-fi feel)
-    const blueLight = new THREE.PointLight(0x00ffff, 2, 8);
-    blueLight.position.set(-1.5, 1.2, 0.5);
-    scene.add(blueLight);
+    // Colored accent lights (Sci-fi feel) - Commented out for white theme
+    // const blueLight = new THREE.PointLight(0x00ffff, 2, 8);
+    // blueLight.position.set(-1.5, 1.2, 0.5);
+    // scene.add(blueLight);
 
-    const purpleLight = new THREE.PointLight(0x764ba2, 2, 8);
-    purpleLight.position.set(1.5, 1.2, 0.5);
-    scene.add(purpleLight);
+    // const purpleLight = new THREE.PointLight(0x764ba2, 2, 8);
+    // purpleLight.position.set(1.5, 1.2, 0.5);
+    // scene.add(purpleLight);
 
     const rimLight = new THREE.PointLight(0xffffff, 1, 5);
     rimLight.position.set(0, 2.5, -1.5);
     scene.add(rimLight);
 
-    // Ground shadow helper
-    const gridHelper = new THREE.GridHelper(10, 20, 0x4f4f4f, 0x2f2f2f);
+    // Ground shadow helper - Black grid
+    const gridHelper = new THREE.GridHelper(10, 20, 0x000000, 0x888888);
     gridHelper.position.y = 0.01;
-    gridHelper.material.opacity = 0.5;
+    gridHelper.material.opacity = 0.25;
     gridHelper.material.transparent = true;
     scene.add(gridHelper);
 
@@ -419,16 +419,16 @@ function appendMessage(sender, text) {
         msgDiv.style.padding = '12px 18px';
     } else {
         msgDiv.style.alignSelf = 'flex-start';
-        msgDiv.style.background = 'rgba(255, 255, 255, 0.05)';
+        msgDiv.style.background = '#f0f0f4';
         msgDiv.style.borderRadius = '12px 12px 12px 0';
-        msgDiv.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        msgDiv.style.border = '1px solid #e0e0ea';
         msgDiv.style.padding = '12px 18px';
     }
 
     const textDiv = document.createElement('div');
     textDiv.style.fontSize = '0.95em';
     textDiv.style.lineHeight = '1.5';
-    textDiv.style.color = 'rgba(255, 255, 255, 0.9)';
+    textDiv.style.color = sender === 'user' ? '#ffffff' : '#333333';
     textDiv.innerText = text;
 
     msgDiv.appendChild(textDiv);

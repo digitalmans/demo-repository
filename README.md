@@ -666,3 +666,16 @@ python import_quick_qa.py
 ## 许可证
 
 本项目仅供学习和研究使用。
+
+---
+
+## 快速启动
+
+在项目根目录下直接运行以下命令即可快速启动核心服务（Flask Web 应用）：
+
+```bash
+python main.py
+```
+
+启动后访问地址为：[http://localhost:5001](http://localhost:5001)
+

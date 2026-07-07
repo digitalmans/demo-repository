@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, OrbitControls, useGLTF, useAnimations, GizmoHelper, GizmoViewport } from '@react-three/drei';
+import { Environment, OrbitControls, useGLTF, useFBX, useAnimations, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import * as THREE from 'three';
 import { Physics, useBox, usePlane } from '@react-three/cannon';
 
@@ -54,13 +54,20 @@ function PhysicsBox({ position, color, id, sceneObjectsRef }) {
 // --------------------------------------------------------
 // Avatar Component
 // --------------------------------------------------------
-function Avatar({ id, modelPath, position, animationTrigger, audioBase64, dynamicCode, destination, onReachDestination, manualOffset, manualRotation, avatarStatesRef }) {
+function Avatar({ id, modelPath, modelName, position, animationTrigger, audioBase64, dynamicCode, destination, onReachDestination, manualOffset, manualRotation, avatarStatesRef }) {
   const group = useRef();
   
   const url = modelPath.startsWith('http') || modelPath.startsWith('file://') || modelPath.startsWith('blob:')
     ? modelPath : `file:///${modelPath.replace(/\\/g, '/')}`;
 
-  const { scene, animations } = useGLTF(url);
+  const isFbx = (modelName && modelName.toLowerCase().endsWith('.fbx')) || url.toLowerCase().includes('.fbx') || url.toLowerCase().includes('model_renamed.fbx');
+
+  const fbx = isFbx ? useFBX(url) : null;
+  const gltf = isFbx ? null : useGLTF(url);
+
+  const scene = isFbx ? fbx : gltf.scene;
+  const animations = isFbx ? fbx.animations : gltf.animations;
+
   const { actions, mixer } = useAnimations(animations, scene);
 
   const [proceduralAnim, setProceduralAnim] = useState(null);
@@ -220,7 +227,7 @@ function Avatar({ id, modelPath, position, animationTrigger, audioBase64, dynami
         position={[manualOffset?.x || 0, (manualOffset?.y || 0) - 1, manualOffset?.z || 0]}
         rotation={[manualRotation?.x || 0, manualRotation?.y || 0, manualRotation?.z || 0]}
       >
-        <group ref={group} dispose={null}>
+        <group ref={group} dispose={null} scale={isFbx ? [0.01, 0.01, 0.01] : [1, 1, 1]}>
           <primitive object={scene} />
         </group>
       </group>
@@ -233,7 +240,7 @@ function Avatar({ id, modelPath, position, animationTrigger, audioBase64, dynami
 // --------------------------------------------------------
 export default function Web3DScene({ backgroundPath, avatars, showGrid = true, manualOffset, sceneOffset, manualRotation, sceneRotation, onReachDestination, avatarStatesRef, sceneObjectsRef }) {
   return (
-    <Canvas camera={{ position: [0, 2, 8], fov: 50 }} style={{width: '100%', height: '100%', borderRadius: '12px', background: '#1a1a2e'}}>
+    <Canvas camera={{ position: [0, 2, 8], fov: 50 }} style={{width: '100%', height: '100%', borderRadius: '12px', background: '#ffffff'}}>
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1.5} />
       <directionalLight position={[-10, 10, -5]} intensity={0.5} />
@@ -256,6 +263,7 @@ export default function Web3DScene({ backgroundPath, avatars, showGrid = true, m
                 key={idx} 
                 id={idx}
                 modelPath={avatar.path} 
+                modelName={avatar.name}
                 position={[avatar.positionX, 0, 0]} 
                 animationTrigger={avatar.trigger}
                 audioBase64={avatar.audioBase64}
@@ -276,7 +284,7 @@ export default function Web3DScene({ backgroundPath, avatars, showGrid = true, m
         </GizmoHelper>
 
         {showGrid && (
-          <gridHelper args={[1000, 1000, '#4f4f4f', '#2f2f2f']} position={[0, 0, 0]} />
+          <gridHelper args={[1000, 1000, '#000000', '#888888']} position={[0, 0, 0]} />
         )}
       </group>
 

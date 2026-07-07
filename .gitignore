@@ -6,3 +6,8 @@ __pycache__/
 *.log
 env/
 backend2/env/
+node_modules/
+dist/
+target/
+.gemini/
+.DS_Store

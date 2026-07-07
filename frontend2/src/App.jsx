@@ -251,7 +251,7 @@ function App() {
       setFile(selectedFile);
       setPrompt(''); 
       const objectUrl = URL.createObjectURL(selectedFile);
-      setAvatars(prev => [...prev, { path: objectUrl, positionX: prev.length * 2 }]);
+      setAvatars(prev => [...prev, { path: objectUrl, name: selectedFile.name, positionX: prev.length * 2 }]);
       addLog(`[Local] Loaded ${selectedFile.name} into Web3D Scene`);
     } else {
       alert('Only .obj, .3mf, .glb, .gltf, .fbx files are supported.');
@@ -447,6 +447,31 @@ function App() {
               </button>
             </form>
           </div>
+
+          <button 
+            className="btn" 
+            style={{
+              marginTop: 'auto',
+              background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '12px',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+              transition: 'transform 0.2s'
+            }}
+            onClick={() => window.location.href = 'http://localhost:5001/qa_robot'}
+            onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+          >
+            🚪 Exit to Q&A Platform
+          </button>
 
         </div>
 

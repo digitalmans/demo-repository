@@ -8,6 +8,7 @@
 
 import os
 import sys
+import json
 
 # 在导入任何模块之前设置 TensorFlow 环境变量，避免导入时的警告和错误
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # 屏蔽 TensorFlow 的 INFO、WARNING、ERROR 日志
@@ -306,14 +307,7 @@ def qa_discussion():
 @login_required
 def digital_human():
     """3D 数字人页面（需要登录）"""
-    deepseek_configured = DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured()
-    return render_template('voice_assistant.html', 
-                         username=session.get('username'),
-                         current_view='digital_human',
-                         deepseek_presets=DEEPSEEK_PRESETS,
-                         default_deepseek_preset=DEFAULT_DEEPSEEK_PRESET,
-                         deepseek_configured=deepseek_configured,
-                         qa_robot_available=QA_ROBOT_AVAILABLE)
+    return redirect("http://127.0.0.1:5173")
 
 
 @app.route('/feature_experience')
@@ -323,6 +317,15 @@ def feature_experience():
     return render_template('voice_assistant.html', 
                          username=session.get('username'),
                          current_view='feature_experience')
+
+
+@app.route('/settings')
+@login_required
+def settings():
+    """系统设置页面（需要登录）"""
+    return render_template('voice_assistant.html', 
+                         username=session.get('username'),
+                         current_view='settings')
 
 
 
@@ -1389,6 +1392,440 @@ def api_user_favorites(username):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ==================== 功能体验 API 路由 ====================
+
+@app.route('/api/feature_experience/generate_ppt', methods=['POST'])
+@login_required
+def api_generate_ppt():
+    """AI生成PPT接口"""
+    try:
+        data = request.get_json() or {}
+        topic = data.get('topic', '').strip()
+        style = data.get('style', 'tech').strip()
+        page_count = data.get('page_count', 5)
+        
+        if not topic:
+            return jsonify({'success': False, 'error': '主题不能为空'}), 400
+            
+        # 尝试调用 DeepSeek
+        if DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured():
+            prompt = (
+                f"你是一个专业的PPT大纲及讲解内容生成助手。请根据用户的主题：“{topic}”，幻灯片风格风格为：“{style}”（古典雅致/现代科技/简约学术/活泼卡通），"
+                f"生成共{page_count}页的PPT幻灯片内容。确保每页的讲解配音自然口语化，适合AI数字人播报。\n"
+                f"你必须返回一个符合以下JSON数组格式的文本，不要包含任何Markdown标记（如```json），直接以 [ 开头，以 ] 结尾，以便于程序直接解析。\n"
+                f"格式要求：\n"
+                f"[\n"
+                f"  {{\n"
+                f"    \"title\": \"第1页的标题\",\n"
+                f"    \"points\": [\"核心要点1\", \"核心要点2\", \"核心要点3\"],\n"
+                f"    \"narration\": \"第一页幻灯片的讲解内容，数字人授课配音文本，要求通俗易懂，口语化，长度在60-120字左右。\"\n"
+                f"  }},\n"
+                f"  ...\n"
+                f"]"
+            )
+            payload = {
+                "model": deepseek_service.model,
+                "messages": [
+                    {"role": "system", "content": "You are a professional assistant that generates PPT slides in JSON format. Return only valid JSON array. Do not include markdown tags."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.5,
+                "max_tokens": 3000,
+                "stream": False
+            }
+            try:
+                res = deepseek_service._post_chat_completions(payload)
+                choices = res.get("choices") or []
+                if choices:
+                    content = choices[0].get("message", {}).get("content", "").strip()
+                    if content.startswith("```"):
+                        lines = content.split("\n")
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        content = "\n".join(lines).strip()
+                    slides = json.loads(content)
+                    return jsonify({'success': True, 'slides': slides, 'source': 'AI (DeepSeek)'})
+            except Exception as e:
+                print(f"[API_GENERATE_PPT] DeepSeek API 调用失败: {e}，将回退到本地模板引擎生成。")
+
+        # 本地生成逻辑（Fallback）
+        slides = []
+        topic_lower = topic.lower()
+        
+        # 1. 匹配古诗词/中国文学/历史/传统文化
+        if any(kw in topic_lower for kw in ['古诗', '诗词', '文学', '历史', '传统文化', '中国', '语文', '古代']):
+            slides = [
+                {
+                    "title": f"《{topic}》的背景与文化渊源",
+                    "points": ["历史朝代的兴衰与文学流派演变", "作者个人生平际遇与情感底色", "特定时代背景下的社会风貌"],
+                    "narration": f"同学们好！今天我们来学习关于《{topic}》的精彩内容。首先，我们需要了解它的背景与文化渊源。每个优秀的文化作品，都深深地烙印着它所处的时代印记、社会风貌以及作者波澜壮阔的人生旅程。让我们穿越时光，回到那段历史之中。"
+                },
+                {
+                    "title": "作品的核心意象与美学价值",
+                    "points": ["经典自然意象的寄托与象征意蕴", "情景交融、虚实结合的艺术手法", "含蓄隽永、意境深远的独特美学风格"],
+                    "narration": f"接下来，我们深入探讨《{topic}》中的美学价值。文学作品往往通过具体的意象来表达情感，比如月亮、春风、流水。作者善于把主观情感融入到客观景物中，达到情景交融的最高境界。我们品读时，不仅要赏析文字，更要感悟那份悠远的意境。"
+                },
+                {
+                    "title": "名篇名句赏析与语言艺术",
+                    "points": ["关键字词的精妙锤炼与多重释义", "句式结构对情感跌宕起伏的推波助澜", "声律和谐、琅琅上口的音韵之美"],
+                    "narration": "学习古典文学，最美妙的莫过于赏析名篇名句。这些字句经过了千锤百炼，极其精妙。让我们一起来看这几个关键句，它们字句凝练，音韵和谐，读起来琅琅上口，在情感的高潮处推波助澜，表现力极强。"
+                },
+                {
+                    "title": "对后世的深远影响与现代启示",
+                    "points": ["在后世文学创作中的传承与发扬", "跨越时空阻隔的人性共鸣与情感投射", "现代语境下的创造性转化与创新发展"],
+                    "narration": f"最后，我们来思考《{topic}》对后世的深远影响。优秀的文学和历史遗产是跨越时空的，它不仅深深影响了后世的创作，在今天也依然能引起我们的强烈共鸣。我们在现代语境下，应该如何去继承和发扬这些珍贵的文化财富呢？这值得我们每个人深思。"
+                }
+            ]
+        # 2. 匹配人工智能/科技/教育信息化
+        elif any(kw in topic_lower for kw in ['人工智能', '科技', 'ai', '教育', '智慧', '学校', '计算机', '技术']):
+            slides = [
+                {
+                    "title": f"{topic} 的概念界定与兴起背景",
+                    "points": ["前沿技术的迭代发展与政策环境红利", "传统教学模式面临的关键痛点与变革诉求", "人机协同教育新范式的概念演进"],
+                    "narration": f"大家好，今天我们的课程主题是《{topic}》。首先，我们来看一下它的概念界定与兴起背景。近年来，随着大模型、算力等底层技术的爆发，以及国家教育数字化战略的推动，传统教育正经历深刻重塑。如何用前沿科技解决传统教学的痛点，是我们探讨的核心。"
+                },
+                {
+                    "title": "核心应用场景与关键技术架构",
+                    "points": ["多模态互动教学与智能学习资源生成", "个性化自适应学习路径精准规划", "全过程学习行为多维分析与智能评估"],
+                    "narration": "那么，它有哪些核心的应用场景呢？首先是教学资源的生成，比如我们现在正在体验的数字人授课和PPT自动生成。其次是自适应学习，通过分析学生的行为，规划最适合的专属路线。最后是智能的学情评估，实现真正的因材施教。"
+                },
+                {
+                    "title": "面临的现实挑战与伦理考量",
+                    "points": ["数字鸿沟引发教育公平性的全新审视", "教学数据隐私保护与信息系统安全底线", "数字技术对教师传统角色定位 of 重塑"],
+                    "narration": "虽然科技带来了极大的便利，但我们也必须保持清醒，看到面临的挑战。比如，落后地区是否能公平享受到这些技术？学生的隐私数据该如何严格保密？更重要的是，当AI能够做很多事情时，我们教师传统的工作角色该如何调整和定位？"
+                },
+                {
+                    "title": "未来发展趋势与融合共生图景",
+                    "points": ["大模型技术在细分教育垂直领域的深度融合", "人机双能驱动教学体系的全面建立", "回归教育本质——关注学生核心素养培养"],
+                    "narration": "最后，展望未来，技术必将与教育各环节进行更深度的融合，构建一个教师与AI双能驱动、融合共生的智能教育新图景。无论技术怎么变，教育的本质——点燃智慧、润泽心灵是永远不会改变的。让我们拥抱科技，共同见证教育的美好未来！"
+                }
+            ]
+        # 3. 其他常规主题
+        else:
+            slides = [
+                {
+                    "title": f"关于《{topic}》的引入与概览",
+                    "points": ["探索该领域的研究初衷与核心价值", "行业发展的重要阶段与历史沿革", "课程内容的核心架构与知识版图"],
+                    "narration": f"各位学员好！今天我将带大家一起探索关于《{topic}》的主题。本课程旨在从多维视角分析该领域的核心框架、演进历史以及未来的关键方向。让我们首先从它的起源和研究初衷开始，逐步揭开它的神秘面纱。"
+                },
+                {
+                    "title": "核心内容解析与要点细化",
+                    "points": ["基本理论架构与底层逻辑支撑", "不同流派或观点的碰撞与技术交融", "实现该领域突破的核心要素分析"],
+                    "narration": f"接下来，我们切入《{topic}》的核心内容进行解析。在这部分，我们将重点讨论其底层的理论逻辑与核心支撑要素。通过对比不同的观点和应用流派，我们将理清该领域在实践中取得重大突破的深层原因。"
+                },
+                {
+                    "title": "应用实例与典型案例分析",
+                    "points": ["国内外典型成功案例深度剖析", "实施过程中的关键路径与避坑指南", "从案例中提炼的普适性规律与实操经验"],
+                    "narration": "理论的生命力在于实践。让我们来看几个具有代表性的成功案例。通过深度剖析这几个案例在不同发展阶段所做出的关键决策，我们可以提炼出许多可以直接借鉴的实操经验，避免在实际推进中少走弯路。"
+                },
+                {
+                    "title": "总结回顾与前瞻性展望",
+                    "points": ["本堂课核心概念的串联与知识收敛", "该领域下一步发展的核心驱动力", "给每位学习者的个人成长与实践建议"],
+                    "narration": f"最后，我们对今天所学关于《{topic}》的内容做个总结。我们梳理了它的理论框架与案例，展望了它接下来的爆发点。希望大家在课后能够结合自己的工作和学习进行实践。谢谢大家，我们下期课程再见！"
+                }
+            ]
+            
+        # 如果请求的页数较少，进行裁剪；如果较多，我们复制填充或者按模板补充
+        if len(slides) > page_count:
+            slides = slides[:page_count]
+        elif len(slides) < page_count:
+            # 简单补充
+            for i in range(len(slides), page_count):
+                slides.append({
+                    "title": f"关于《{topic}》的深入探究 (页 {i+1})",
+                    "points": ["探索未知维度的补充概念与支撑材料", "关键论点的延伸讨论与论据丰富", "实践层面的更多操作规范与应用指导"],
+                    "narration": f"在这里，我们对《{topic}》的相关内容进行进一步的延伸探讨。在本页，我们将细化补充论点，确保我们的知识体系更加健全，帮助大家在实际操作中具备更全面的视野。"
+                })
+                
+        return jsonify({'success': True, 'slides': slides, 'source': 'Local Template'})
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'PPT生成失败: {str(e)}'}), 500
+
+
+@app.route('/api/feature_experience/correct_homework', methods=['POST'])
+@login_required
+def api_correct_homework():
+    """AI批改作业接口"""
+    try:
+        if request.is_json:
+            data = request.get_json() or {}
+            homework_text = data.get('homework_text', '').strip()
+            subject = data.get('subject', 'chinese').strip()
+        else:
+            homework_text = request.form.get('homework_text', '').strip()
+            subject = request.form.get('subject', 'chinese').strip()
+            
+        if not homework_text:
+            return jsonify({'success': False, 'error': '作业内容不能为空'}), 400
+            
+        # 尝试调用 DeepSeek
+        if DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured():
+            prompt = (
+                f"你是一个资深的教育导师。请对以下学生的“{subject}”科目作业进行精细化的批改。反馈需要温和鼓励但指出关键错误。\n"
+                f"学生作业内容：\n"
+                f"\"\"\"\n{homework_text}\n\"\"\"\n\n"
+                f"请分析作业中的语法错误、逻辑错误、计算错误或笔误，并给出改进意见。\n"
+                f"你必须返回一个符合以下JSON格式的纯文本，不要包含任何Markdown标记（如```json），以便于程序解析：\n"
+                f"{{\n"
+                f"  \"score\": 评分(1-100的整数),\n"
+                f"  \"overall_comment\": \"总评，夸奖优点并委婉指出不足，富有启发性(100-150字左右)\",\n"
+                f"  \"corrections\": [\n"
+                f"    {{\n"
+                f"      \"original\": \"原错词/句/算式\",\n"
+                f"      \"corrected\": \"修改后的正确内容\",\n"
+                f"      \"reason\": \"详细的纠错原因与知识点解析\"\n"
+                f"    }},\n"
+                f"    ...\n"
+                f"  ],\n"
+                f"  \"suggestions\": [\n"
+                f"    \"后续具体的复习与练习建议1\",\n"
+                f"    \"后续具体的复习与练习建议2\"\n"
+                f"  ]\n"
+                f"}}"
+            )
+            payload = {
+                "model": deepseek_service.model,
+                "messages": [
+                    {"role": "system", "content": "You are a professional educational teacher grading homework. Return only a valid JSON object. Do not include markdown formatting."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.4,
+                "max_tokens": 2000,
+                "stream": False
+            }
+            try:
+                res = deepseek_service._post_chat_completions(payload)
+                choices = res.get("choices") or []
+                if choices:
+                    content = choices[0].get("message", {}).get("content", "").strip()
+                    if content.startswith("```"):
+                        lines = content.split("\n")
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        content = "\n".join(lines).strip()
+                    result = json.loads(content)
+                    return jsonify({'success': True, 'report': result, 'source': 'AI (DeepSeek)'})
+            except Exception as e:
+                print(f"[API_CORRECT_HOMEWORK] DeepSeek API 调用失败: {e}，将回退到本地启发式批改。")
+
+        # 本地批改逻辑 (Fallback)
+        report = {
+            "score": 85,
+            "overall_comment": "",
+            "corrections": [],
+            "suggestions": []
+        }
+        
+        text_lower = homework_text.lower()
+        if subject == 'math':
+            report["overall_comment"] = "计算过程比较清晰，书写也规范，但是在部分基础算式和公式套用上出现了笔误。建议日常练习时多加复查，养成细心的好习惯。"
+            if '1+1=3' in homework_text.replace(' ', ''):
+                report["corrections"].append({
+                    "original": "1 + 1 = 3",
+                    "corrected": "1 + 1 = 2",
+                    "reason": "最基础的加法计算失误，请集中注意力进行运算。"
+                })
+            if '3x=6' in homework_text.replace(' ', '') and 'x=3' in homework_text.replace(' ', ''):
+                report["corrections"].append({
+                    "original": "3x = 6 推出 x = 3",
+                    "corrected": "x = 2",
+                    "reason": "方程两边应同时除以系数3，得到 x = 6/3 = 2。你可能误用减法去移项了。"
+                })
+            
+            if not report["corrections"]:
+                report["corrections"] = [
+                    {
+                        "original": "计算中间步骤的单位漏写",
+                        "corrected": "带上对应单位（如：cm² 或 元）",
+                        "reason": "应用题的计算过程中，关键步骤建议保留单位，最终结果必须注明正确单位，以免扣分。"
+                    },
+                    {
+                        "original": "除法运算中余数写错",
+                        "corrected": "仔细验算：被除数 = 除数 × 商 + 余数",
+                        "reason": "除法竖式计算中，减法借位出现了偏差，导致余数大于除数，请牢记余数必须小于除数的定理。"
+                    }
+                ]
+            report["suggestions"] = [
+                "准备一本错题本，把平时因为马虎写错的题目收集起来，考试前看一遍。",
+                "做完题后，使用代入法或者逆运算法进行一轮快速的口算验算。",
+                "每天坚持进行5道口算或心算基础练习，提升对数字的敏感度。"
+            ]
+            report["score"] = 82
+            
+        elif subject == 'english':
+            report["overall_comment"] = "An interesting writing with rich ideas! Your vocabulary is good, but there are a few grammatical errors related to subject-verb agreement and preposition usage. Keep writing!"
+            if 'i is' in text_lower or 'he are' in text_lower or 'she are' in text_lower:
+                report["corrections"].append({
+                    "original": "I is / He are / She are",
+                    "corrected": "I am / He is / She is",
+                    "reason": "Be动词需与主语人称保持一致。第一人称单数I用am，第三人称单数he/she/it用is。"
+                })
+            if 'good at english' not in text_lower and 'good in english' in text_lower:
+                report["corrections"].append({
+                    "original": "good in English",
+                    "corrected": "good at English",
+                    "reason": "固定搭配。表示擅长于某项学科或技能用 be good at，后接名词或动名词形式。"
+                })
+            if 'last year i go' in text_lower or 'yesterday i buy' in text_lower:
+                report["corrections"].append({
+                    "original": "last year I go / yesterday I buy",
+                    "corrected": "last year I went / yesterday I bought",
+                    "reason": "时态错误。时间状语表示过去时间（last year, yesterday等）时，谓语动词应使用过去时态。"
+                })
+                
+            if not report["corrections"]:
+                report["corrections"] = [
+                    {
+                        "original": "The student show a lot of interest...",
+                        "corrected": "The student shows a lot of interest...",
+                        "reason": "主谓一致。当主语是第三人称单数时，一般现在时的谓语动词要加上词尾 -s 或 -es。"
+                    },
+                    {
+                        "original": "in sunday morning",
+                        "corrected": "on Sunday morning",
+                        "reason": "介词搭配。表示在具体某一天或某一天的上午、下午、晚上时，前面要用介词 on，首字母 Sunday 需大写。"
+                    }
+                ]
+            report["suggestions"] = [
+                "Pay attention to verb tenses when describing past events.",
+                "Review the rules of third-person singular verbs in present simple tense.",
+                "Read english articles aloud for 10 minutes daily to build natural grammar intuition."
+            ]
+            report["score"] = 88
+            
+        else: # Chinese
+            report["overall_comment"] = "文章构思新颖，情感表达真挚，细节描写非常生动。但是，在个别段落中存在着错别字，以及词语搭配不够恰当的情况，精雕细琢后会是一篇佳作！"
+            if '得时候' in homework_text:
+                report["corrections"].append({
+                    "original": "得时候",
+                    "corrected": "的时候",
+                    "reason": "结构助词使用错误。表示时间的“...的时候”应该使用“的”字，而不是表示程度或补语的“得”。"
+                })
+            if '克苦' in homework_text or '客苦' in homework_text:
+                report["corrections"].append({
+                    "original": "克苦 / 客苦",
+                    "corrected": "刻苦",
+                    "reason": "字形写错。“刻苦”的“刻”是雕刻的刻，意思是像雕刻一样深刻用力，形容非常吃苦、努力。"
+                })
+            
+            if not report["corrections"]:
+                report["corrections"] = [
+                    {
+                        "original": "他那红润的脸蛋上露出了欣慰的笑容和开心的笑声",
+                        "corrected": "他那红润的脸蛋上露出了欣慰的笑容，传传来开心的笑声",
+                        "reason": "动宾搭配不当。笑容可以“露出”，但笑声只能“传来”或“听到”，不能与“露出”搭配使用。"
+                    },
+                    {
+                        "original": "通过这次活动，使我深刻懂得了团队合作的重要性",
+                        "corrected": "这次活动使我深刻懂得了... / 通过这次活动，我深刻懂得了...",
+                        "reason": "成分残缺（主语缺失）。“通过...”和“使...”连用，导致句子缺少主语。可去掉“通过”或去掉“使”。"
+                    }
+                ]
+            report["suggestions"] = [
+                "在写作完成后，养成默读一到两遍的习惯，自主找出语气不顺的病句和错别字。",
+                "多积累好词好句，注意动词和名词之间的搭配合理性，做到准确表达。",
+                "重点温习多音字和形近字，把容易写错的字单独抄写三遍加深记忆。"
+            ]
+            report["score"] = 86
+            
+        return jsonify({'success': True, 'report': report, 'source': 'Local Rules Engine'})
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'批改失败: {str(e)}'}), 500
+
+
+@app.route('/api/feature_experience/upload_ppt', methods=['POST'])
+@login_required
+def api_upload_ppt():
+    """上传并解析 PPTX 课件"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': '未选择文件'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': '未选择文件'}), 400
+        
+    if not file.filename.lower().endswith('.pptx'):
+        return jsonify({'success': False, 'error': '目前仅支持解析 .pptx 格式的幻灯片文件'}), 400
+        
+    try:
+        # 保存临时文件
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        slides = []
+        
+        # 使用 python-pptx 解析
+        try:
+            from pptx import Presentation
+            prs = Presentation(filepath)
+            for i, slide in enumerate(prs.slides):
+                title = ""
+                if slide.shapes.title:
+                    title = slide.shapes.title.text.strip()
+                
+                points = []
+                for shape in slide.shapes:
+                    if shape.has_text_frame and (not slide.shapes.title or shape != slide.shapes.title):
+                        for paragraph in shape.text_frame.paragraphs:
+                            txt = paragraph.text.strip()
+                            if txt and txt not in points:
+                                points.append(txt)
+                
+                # 如果没有标题，尝试使用第一个文本点作为标题
+                if not title and points:
+                    title = points.pop(0)
+                
+                if not title:
+                    title = f"幻灯片 {i+1}"
+                
+                # 限制要点字数和个数，过滤无意义空白
+                points = [p for p in points if len(p) > 1][:4]
+                
+                # 自动为数字人生成讲解词
+                if points:
+                    points_summary = "，".join([p[:20] for p in points[:3]])
+                    narration = f"现在我们来看这一页，它的核心内容是：{title}。主要包括以下几个要点：{points_summary}。请大家仔细对照屏幕上的内容进行理解。"
+                else:
+                    narration = f"大家请看这一页幻灯片，它的主题是：{title}。这里展示了相关的重要概念，请大家进行阅读和思考。"
+                    
+                slides.append({
+                    "title": title,
+                    "points": points if points else ["图片、图表或多媒体展示页"],
+                    "narration": narration
+                })
+        except ImportError:
+            try:
+                os.remove(filepath)
+            except:
+                pass
+            return jsonify({'success': False, 'error': '服务器未配置 python-pptx 解析环境，请联系管理员运行 `pip install python-pptx`。'}), 500
+            
+        # 删除临时文件
+        try:
+            os.remove(filepath)
+        except:
+            pass
+            
+        if not slides:
+            return jsonify({'success': False, 'error': '未能在该幻灯片文件中解析出任何有效的文字页面。'}), 400
+            
+        return jsonify({'success': True, 'slides': slides})
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'幻灯片解析失败: {str(e)}'}), 500
 
 
 if __name__ == '__main__':

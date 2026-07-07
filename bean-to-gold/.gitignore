@@ -1,0 +1,34 @@
+# Maven
+backend/target/
+backend/.idea/
+backend/*.iml
+**/target/
+
+# Node.js
+frontend/node_modules/
+frontend/dist/
+frontend/.npm/
+frontend/*.log
+node_modules/
+**/node_modules/
+.pnpm-store/
+*.log
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sensitive Info
+# backend/src/main/resources/application.properties
+.env
+.env.*
+!.env.example

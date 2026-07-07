@@ -23,21 +23,25 @@
         }
         .admin-header h1 {
             margin: 0;
-            font-size: 1.8em;
+            font-size: 1.3em;
+            white-space: nowrap;
         }
         .admin-nav {
             display: flex;
-            gap: 15px;
+            gap: 6px;
+            flex-wrap: nowrap;
         }
         .nav-btn {
             background: rgba(255,255,255,0.2);
             color: white;
             border: 1px solid rgba(255,255,255,0.3);
-            padding: 8px 20px;
+            padding: 6px 10px;
             border-radius: 5px;
             cursor: pointer;
             text-decoration: none;
             transition: all 0.3s;
+            font-size: 0.8em;
+            white-space: nowrap;
         }
         .nav-btn:hover {
             background: rgba(255,255,255,0.3);
@@ -124,9 +128,12 @@
         <div class="admin-header">
             <h1>🔐 管理员后台</h1>
             <div class="admin-nav">
-                <a href="{{ url_for('qa_robot') }}" class="nav-btn">问答机器人</a>
-                <a href="{{ url_for('qa_discussion') }}" class="nav-btn">讨论区管理</a>
-                <a href="{{ url_for('logout') }}" class="nav-btn">退出登录</a>
+                <a href="{{ url_for('qa_robot') }}" class="nav-btn">🤖 问答机器人</a>
+                <a href="{{ url_for('digital_human') }}" class="nav-btn">👤 3D 数字人</a>
+                <a href="{{ url_for('feature_experience') }}" class="nav-btn">✨ 功能体验</a>
+                <a href="{{ url_for('qa_discussion') }}" class="nav-btn">💬 讨论区管理</a>
+                <a href="{{ url_for('user_profile_page', username=session.get('username')) }}" class="nav-btn">🙋 我的主页</a>
+                <a href="{{ url_for('logout') }}" class="nav-btn">🚪 退出登录</a>
             </div>
         </div>
 

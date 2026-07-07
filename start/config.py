@@ -12,9 +12,9 @@ import os
 # 新装的 MySQL 8.0 跑在 3307；密码设置为 123456
 MYSQL_CONFIG = {
     'host': '127.0.0.1',
-    'port': 3307,
+    'port': 3306,
     'user': 'root',
-    'password': '123456',
+    'password': 'xh050316',
     'database': 'voice_assistant_db',
     'charset': 'utf8mb4'
 }

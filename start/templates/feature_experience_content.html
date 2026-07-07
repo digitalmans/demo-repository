@@ -1,0 +1,1279 @@
+<!-- 功能体验二级页面 -->
+<div class="fe-wrapper" style="width: 100%; height: 100vh; overflow: hidden; display: flex; flex-direction: column; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0b0b16; color: #fff;">
+    
+    <!-- 头部导航栏 -->
+    <div class="fe-header" style="height: 60px; min-height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; background: rgba(15, 15, 30, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); z-index: 10;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5em;">✨</span>
+            <h2 style="font-size: 1.2em; font-weight: 700; background: linear-gradient(135deg, #00ffff 0%, #667eea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                AI 智慧教育功能体验
+            </h2>
+        </div>
+        <div class="fe-tabs" style="display: flex; gap: 15px; height: 100%; align-items: center;">
+            <button class="fe-tab-btn active" onclick="switchFETab('ppt')" id="tab-btn-ppt" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;">
+                📊 AI 生成 PPT
+            </button>
+            <button class="fe-tab-btn" onclick="switchFETab('course')" id="tab-btn-course" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;">
+                👤 AI 数字人教学
+            </button>
+            <button class="fe-tab-btn" onclick="switchFETab('grading')" id="tab-btn-grading" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;">
+                📝 AI 批改作业
+            </button>
+        </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="fe-content" style="flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at top left, #14142a, #0b0b16);">
+        
+        <!-- ==================== Tab 1: AI生成PPT ==================== -->
+        <div class="fe-pane active" id="pane-ppt" style="display: flex; width: 100%; height: 100%; padding: 25px; gap: 25px;">
+            <!-- 左侧：输入控制区 -->
+            <div style="width: 380px; min-width: 380px; display: flex; flex-direction: column; gap: 20px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px; overflow-y: auto; backdrop-filter: blur(10px);">
+                <h3 style="font-size: 1.1em; color: #00ffff; margin-bottom: 5px; font-weight: 600;">PPT 课件生成器</h3>
+                <p style="font-size: 0.85em; color: rgba(255,255,255,0.5);">输入主题，AI 将自动规划大纲、设计排版与生成讲解稿。</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">课件主题或大纲</label>
+                    <textarea id="ppt-topic" placeholder="例：中国古典诗词美学研究，或人工智能在基础教育的应用..." style="height: 100px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; color: white; resize: none; font-size: 0.9em; outline: none; transition: border-color 0.3s;"></textarea>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
+                        <button onclick="presetPPT('古诗词鉴赏与美学价值')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 20px; font-size: 0.75em; cursor: pointer; transition: all 0.2s;">📜 古诗词鉴赏</button>
+                        <button onclick="presetPPT('人工智能与智慧教育的未来')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 20px; font-size: 0.75em; cursor: pointer; transition: all 0.2s;">🤖 智能教育</button>
+                        <button onclick="presetPPT('启发式教学在理科课堂的探索')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 20px; font-size: 0.75em; cursor: pointer; transition: all 0.2s;">💡 启发式教学</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">视觉主题风格</label>
+                        <select id="ppt-style" style="height: 38px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; padding: 0 10px; font-size: 0.9em; outline: none; cursor: pointer;">
+                            <option value="ancient">古典雅致 (棕红水墨)</option>
+                            <option value="tech" selected>现代科技 (深蓝霓虹)</option>
+                            <option value="academic">简约学术 (灰蓝框架)</option>
+                            <option value="cartoon">活泼卡通 (橙紫圆角)</option>
+                        </select>
+                    </div>
+                    <div style="width: 100px; display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">课件页数</label>
+                        <select id="ppt-pages" style="height: 38px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; padding: 0 10px; font-size: 0.9em; outline: none; cursor: pointer;">
+                            <option value="3">3页</option>
+                            <option value="4" selected>4页</option>
+                            <option value="5">5页</option>
+                            <option value="6">6页</option>
+                            <option value="8">8页</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="ppt-generate-btn" onclick="generatePPT()" style="margin-top: 10px; height: 45px; border-radius: 8px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    🚀 开启生成方案
+                </button>
+            </div>
+            
+            <!-- 右侧：效果预览区 -->
+            <div style="flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; overflow: hidden; position: relative;">
+                
+                <!-- 初始状态 -->
+                <div id="ppt-preview-empty" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; color: rgba(255,255,255,0.4);">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="9" x2="15" y2="9"></line>
+                        <line x1="9" y1="13" x2="15" y2="13"></line>
+                        <line x1="9" y1="17" x2="13" y2="17"></line>
+                    </svg>
+                    <span style="font-size: 1.05em; font-weight: 500;">等待生成课件预览</span>
+                </div>
+
+                <!-- 加载生成中 -->
+                <div id="ppt-preview-loading" style="display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center; gap: 20px; background: rgba(11, 11, 22, 0.95); z-index: 5;">
+                    <div style="width: 50px; height: 50px; border: 3px solid rgba(0, 255, 255, 0.1); border-top-color: #00ffff; border-radius: 50%; animation: fe-spin 1s linear infinite;"></div>
+                    <div style="width: 300px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: rgba(255,255,255,0.7);">
+                            <span id="ppt-loading-text">正在分析主题框架...</span>
+                            <span id="ppt-loading-percent">15%</span>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                            <div id="ppt-loading-bar" style="height: 100%; width: 15%; background: #00ffff; border-radius: 3px; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PPT 预览内容 -->
+                <div id="ppt-preview-content" style="display: none; flex: 1; flex-direction: column; position: relative;">
+                    <!-- 幻灯片主体视口 (按 16:9 框定) -->
+                    <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 30px; background: #080810;">
+                        <div id="slide-viewport" class="slide-theme-tech" style="width: 100%; aspect-ratio: 16/9; max-height: 100%; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); overflow: hidden; position: relative; display: flex; flex-direction: column; justify-content: center; padding: 40px; box-sizing: border-box; transition: all 0.3s;">
+                            <!-- 幻灯片页容 -->
+                            <div id="slide-body" style="height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 20px;">
+                                <h1 id="slide-title" style="font-size: 2.2em; font-weight: 700; margin: 0; line-height: 1.3;">PPT Slide Title</h1>
+                                <ul id="slide-points" style="font-size: 1.15em; line-height: 1.6; margin-left: 20px; display: flex; flex-direction: column; gap: 10px;">
+                                    <li>Bullet point 1</li>
+                                    <li>Bullet point 2</li>
+                                    <li>Bullet point 3</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- 幻灯片水印与页码 -->
+                            <div style="position: absolute; bottom: 20px; left: 40px; font-size: 0.75em; opacity: 0.5; display: flex; align-items: center; gap: 8px;">
+                                <span>AI Smart Education Platform</span>
+                                <span style="width: 3px; height: 3px; border-radius: 50%; background: white;"></span>
+                                <span id="slide-watermark-theme">Theme: Tech</span>
+                            </div>
+                            <div id="slide-page-num" style="position: absolute; bottom: 20px; right: 40px; font-size: 0.8em; opacity: 0.6; font-weight: 600;">1 / 4</div>
+                        </div>
+                    </div>
+
+                    <!-- 幻灯片底部讲解词 & 控制栏 -->
+                    <div style="height: 140px; background: rgba(15, 15, 30, 0.95); border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; padding: 15px 25px; box-sizing: border-box; justify-content: space-between;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                            <span style="background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.2); color: #00ffff; font-size: 0.75em; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-top: 2px;">配音讲解词</span>
+                            <p id="slide-narration" style="font-size: 0.85em; line-height: 1.5; color: rgba(255,255,255,0.7); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px;">这里是数字人教师上课讲解的参考稿，将在下一步教学过程中由数字人教师以生动的语气读出。</p>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="prevSlide()" class="slide-nav-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600;">◀ 上一页</button>
+                                <button onclick="nextSlide()" class="slide-nav-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600;">下一页 ▶</button>
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px;">
+                                <button onclick="exportPPT()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 6px;">
+                                    💾 导出课件
+                                </button>
+                                <button onclick="linkToCourse()" style="background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%); border: none; color: white; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                    👤 送去数字人课堂教学
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== Tab 2: AI数字人教学 ==================== -->
+        <div class="fe-pane" id="pane-course" style="display: none; width: 100%; height: 100%; padding: 25px; gap: 25px;">
+            <!-- 左侧：3D 数字人视口 -->
+            <div style="flex: 4; display: flex; flex-direction: column; background: rgba(0,0,0,0.3); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; overflow: hidden; position: relative;">
+                <div id="fe-canvas-container" style="width: 100%; height: 100%; position: relative;"></div>
+                
+                <!-- 3D 角色加载中 -->
+                <div id="fe-model-loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0b0b16; z-index: 5;">
+                    <div style="width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: #00ffff; border-radius: 50%; animation: fe-spin 1s linear infinite;"></div>
+                    <p style="margin-top: 15px; font-size: 0.95em; color: #00ffff;">正在唤醒虚拟教师...</p>
+                </div>
+                
+                <!-- 角色说明/状态标签 -->
+                <div style="position: absolute; top: 20px; left: 20px; padding: 6px 12px; border-radius: 20px; background: rgba(15, 15, 30, 0.8); border: 1px solid rgba(255,255,255,0.1); font-size: 0.8em; display: flex; align-items: center; gap: 8px;">
+                    <span id="fe-teacher-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #4CAF50;"></span>
+                    <span id="fe-teacher-status-text">AI 讲师：空闲中</span>
+                </div>
+                
+                <div style="position: absolute; top: 20px; right: 20px; padding: 6px 12px; border-radius: 20px; background: rgba(15, 15, 30, 0.8); border: 1px solid rgba(255,255,255,0.1); font-size: 0.8em;">
+                    🏫 3D 虚拟智慧教室
+                </div>
+            </div>
+            
+            <!-- 右侧：PPT幻灯片 + 交互面板 -->
+            <div style="flex: 5; display: flex; flex-direction: column; gap: 20px;">
+                <!-- 幻灯片展示区 -->
+                <div style="flex: 1; display: flex; flex-direction: column; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; position: relative;">
+                    <div style="padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
+                        <span style="font-size: 0.9em; font-weight: 600; color: #00ffff;">当前授课幻灯片</span>
+                        <span id="course-page-num" style="font-size: 0.8em; color: rgba(255,255,255,0.5);">0 / 0</span>
+                    </div>
+                    
+                    <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; background: #05050c;">
+                        <div id="course-slide-viewport" class="slide-theme-tech" style="width: 100%; aspect-ratio: 16/9; max-height: 100%; border-radius: 8px; padding: 30px; box-sizing: border-box; position: relative; display: flex; flex-direction: column; justify-content: center; gap: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); overflow: hidden;">
+                            <h2 id="course-slide-title" style="font-size: 1.8em; font-weight: 700; margin: 0; line-height: 1.3;">未加载课程</h2>
+                            <ul id="course-slide-points" style="font-size: 1.05em; line-height: 1.5; margin-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                                <li>请在“AI生成PPT”页生成课件，或点击下方加载预置课程。</li>
+                            </ul>
+                            
+                            <div style="position: absolute; bottom: 15px; left: 30px; font-size: 0.7em; opacity: 0.5;">
+                                AI Interactive Course Player
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 教师朗读的实时字幕 -->
+                    <div style="height: 70px; background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; padding: 10px 20px; text-align: center;">
+                        <p id="course-subtitles" style="font-size: 0.9em; font-weight: 600; color: #00ffff; margin: 0; line-height: 1.4; letter-spacing: 0.5px;">💬 [字幕] 等待启动课程讲解...</p>
+                    </div>
+                </div>
+                
+                <!-- 教学控制台 -->
+                <div style="height: 120px; min-height: 120px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 15px 20px; display: flex; flex-direction: column; justify-content: space-between; backdrop-filter: blur(10px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <label style="font-size: 0.85em; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 6px;">
+                                👩‍🏫 讲师配音:
+                                <select id="course-speaker" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: white; font-size: 0.85em; padding: 2px 6px; outline: none; cursor: pointer;">
+                                    <option value="0">度小美 (温柔女声)</option>
+                                    <option value="1">度小字 (稳重男声)</option>
+                                    <option value="4">度丫丫 (可爱童声)</option>
+                                </select>
+                            </label>
+                            
+                            <label style="font-size: 0.85em; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" id="course-autoplay" checked style="cursor: pointer;">
+                                自动切换下一页
+                            </label>
+                        </div>
+                        
+                        <div style="font-size: 0.85em; color: rgba(255,255,255,0.5);">
+                            💡 提示: 若未配置百度语音API，系统将自动启用浏览器本地语音引擎授课
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
+                        <button id="course-play-btn" onclick="toggleCoursePlayback()" style="flex: 1; height: 40px; border-radius: 8px; border: none; background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 0.9em; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            ▶ 开始课程授课
+                        </button>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="changeCourseSlide(-1)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: background 0.2s;">◀</button>
+                            <button onclick="changeCourseSlide(1)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: background 0.2s;">▶</button>
+                        </div>
+                        
+                        <button onclick="loadPresetCourse()" style="height: 40px; padding: 0 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; cursor: pointer; font-size: 0.85em; transition: background 0.2s;">
+                            📚 载入内置范例课程
+                        </button>
+                        <button onclick="triggerPPTXUpload()" style="height: 40px; padding: 0 15px; border-radius: 8px; border: 1px solid rgba(0, 255, 255, 0.3); background: rgba(0, 255, 255, 0.1); color: #00ffff; cursor: pointer; font-size: 0.85em; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                            📤 上传 PPTX 课件
+                        </button>
+                        <input type="file" id="course-file-input" accept=".pptx" style="display: none;" onchange="handlePPTXUpload(event)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== Tab 3: AI批改作业 ==================== -->
+        <div class="fe-pane" id="pane-grading" style="display: none; width: 100%; height: 100%; padding: 25px; gap: 25px;">
+            <!-- 左侧：作业上传与输入区 -->
+            <div style="width: 420px; min-width: 420px; display: flex; flex-direction: column; gap: 20px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px; overflow-y: auto; backdrop-filter: blur(10px);">
+                <h3 style="font-size: 1.1em; color: #00ffff; margin-bottom: 5px; font-weight: 600;">AI 作业批改系统</h3>
+                <p style="font-size: 0.85em; color: rgba(255,255,255,0.5);">提交学生的书面作答或文本，AI 将智能指出错漏、给予评分并提供纠错建议。</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">学科分类</label>
+                    <select id="grade-subject" onchange="onSubjectChange()" style="height: 38px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; padding: 0 10px; font-size: 0.9em; outline: none; cursor: pointer;">
+                        <option value="chinese" selected>语文 (错别字修改、句法、病句)</option>
+                        <option value="math">数学 (代数算式、公式推理、运算错漏)</option>
+                        <option value="english">英语 (时态纠错、主谓一致、固定搭配)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">上传作业图片 (可选)</label>
+                    <div id="grade-upload-box" style="border: 2px dashed rgba(255,255,255,0.15); border-radius: 8px; height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; background: rgba(0,0,0,0.1);">
+                        <span style="font-size: 1.3em; margin-bottom: 2px;">📁</span>
+                        <span id="grade-upload-text" style="font-size: 0.75em; color: rgba(255,255,255,0.5);">点击选择或拖拽作业图片上传</span>
+                        <input type="file" id="grade-file" style="display: none;" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">作业文本内容</label>
+                    <textarea id="grade-text" placeholder="在此处输入学生的文字作答..." style="height: 150px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; color: white; resize: none; font-size: 0.9em; outline: none; transition: border-color 0.3s; line-height: 1.5;"></textarea>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                        <span style="font-size: 0.8em; color: rgba(255,255,255,0.5);">快速载入学生作业范例:</span>
+                        <button onclick="loadGradingSample()" style="background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.25); color: #00ffff; padding: 4px 10px; border-radius: 4px; font-size: 0.75em; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                            📝 载入差错范例
+                        </button>
+                    </div>
+                </div>
+
+                <button id="grade-submit-btn" onclick="submitGrading()" style="margin-top: 5px; height: 42px; border-radius: 8px; border: none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(56, 239, 125, 0.2); font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    🎓 提交批改作业
+                </button>
+            </div>
+            
+            <!-- 右侧：批改报告区 -->
+            <div style="flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; overflow: hidden; position: relative;">
+                <!-- 初始状态 -->
+                <div id="grade-report-empty" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; color: rgba(255,255,255,0.4);">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span style="font-size: 1.05em; font-weight: 500;">等待提交批改任务</span>
+                </div>
+
+                <!-- 批改中加载 -->
+                <div id="grade-report-loading" style="display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center; gap: 15px; background: rgba(11, 11, 22, 0.95); z-index: 5;">
+                    <div style="width: 45px; height: 45px; border: 3px solid rgba(56, 239, 125, 0.1); border-top-color: #38ef7d; border-radius: 50%; animation: fe-spin 1s linear infinite;"></div>
+                    <span style="font-size: 0.95em; color: #38ef7d; font-weight: 600; letter-spacing: 0.5px;">AI 导师正在审阅学生作答并标注...</span>
+                </div>
+
+                <!-- 批改结果纸张报告 -->
+                <div id="grade-report-content" style="display: none; flex: 1; overflow-y: auto; padding: 30px; box-sizing: border-box; background: #faf8f5; color: #2d2d2d; position: relative;">
+                    <!-- 顶部落款批改印章/分值 -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 2px dashed #e0dcd5; padding-bottom: 15px;">
+                        <div>
+                            <h2 id="report-title" style="margin: 0; font-size: 1.4em; color: #c0392b; font-weight: 700; font-family: 'STKaiti', 'KaiTi', serif;">作业批语与反馈</h2>
+                            <p style="margin: 5px 0 0 0; font-size: 0.8em; color: #7f8c8d;">批改时间: <span id="report-date">2026-07-06</span></p>
+                        </div>
+                        
+                        <!-- 红色墨水手写体分数圈 -->
+                        <div style="width: 80px; height: 80px; border: 3px solid #c0392b; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; transform: rotate(-5deg); box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.15); color: #c0392b; background: rgba(192, 57, 43, 0.02);">
+                            <span style="font-size: 0.7em; font-weight: bold; border-bottom: 1px solid #c0392b; padding-bottom: 1px; margin-bottom: 1px;">得分</span>
+                            <span id="report-score" style="font-size: 1.8em; font-weight: 900; font-family: 'Georgia', serif; line-height: 1.1;">85</span>
+                        </div>
+                    </div>
+
+                    <!-- 批语总评 -->
+                    <div style="margin-bottom: 25px; background: rgba(192, 57, 43, 0.03); border-left: 4px solid #c0392b; padding: 15px 20px; border-radius: 0 8px 8px 0;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 0.95em; color: #c0392b; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                            ✍️ 导师总评:
+                        </h4>
+                        <p id="report-comment" style="margin: 0; font-size: 0.9em; line-height: 1.6; color: #34495e; font-style: italic;">
+                            文章结构基本完整，但在错别字和一些句法搭配上存在问题。
+                        </p>
+                    </div>
+
+                    <!-- 错题标红精改 -->
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 1em; color: #2c3e50; font-weight: 700; border-bottom: 2px solid #e0dcd5; padding-bottom: 5px;">
+                            🔴 差错智能批改标红:
+                        </h4>
+                        <div id="report-corrections-list" style="display: flex; flex-direction: column; gap: 15px;">
+                            <!-- 纠错条目 -->
+                            <div class="correction-card" style="background: white; border: 1px solid #e6e0d8; border-radius: 8px; padding: 12px 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.88em;">
+                                    <div style="text-decoration: line-through; color: #c0392b; font-weight: bold; background: rgba(192, 57, 43, 0.05); padding: 3px 8px; border-radius: 4px;">原错内容: "..."</div>
+                                    <div style="color: #27ae60; font-weight: bold; background: rgba(39, 174, 96, 0.05); padding: 3px 8px; border-radius: 4px;">修正建议: "..."</div>
+                                    <div style="color: #7f8c8d; line-height: 1.4; padding-left: 8px; border-left: 2px solid #bdc3c7; margin-top: 4px;">解析: ...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 后续学习建议 -->
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; font-size: 1em; color: #2c3e50; font-weight: 700; border-bottom: 2px solid #e0dcd5; padding-bottom: 5px;">
+                            💡 针对性辅导建议:
+                        </h4>
+                        <ul id="report-suggestions-list" style="margin: 0; padding-left: 20px; font-size: 0.9em; line-height: 1.7; color: #34495e; display: flex; flex-direction: column; gap: 6px;">
+                            <li>建议一</li>
+                            <li>建议二</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* CSS 过渡与动画 */
+    @keyframes fe-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .fe-tab-btn:hover {
+        color: white !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    .fe-tab-btn.active {
+        color: #00ffff !important;
+        background: rgba(0, 255, 255, 0.1) !important;
+        border: 1px solid rgba(0, 255, 255, 0.2) !important;
+    }
+    
+    .slide-nav-btn:hover {
+        background: rgba(255,255,255,0.15) !important;
+        border-color: rgba(255,255,255,0.2) !important;
+    }
+    
+    #grade-upload-box:hover {
+        border-color: #11998e !important;
+        background: rgba(17, 153, 142, 0.05) !important;
+    }
+    
+    /* PPT 幻灯片视觉主题 CSS */
+    .slide-theme-ancient {
+        background: #f4eae1 !important;
+        color: #3e2723 !important;
+        border: 10px double #8d6e63;
+        font-family: "STKaiti", "KaiTi", "Georgia", serif;
+    }
+    .slide-theme-ancient h1 {
+        color: #5d4037 !important;
+        border-bottom: 2px dashed #bcaaa4;
+        padding-bottom: 15px;
+    }
+    .slide-theme-ancient ul {
+        list-style-type: square;
+        color: #4e342e;
+    }
+
+    .slide-theme-tech {
+        background: #090916 !important;
+        color: #fff !important;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.1) inset;
+        font-family: "Segoe UI", "Roboto", monospace;
+    }
+    .slide-theme-tech h1 {
+        color: #00ffff !important;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    .slide-theme-tech ul {
+        color: rgba(255,255,255,0.85);
+    }
+    .slide-theme-tech ul li::marker {
+        color: #00ffff;
+    }
+
+    .slide-theme-academic {
+        background: #f8f9fa !important;
+        color: #2b3e50 !important;
+        border-top: 15px solid #2c3e50;
+        border-bottom: 4px solid #2c3e50;
+        border-left: 1px solid #dcdde1;
+        border-right: 1px solid #dcdde1;
+        font-family: "Georgia", "Times New Roman", serif;
+    }
+    .slide-theme-academic h1 {
+        color: #2c3e50 !important;
+        font-weight: normal;
+    }
+    .slide-theme-academic ul {
+        color: #34495e;
+    }
+
+    .slide-theme-cartoon {
+        background: linear-gradient(135deg, #ffeaa7 0%, #ff9f43 100%) !important;
+        color: #2d3436 !important;
+        border: 4px solid #ffeaa7;
+        border-radius: 25px !important;
+        font-family: "Microsoft YaHei", sans-serif;
+    }
+    .slide-theme-cartoon h1 {
+        color: #2d3436 !important;
+        background: white;
+        padding: 10px 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        display: inline-block;
+        font-size: 1.8em !important;
+    }
+    .slide-theme-cartoon ul {
+        color: #2d3436;
+        font-weight: 600;
+    }
+</style>
+
+<!-- 引入 JS 库用于 3D 数字人绘图 -->
+<script src="{{ url_for('static', filename='js/three.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/GLTFLoader.js') }}"></script>
+<script src="{{ url_for('static', filename='js/OrbitControls.js') }}"></script>
+
+<script>
+// ==================== 全局状态与数据定义 ====================
+let activeFETab = 'ppt';
+let generatedSlides = [];
+let currentSlideIndex = 0;
+
+// 数字人模块专用作用域变量
+let courseSlides = [];
+let currentCourseIndex = 0;
+let isCoursePlaying = false;
+let currentUtterance = null; // 用于 Web Speech API
+
+// Three.js 状态变量
+let feScene, feCamera, feRenderer, feMixer, feControls, feModel;
+let feIsTalking = false;
+let feClock = new THREE.Clock();
+let feAnimationId = null;
+
+// ==================== 视图切换逻辑 ====================
+function switchFETab(tabName) {
+    activeFETab = tabName;
+    
+    // 激活对应的Tab按钮
+    document.querySelectorAll('.fe-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+    
+    // 隐藏所有面板，展示当前激活面板
+    document.querySelectorAll('.fe-pane').forEach(pane => pane.style.display = 'none');
+    document.getElementById(`pane-${tabName}`).style.display = 'flex';
+    
+    // 如果切到了 3D 数字人教学 tab，我们需要初始化/重启 Three.js
+    if (tabName === 'course') {
+        initCourseThreeJS();
+    } else {
+        // 如果离开教学 tab，停止渲染循环和发音，节省 CPU 资源
+        stopCourseThreeJS();
+        stopNarration();
+    }
+}
+
+// ==================== 1. AI生成PPT模块逻辑 ====================
+function presetPPT(text) {
+    document.getElementById('ppt-topic').value = text;
+}
+
+async function generatePPT() {
+    const topic = document.getElementById('ppt-topic').value.trim();
+    const style = document.getElementById('ppt-style').value;
+    const pageCount = parseInt(document.getElementById('ppt-pages').value);
+    
+    if (!topic) {
+        alert('请输入课件主题或大纲！');
+        return;
+    }
+    
+    const generateBtn = document.getElementById('ppt-generate-btn');
+    generateBtn.disabled = true;
+    generateBtn.innerText = '正在规划生成中...';
+    
+    // 显示加载态
+    document.getElementById('ppt-preview-empty').style.display = 'none';
+    document.getElementById('ppt-preview-content').style.display = 'none';
+    document.getElementById('ppt-preview-loading').style.display = 'flex';
+    
+    // 模拟加载百分比
+    let progress = 10;
+    const progressInterval = setInterval(() => {
+        if (progress < 90) {
+            progress += Math.floor(Math.random() * 8) + 2;
+            document.getElementById('ppt-loading-percent').innerText = `${progress}%`;
+            document.getElementById('ppt-loading-bar').style.width = `${progress}%`;
+            
+            // 切换文案
+            if (progress > 30 && progress <= 55) {
+                document.getElementById('ppt-loading-text').innerText = '正在编写幻灯片大纲文本...';
+            } else if (progress > 55 && progress <= 80) {
+                document.getElementById('ppt-loading-text').innerText = '应用指定美学主题排版...';
+            } else if (progress > 80) {
+                document.getElementById('ppt-loading-text').innerText = '整合数字人讲解课件...';
+            }
+        }
+    }, 250);
+
+    try {
+        const response = await fetch('/api/feature_experience/generate_ppt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topic: topic,
+                style: style,
+                page_count: pageCount
+            })
+        });
+        
+        const data = await response.json();
+        clearInterval(progressInterval);
+        
+        if (data.success && data.slides) {
+            generatedSlides = data.slides;
+            currentSlideIndex = 0;
+            
+            // 填充并展示幻灯片
+            renderSlide(style);
+            
+            document.getElementById('ppt-preview-loading').style.display = 'none';
+            document.getElementById('ppt-preview-content').style.display = 'flex';
+        } else {
+            alert('生成PPT课件失败: ' + (data.error || '未知错误'));
+            resetPPTState();
+        }
+    } catch(err) {
+        clearInterval(progressInterval);
+        console.error(err);
+        alert('请求生成接口出错，请确认后端运行正常！');
+        resetPPTState();
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '🚀 开启生成方案';
+    }
+}
+
+function resetPPTState() {
+    document.getElementById('ppt-preview-loading').style.display = 'none';
+    document.getElementById('ppt-preview-content').style.display = 'none';
+    document.getElementById('ppt-preview-empty').style.display = 'flex';
+}
+
+function renderSlide(style) {
+    if (!generatedSlides || generatedSlides.length === 0) return;
+    const slide = generatedSlides[currentSlideIndex];
+    
+    // 设置视觉主题类
+    const viewport = document.getElementById('slide-viewport');
+    viewport.className = ''; // 清空类
+    viewport.classList.add(`slide-theme-${style}`);
+    
+    // 设置文本
+    document.getElementById('slide-title').innerText = slide.title;
+    
+    // 设置要点
+    const ul = document.getElementById('slide-points');
+    ul.innerHTML = '';
+    slide.points.forEach(point => {
+        const li = document.createElement('li');
+        li.innerText = point;
+        ul.appendChild(li);
+    });
+    
+    // 讲解词与页码
+    document.getElementById('slide-narration').innerText = slide.narration;
+    document.getElementById('slide-page-num').innerText = `${currentSlideIndex + 1} / ${generatedSlides.length}`;
+    
+    // 水印主题名
+    const themeLabels = {
+        'ancient': '古典雅致',
+        'tech': '现代科技',
+        'academic': '简约学术',
+        'cartoon': '活泼卡通'
+    };
+    document.getElementById('slide-watermark-theme').innerText = `视觉主题: ${themeLabels[style] || style}`;
+}
+
+function prevSlide() {
+    if (currentSlideIndex > 0) {
+        currentSlideIndex--;
+        const style = document.getElementById('ppt-style').value;
+        renderSlide(style);
+    }
+}
+
+function nextSlide() {
+    if (currentSlideIndex < generatedSlides.length - 1) {
+        currentSlideIndex++;
+        const style = document.getElementById('ppt-style').value;
+        renderSlide(style);
+    }
+}
+
+function exportPPT() {
+    if (!generatedSlides || generatedSlides.length === 0) return;
+    
+    // 转换成 Markdown/大纲文本供用户保存
+    let content = `# PPT课件大纲: ${document.getElementById('ppt-topic').value}\n\n`;
+    generatedSlides.forEach((slide, i) => {
+        content += `## Page ${i + 1}: ${slide.title}\n`;
+        slide.points.forEach(p => content += `- ${p}\n`);
+        content += `\n[教师讲解稿]: ${slide.narration}\n\n---\n\n`;
+    });
+    
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${document.getElementById('ppt-topic').value.slice(0, 10)}_课件大纲.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function linkToCourse() {
+    if (!generatedSlides || generatedSlides.length === 0) {
+        alert('请先生成课件！');
+        return;
+    }
+    
+    // 将 PPT 传给数字人教学
+    courseSlides = JSON.parse(JSON.stringify(generatedSlides));
+    currentCourseIndex = 0;
+    
+    // 同步到数字人页面的 PPT 视觉效果
+    const style = document.getElementById('ppt-style').value;
+    const courseViewport = document.getElementById('course-slide-viewport');
+    courseViewport.className = '';
+    courseViewport.classList.add(`slide-theme-${style}`);
+    
+    // 渲染第一页
+    renderCourseSlide();
+    
+    // 跳转
+    switchFETab('course');
+}
+
+// ==================== 2. AI数字人教学模块逻辑 ====================
+function renderCourseSlide() {
+    if (!courseSlides || courseSlides.length === 0) return;
+    const slide = courseSlides[currentCourseIndex];
+    
+    document.getElementById('course-slide-title').innerText = slide.title;
+    const ul = document.getElementById('course-slide-points');
+    ul.innerHTML = '';
+    slide.points.forEach(point => {
+        const li = document.createElement('li');
+        li.innerText = point;
+        ul.appendChild(li);
+    });
+    
+    document.getElementById('course-page-num').innerText = `${currentCourseIndex + 1} / ${courseSlides.length}`;
+    document.getElementById('course-subtitles').innerText = `💬 [字幕] ${slide.title}`;
+}
+
+function changeCourseSlide(dir) {
+    if (!courseSlides || courseSlides.length === 0) return;
+    
+    stopNarration();
+    
+    if (dir === 1 && currentCourseIndex < courseSlides.length - 1) {
+        currentCourseIndex++;
+        renderCourseSlide();
+        if (isCoursePlaying) {
+            playCurrentCourseNarration();
+        }
+    } else if (dir === -1 && currentCourseIndex > 0) {
+        currentCourseIndex--;
+        renderCourseSlide();
+        if (isCoursePlaying) {
+            playCurrentCourseNarration();
+        }
+    }
+}
+
+function loadPresetCourse() {
+    courseSlides = [
+        {
+            "title": "智慧教育：AI在课堂的角色定位",
+            "points": ["智能助教：从琐碎重复工作解放教师", "辅导顾问：提供个性化学习方案设计", "数字大屏：动态展示多维度统计数据"],
+            "narration": "同学们好！现在我们来开始范例课程：AI在课堂的角色定位。人工智能并不是要取代老师，而是作为智能的助教和教学辅导顾问。它能够帮我们设计自适应的个性化方案，并且生成直观的数字化看板。我们接下看第二页。"
+        },
+        {
+            "title": "人机协同教学新样态与优势",
+            "points": ["因材施教：精准抓取各段学习薄弱项", "减负增效：自动化作业分层与成绩生成", "启发导学：点燃学习兴趣而非填鸭死记"],
+            "narration": "第二页讲到人机协同的优势。通过智能分析薄弱项，我们真正做到了因材施教，实现减负增效，设计更有启发性的课堂互动，而不是一味地填鸭死记。接下来，让我们看最后一页的总结。"
+        },
+        {
+            "title": "未来智慧教育愿景展望",
+            "points": ["AI 讲师与真实教师双能联动", "全域教学资源即时生成共享", "构建更温暖、更包容的终身学习平台"],
+            "narration": "最后，我们来作个总结。未来的智慧教育，是虚拟AI讲师和真人教师双向联动的时代。课件 and 资源都是即时生成的，我们将共同构建一个更加包容、更有温度的终身学习平台！谢谢大家的聆听。"
+        }
+    ];
+    
+    currentCourseIndex = 0;
+    
+    const courseViewport = document.getElementById('course-slide-viewport');
+    courseViewport.className = 'slide-theme-tech';
+    
+    renderCourseSlide();
+}
+
+function triggerPPTXUpload() {
+    document.getElementById('course-file-input').click();
+}
+
+async function handlePPTXUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.name.toLowerCase().endsWith('.pptx')) {
+        alert('目前仅支持上传解析 .pptx 格式的幻灯片文件！');
+        event.target.value = '';
+        return;
+    }
+    
+    updateTeacherStatus('正在上传解析课件...', '#FF9800');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/api/feature_experience/upload_ppt', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        if (data.success && data.slides) {
+            courseSlides = data.slides;
+            currentCourseIndex = 0;
+            
+            const courseViewport = document.getElementById('course-slide-viewport');
+            courseViewport.className = 'slide-theme-tech';
+            
+            renderCourseSlide();
+            alert(`课件解析成功！共解析出 ${courseSlides.length} 页幻灯片。`);
+        } else {
+            alert('解析课件失败: ' + (data.error || '未知错误'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('网络请求出错，请重试！');
+    } finally {
+        updateTeacherStatus('AI 讲师：空闲中', '#4CAF50');
+        event.target.value = '';
+    }
+}
+
+function toggleCoursePlayback() {
+    if (!courseSlides || courseSlides.length === 0) {
+        alert('当前没有加载课件！您可以点击“载入内置范例课程”或在第一页生成它。');
+        return;
+    }
+    
+    const playBtn = document.getElementById('course-play-btn');
+    if (!isCoursePlaying) {
+        isCoursePlaying = true;
+        playBtn.innerText = '⏸ 暂停课程讲解';
+        playBtn.style.background = 'linear-gradient(135deg, #e65c00 0%, #F9D423 100%)';
+        playCurrentCourseNarration();
+    } else {
+        isCoursePlaying = false;
+        playBtn.innerText = '▶ 恢复课程讲解';
+        playBtn.style.background = 'linear-gradient(135deg, #00b4db 0%, #0083b0 100%)';
+        stopNarration();
+    }
+}
+
+// 播放当前页面的讲解词
+async function playCurrentCourseNarration() {
+    if (!isCoursePlaying || !courseSlides || courseSlides.length === 0) return;
+    const slide = courseSlides[currentCourseIndex];
+    const text = slide.narration;
+    
+    document.getElementById('course-subtitles').innerText = `🗣️ 正在讲解: ${text}`;
+    updateTeacherStatus('正在上课讲解中... (🗣️)', '#00ffff');
+    
+    // 1. 尝试使用后端的 TTS 接口 (Baidu API)
+    try {
+        const speaker = document.getElementById('course-speaker').value;
+        const response = await fetch('/api/voice/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: text,
+                language: 'zh',
+                speaker: parseInt(speaker)
+            })
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const audioUrl = URL.createObjectURL(blob);
+            
+            // 使用 Audio 播报
+            window.courseAudio = new Audio(audioUrl);
+            window.courseAudio.onplay = () => {
+                feIsTalking = true;
+            };
+            window.courseAudio.onended = () => {
+                onNarrationEnd();
+            };
+            window.courseAudio.onerror = () => {
+                console.log("Audio URL playback failed, falling back to Web Speech Synthesis");
+                playWebSpeech(text);
+            };
+            
+            window.courseAudio.play();
+            return;
+        }
+    } catch(err) {
+        console.log("Backend TTS endpoint call error, falling back to web speech", err);
+    }
+    
+    // 2. Web Speech Synthesis API Fallback (完全客户端运行)
+    playWebSpeech(text);
+}
+
+function playWebSpeech(text) {
+    if (!('speechSynthesis' in window)) {
+        console.log("Browser doesn't support Web Speech Synthesis.");
+        feIsTalking = true;
+        setTimeout(() => {
+            onNarrationEnd();
+        }, text.length * 200);
+        return;
+    }
+    
+    window.speechSynthesis.cancel(); // 终止所有前面的播放
+    
+    currentUtterance = new SpeechSynthesisUtterance(text);
+    currentUtterance.lang = 'zh-CN';
+    
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find(v => v.lang.includes('ZH') || v.lang.includes('zh'));
+    if (zhVoice) currentUtterance.voice = zhVoice;
+    
+    currentUtterance.rate = 1.0; // 语速
+    currentUtterance.pitch = 1.0;
+    
+    currentUtterance.onstart = () => {
+        feIsTalking = true;
+    };
+    
+    currentUtterance.onend = () => {
+        onNarrationEnd();
+    };
+    
+    currentUtterance.onerror = (e) => {
+        console.error("Speech Synthesis error:", e);
+        feIsTalking = false;
+        updateTeacherStatus('AI 讲师：空闲中', '#4CAF50');
+    };
+    
+    window.speechSynthesis.speak(currentUtterance);
+}
+
+function onNarrationEnd() {
+    feIsTalking = false;
+    resetModelMouth();
+    updateTeacherStatus('AI 讲师：讲解完毕', '#F9D423');
+    
+    const autoplay = document.getElementById('course-autoplay').checked;
+    if (autoplay && isCoursePlaying && currentCourseIndex < courseSlides.length - 1) {
+        // 等待1.5秒后切下一页
+        setTimeout(() => {
+            if (isCoursePlaying && activeFETab === 'course') {
+                currentCourseIndex++;
+                renderCourseSlide();
+                playCurrentCourseNarration();
+            }
+        }, 1500);
+    } else if (currentCourseIndex === courseSlides.length - 1) {
+        // 课程彻底讲完
+        isCoursePlaying = false;
+        const playBtn = document.getElementById('course-play-btn');
+        playBtn.innerText = '▶ 开始课程授课';
+        playBtn.style.background = 'linear-gradient(135deg, #00b4db 0%, #0083b0 100%)';
+        updateTeacherStatus('AI 讲师：教学已全部完成', '#4CAF50');
+        document.getElementById('course-subtitles').innerText = '🎉 本堂课程讲完了，谢谢大家！';
+    }
+}
+
+function stopNarration() {
+    feIsTalking = false;
+    resetModelMouth();
+    
+    if (window.courseAudio) {
+        window.courseAudio.pause();
+        window.courseAudio = null;
+    }
+    if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+    }
+    updateTeacherStatus('AI 讲师：空闲中', '#4CAF50');
+}
+
+function updateTeacherStatus(text, color) {
+    const dot = document.getElementById('fe-teacher-status-dot');
+    const label = document.getElementById('fe-teacher-status-text');
+    if (dot && label) {
+        dot.style.background = color;
+        dot.style.boxShadow = `0 0 10px ${color}`;
+        label.innerText = text;
+    }
+}
+
+// ==================== 3. AI批改作业模块逻辑 ====================
+const gradingSamples = {
+    'chinese': '昨晚，爸爸带我去公园散步，在路上得时候，我克苦地背诵了李白的静夜思。虽然我背错了一个字，因为爸爸还是摸着我的头，露出了开心的笑容和欣慰的笑声。',
+    'math': '解答应用题：\n已知正方形铁皮的边长为 3x = 6 cm，所以边长 x = 3 cm。\n该铁皮的总面积为： S = x的平方 = 9 cm。',
+    'english': 'Yesterday I go to a beautiful library with my classmates. I is very good in English, so I read a lot of English books. The student show a lot of interest in Sunday morning.'
+};
+
+function onSubjectChange() {
+    const sub = document.getElementById('grade-subject').value;
+    const textarea = document.getElementById('grade-text');
+    
+    if (sub === 'chinese') {
+        textarea.placeholder = '在此输入学生语文作业或作文段落...';
+    } else if (sub === 'math') {
+        textarea.placeholder = '在此输入学生数学方程、应用题算式与求解步骤...';
+    } else {
+        textarea.placeholder = '在此输入学生英语语法填空或英语短文小作文...';
+    }
+}
+
+function loadGradingSample() {
+    const sub = document.getElementById('grade-subject').value;
+    document.getElementById('grade-text').value = gradingSamples[sub] || '';
+}
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('grade-upload-text').innerText = `已载入: ${file.name} (大小 ${Math.round(file.size/1024)}KB)`;
+    }
+}
+
+async function submitGrading() {
+    const text = document.getElementById('grade-text').value.trim();
+    const subject = document.getElementById('grade-subject').value;
+    
+    if (!text) {
+        alert('请先输入作业文本内容，或载入内置差错范例！');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('grade-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = '正在审阅与深度批改...';
+    
+    document.getElementById('grade-report-empty').style.display = 'none';
+    document.getElementById('grade-report-content').style.display = 'none';
+    document.getElementById('grade-report-loading').style.display = 'flex';
+    
+    try {
+        const response = await fetch('/api/feature_experience/correct_homework', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                homework_text: text,
+                subject: subject
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.report) {
+            const report = data.report;
+            
+            document.getElementById('report-score').innerText = report.score;
+            document.getElementById('report-comment').innerText = report.overall_comment;
+            
+            const correctionsList = document.getElementById('report-corrections-list');
+            correctionsList.innerHTML = '';
+            
+            if (report.corrections && report.corrections.length > 0) {
+                report.corrections.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'correction-card';
+                    card.style.background = 'white';
+                    card.style.border = '1px solid #e6e0d8';
+                    card.style.borderRadius = '8px';
+                    card.style.padding = '12px 15px';
+                    card.style.boxShadow = '0 2px 6px rgba(0,0,0,0.02)';
+                    
+                    card.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.88em;">
+                            <div style="text-decoration: line-through; color: #c0392b; font-weight: bold; background: rgba(192, 57, 43, 0.05); padding: 3px 8px; border-radius: 4px;">原错内容: "${c.original}"</div>
+                            <div style="color: #27ae60; font-weight: bold; background: rgba(39, 174, 96, 0.05); padding: 3px 8px; border-radius: 4px;">修正建议: "${c.corrected}"</div>
+                            <div style="color: #7f8c8d; line-height: 1.4; padding-left: 8px; border-left: 2px solid #bdc3c7; margin-top: 4px;">解析: ${c.reason}</div>
+                        </div>
+                    `;
+                    correctionsList.appendChild(card);
+                });
+            } else {
+                correctionsList.innerHTML = '<p style="color: #27ae60; font-size: 0.9em; font-weight: bold; margin: 0;">🎉 作业非常完美，未检测出明显拼写或计算错误！</p>';
+            }
+            
+            const suggestionsList = document.getElementById('report-suggestions-list');
+            suggestionsList.innerHTML = '';
+            if (report.suggestions && report.suggestions.length > 0) {
+                report.suggestions.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerText = s;
+                    suggestionsList.appendChild(li);
+                });
+            }
+            
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            document.getElementById('report-date').innerText = dateStr;
+            
+            document.getElementById('grade-report-loading').style.display = 'none';
+            document.getElementById('grade-report-content').style.display = 'flex';
+        } else {
+            alert('批改失败: ' + (data.error || '后端处理出错'));
+            resetGradingState();
+        }
+    } catch(err) {
+        console.error(err);
+        alert('连接批改接口异常，请重试！');
+        resetGradingState();
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = '🎓 提交批改作业';
+    }
+}
+
+function resetGradingState() {
+    document.getElementById('grade-report-loading').style.display = 'none';
+    document.getElementById('grade-report-content').style.display = 'none';
+    document.getElementById('grade-report-empty').style.display = 'flex';
+}
+
+document.getElementById('grade-upload-box').addEventListener('click', () => {
+    document.getElementById('grade-file').click();
+});
+
+
+// ==================== Three.js 3D 虚拟讲师引擎 ====================
+function initCourseThreeJS() {
+    if (feScene) return;
+    
+    const container = document.getElementById('fe-canvas-container');
+    if (!container) return;
+    
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    feScene = new THREE.Scene();
+    feScene.background = new THREE.Color(0x0b0b16);
+    feScene.fog = new THREE.FogExp2(0x0b0b16, 0.15);
+    
+    feCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    feCamera.position.set(0, 0.4, 2.5);
+    
+    feRenderer = new THREE.WebGLRenderer({ antialias: true });
+    feRenderer.setSize(width, height);
+    feRenderer.shadowMap.enabled = true;
+    feRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(feRenderer.domElement);
+    
+    feControls = new THREE.OrbitControls(feCamera, feRenderer.domElement);
+    feControls.enableDamping = true;
+    feControls.dampingFactor = 0.05;
+    feControls.maxPolarAngle = Math.PI / 2;
+    feControls.minDistance = 1;
+    feControls.maxDistance = 5;
+    feControls.target.set(0, 0.3, 0);
+    
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    feScene.add(ambientLight);
+    
+    const dirLight = new THREE.DirectionalLight(0x00ffff, 0.8);
+    dirLight.position.set(5, 5, 5);
+    dirLight.castShadow = true;
+    feScene.add(dirLight);
+    
+    const sideLight = new THREE.PointLight(0x764ba2, 0.8, 10);
+    sideLight.position.set(-3, 2, 2);
+    feScene.add(sideLight);
+    
+    const podiumGeo = new THREE.BoxGeometry(0.8, 0.4, 0.5);
+    const podiumMat = new THREE.MeshStandardMaterial({ color: 0x151530, roughness: 0.6 });
+    const podium = new THREE.Mesh(podiumGeo, podiumMat);
+    podium.position.set(0, -0.3, 0.2);
+    podium.receiveShadow = true;
+    feScene.add(podium);
+    
+    const loader = new THREE.GLTFLoader();
+    loader.load('/static/models/robot.glb', function(gltf) {
+        feModel = gltf.scene;
+        
+        feModel.position.set(0, -0.1, 0);
+        feModel.scale.set(0.65, 0.65, 0.65);
+        
+        feModel.traverse(function(child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                if (child.material) {
+                    child.material.roughness = 0.25;
+                    child.material.metalness = 0.75;
+                }
+            }
+        });
+        
+        feScene.add(feModel);
+        
+        if (gltf.animations && gltf.animations.length > 0) {
+            feMixer = new THREE.AnimationMixer(feModel);
+            const idleAction = feMixer.clipAction(gltf.animations[0]);
+            idleAction.play();
+        }
+        
+        document.getElementById('fe-model-loading').style.display = 'none';
+        animateCourseThreeJS();
+        
+    }, undefined, function(err) {
+        console.error("Course Three.js model load failed:", err);
+        document.getElementById('fe-model-loading').innerHTML = '<p style="color: #ff3333;">❌ 虚拟讲师加载失败</p>';
+    });
+    
+    window.addEventListener('resize', onCourseResize);
+}
+
+function onCourseResize() {
+    const container = document.getElementById('fe-canvas-container');
+    if (!container || !feRenderer || !feCamera) return;
+    
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    feCamera.aspect = width / height;
+    feCamera.updateProjectionMatrix();
+    feRenderer.setSize(width, height);
+}
+
+function animateCourseThreeJS() {
+    feAnimationId = requestAnimationFrame(animateCourseThreeJS);
+    
+    const delta = feClock.getDelta();
+    const elapsedTime = feClock.getElapsedTime();
+    
+    if (feMixer) feMixer.update(delta);
+    if (feControls) feControls.update();
+    
+    if (feModel) {
+        if (!feIsTalking) {
+            feModel.position.y = -0.1 + Math.sin(elapsedTime * 1.5) * 0.008;
+            
+            const head = feModel.getObjectByName('head') || feModel.getObjectByName('Head');
+            if (head) {
+                head.rotation.y = Math.sin(elapsedTime * 0.4) * 0.04;
+                head.rotation.x = Math.sin(elapsedTime * 0.8) * 0.015;
+            }
+        } else {
+            feModel.position.y = -0.1 + Math.sin(elapsedTime * 8) * 0.004;
+            
+            const head = feModel.getObjectByName('head') || feModel.getObjectByName('Head');
+            if (head) {
+                head.rotation.x = (Math.sin(elapsedTime * 12) * 0.035) + 0.015;
+                head.rotation.y = Math.sin(elapsedTime * 3) * 0.05;
+            }
+            
+            const mouth = feModel.getObjectByName('mouth') || feModel.getObjectByName('Mouth') || 
+                          feModel.getObjectByName('jaw') || feModel.getObjectByName('Jaw');
+            if (mouth && mouth !== feModel) {
+                mouth.scale.z = 1 + Math.sin(elapsedTime * 20) * 0.25;
+                mouth.position.y = Math.sin(elapsedTime * 20) * 0.012;
+            } else {
+                feModel.scale.y = 0.65 * (1 + Math.sin(elapsedTime * 22) * 0.006);
+            }
+        }
+    }
+    
+    if (feRenderer && feScene && feCamera) {
+        feRenderer.render(feScene, feCamera);
+    }
+}
+
+function resetModelMouth() {
+    if (feModel) {
+        const mouth = feModel.getObjectByName('mouth') || feModel.getObjectByName('Mouth') || 
+                      feModel.getObjectByName('jaw') || feModel.getObjectByName('Jaw');
+        if (mouth && mouth !== feModel) {
+            mouth.scale.z = 1;
+            mouth.position.y = 0;
+        }
+        feModel.scale.y = 0.65;
+    }
+}
+
+function stopCourseThreeJS() {
+    if (feAnimationId) {
+        cancelAnimationFrame(feAnimationId);
+        feAnimationId = null;
+    }
+    
+    const container = document.getElementById('fe-canvas-container');
+    if (container) container.innerHTML = '';
+    
+    feScene = null;
+    feCamera = null;
+    feRenderer = null;
+    feMixer = null;
+    feControls = null;
+    feModel = null;
+    
+    const mask = document.getElementById('fe-model-loading');
+    if (mask) mask.style.display = 'flex';
+}
+</script>
