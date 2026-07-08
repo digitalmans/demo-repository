@@ -192,6 +192,12 @@ function applyLanguageSetting(lang) {
     const sLangZh = document.getElementById('settings-lang-zh');
     const sLangEn = document.getElementById('settings-lang-en');
     
+    const sThemeLabel = document.getElementById('settings-theme-label');
+    const sColorDefault = document.getElementById('settings-color-default');
+    const sColorYellow = document.getElementById('settings-color-yellow');
+    const sColorGreen = document.getElementById('settings-color-green');
+    const sColorWhite = document.getElementById('settings-color-white');
+
     const sAccountTitle = document.getElementById('settings-account-title');
     const sLabelUser = document.getElementById('account-label-username');
     const sLabelRole = document.getElementById('account-label-role');
@@ -217,6 +223,12 @@ function applyLanguageSetting(lang) {
         if (sLangLabel) sLangLabel.innerText = 'System Language';
         if (sLangZh) sLangZh.innerText = 'Chinese';
         if (sLangEn) sLangEn.innerText = 'English';
+
+        if (sThemeLabel) sThemeLabel.innerText = 'Choose Interface Color';
+        if (sColorDefault) sColorDefault.innerText = 'Default';
+        if (sColorYellow) sColorYellow.innerText = 'Yellow';
+        if (sColorGreen) sColorGreen.innerText = 'Green';
+        if (sColorWhite) sColorWhite.innerText = 'White';
         
         if (title) title.innerText = 'Language Preview';
         if (text) text.innerText = 'Current active language is English. All system elements, menu buttons, and bot Q&As will be customized based on your English preferences.';
@@ -253,6 +265,12 @@ function applyLanguageSetting(lang) {
         if (sLangLabel) sLangLabel.innerText = '选择系统语言 (Choose Language)';
         if (sLangZh) sLangZh.innerText = '中文界面 (Chinese)';
         if (sLangEn) sLangEn.innerText = '英文界面 (English)';
+
+        if (sThemeLabel) sThemeLabel.innerText = '选择界面颜色 (Choose Interface Color)';
+        if (sColorDefault) sColorDefault.innerText = '默认 (Default)';
+        if (sColorYellow) sColorYellow.innerText = '黄色 (Yellow)';
+        if (sColorGreen) sColorGreen.innerText = '绿色 (Green)';
+        if (sColorWhite) sColorWhite.innerText = '白色 (White)';
         
         if (title) title.innerText = '界面语言预览 (Language Preview)';
         if (text) text.innerText = '当前选中的是中文界面。所有的系统组件、机器人问答将按您的语言习惯进行展示。';
