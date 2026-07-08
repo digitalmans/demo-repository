@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -6,23 +6,17 @@
     <title>智能问答系统</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { height: 100%; overflow: hidden; }
+
         .main-container {
             display: flex;
             height: 100vh;
             width: 100vw;
         }
-        
+
+        /* ── 内容壳：所有面板叠放于此 ── */
         .voice-content {
             flex: 1;
             width: 100%;
@@ -31,7 +25,37 @@
             overflow-y: auto;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        
+
+        /* 每个模块面板，默认隐藏 */
+        .spa-panel {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+        .spa-panel.active {
+            display: block;
+        }
+
+        /* 加载中骨架屏 */
+        .spa-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: rgba(255,255,255,0.7);
+            gap: 16px;
+        }
+        .spa-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── 侧边栏 ── */
         .logout-sidebar {
             width: 200px;
             height: 100%;
@@ -45,7 +69,7 @@
             z-index: 1000;
             box-sizing: border-box;
         }
-        
+
         .user-welcome {
             color: white;
             text-align: center;
@@ -54,19 +78,9 @@
             border-bottom: 1px solid rgba(255,255,255,0.2);
             width: 100%;
         }
-        
-        .user-welcome h3 {
-            font-size: 1.1em;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .user-welcome .username {
-            font-size: 1.3em;
-            font-weight: 700;
-            color: #fff;
-        }
-        
+        .user-welcome h3 { font-size: 1.1em; margin-bottom: 10px; font-weight: 600; }
+        .user-welcome .username { font-size: 1.3em; font-weight: 700; color: #fff; }
+
         .logout-btn {
             background: rgba(255,255,255,0.2);
             color: white;
@@ -81,31 +95,15 @@
             width: 100%;
             text-align: center;
             display: block;
+            margin-top: 15px;
         }
-        
         .logout-btn:hover {
             background: rgba(255,255,255,0.3);
             border-color: rgba(255,255,255,0.5);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        
-        .admin-link {
-            margin-top: 15px;
-            color: rgba(255,255,255,0.9);
-            text-decoration: none;
-            font-size: 0.9em;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: all 0.3s;
-            display: block;
-            text-align: center;
-        }
-        
-        .admin-link:hover {
-            background: rgba(255,255,255,0.1);
-        }
-        
+
         .switch-buttons {
             margin-top: 12px;
             margin-bottom: auto;
@@ -114,7 +112,7 @@
             flex-direction: column;
             gap: 12px;
         }
-        
+
         .switch-btn {
             background: rgba(255,255,255,0.2);
             color: white;
@@ -130,368 +128,340 @@
             text-align: center;
             display: block;
         }
-        
         .switch-btn:hover {
             background: rgba(255,255,255,0.3);
             border-color: rgba(255,255,255,0.5);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        
         .switch-btn.active {
             background: rgba(255,255,255,0.4);
             border-color: rgba(255,255,255,0.6);
             font-weight: 700;
         }
-        
-        .movie-iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
+
+        .movie-iframe { width: 100%; height: 100%; border: none; }
+
         @media (max-width: 768px) {
-            .logout-sidebar {
-                width: 150px;
-                padding: 15px;
-            }
-            
-            .user-welcome h3 {
-                font-size: 0.9em;
-            }
-            
-            .user-welcome .username {
-                font-size: 1.1em;
-            }
+            .logout-sidebar { width: 150px; padding: 15px; }
+            .user-welcome h3 { font-size: 0.9em; }
+            .user-welcome .username { font-size: 1.1em; }
         }
     </style>
 </head>
 <body>
     <div class="main-container">
-        <!-- 内容区域 -->
-        <div class="voice-content">
-            {% if error %}
-            <div style="padding: 20px; color: red;">
-                <p>错误: {{ error }}</p>
+        <!-- 内容区域：所有模块面板叠放 -->
+        <div class="voice-content" id="voice-content-root">
+            <!-- 每个模块占一个 .spa-panel div，首次点击时懒加载 HTML 片段 -->
+            <div class="spa-panel {% if current_view == 'qa_robot' %}active{% endif %}" id="panel-qa_robot">
+                {% if current_view == 'qa_robot' %}
+                    {% if error %}
+                        <div style="padding:20px;color:red;"><p>错误: {{ error }}</p></div>
+                    {% else %}
+                        {% include 'qa_robot_content.html' %}
+                    {% endif %}
+                {% else %}
+                    <div class="spa-loading"><div class="spa-spinner"></div><span>加载中...</span></div>
+                {% endif %}
             </div>
-            {% elif current_view == 'qa_robot' %}
-                {% include 'qa_robot_content.html' %}
-            {% elif current_view == 'qa_discussion' %}
-                {% include 'qa_discussion_content.html' %}
-            {% elif current_view == 'digital_human' %}
-                {% include 'digital_human_content.html' %}
-            {% elif current_view == 'user_profile' %}
-                {% include 'user_profile.html' %}
-            {% elif current_view == 'feature_experience' %}
-                {% include 'feature_experience_content.html' %}
-            {% elif current_view == 'settings' %}
-                {% include 'settings_content.html' %}
-            {% else %}
-                {% include 'qa_robot_content.html' %}
-            {% endif %}
+
+            <div class="spa-panel {% if current_view == 'qa_discussion' %}active{% endif %}" id="panel-qa_discussion">
+                {% if current_view == 'qa_discussion' %}
+                    {% include 'qa_discussion_content.html' %}
+                {% else %}
+                    <div class="spa-loading"><div class="spa-spinner"></div><span>加载中...</span></div>
+                {% endif %}
+            </div>
+
+            <div class="spa-panel {% if current_view == 'feature_experience' %}active{% endif %}" id="panel-feature_experience">
+                {% if current_view == 'feature_experience' %}
+                    {% include 'feature_experience_content.html' %}
+                {% else %}
+                    <div class="spa-loading"><div class="spa-spinner"></div><span>加载中...</span></div>
+                {% endif %}
+            </div>
+
+            <div class="spa-panel {% if current_view == 'settings' %}active{% endif %}" id="panel-settings">
+                {% if current_view == 'settings' %}
+                    {% include 'settings_content.html' %}
+                {% else %}
+                    <div class="spa-loading"><div class="spa-spinner"></div><span>加载中...</span></div>
+                {% endif %}
+            </div>
+
+            <div class="spa-panel {% if current_view == 'user_profile' %}active{% endif %}" id="panel-user_profile">
+                {% if current_view == 'user_profile' %}
+                    {% include 'user_profile.html' %}
+                {% else %}
+                    <div class="spa-loading"><div class="spa-spinner"></div><span>加载中...</span></div>
+                {% endif %}
+            </div>
         </div>
-        
-        <!-- 右侧退出登录侧边栏 -->
+
+        <!-- 右侧导航侧边栏 -->
         <div class="logout-sidebar">
             <div class="user-welcome">
                 <h3>智能问答系统</h3>
                 <div class="username">欢迎, {{ username }}</div>
             </div>
-            
+
             <div class="switch-buttons">
-                <a href="{{ url_for('qa_robot') }}" class="switch-btn {% if current_view == 'qa_robot' %}active{% endif %}" id="qa-robot-btn">
-                    🤖 问答机器人
-                </a>
-                <a href="{{ url_for('digital_human') }}" class="switch-btn {% if current_view == 'digital_human' %}active{% endif %}" id="digital-human-btn">
-                    👤 3D 数字人
-                </a>
-                <a href="{{ url_for('feature_experience') }}" class="switch-btn {% if current_view == 'feature_experience' %}active{% endif %}" id="feature-experience-btn">
-                    ✨ 功能体验
-                </a>
-                <a href="{{ url_for('qa_discussion') }}" class="switch-btn {% if current_view == 'qa_discussion' %}active{% endif %}" id="qa-discussion-btn">
-                    💬 讨论区
-                </a>
-                <a href="{{ url_for('user_profile_page', username=session.get('username')) }}" class="switch-btn {% if current_view == 'user_profile' %}active{% endif %}" id="user-profile-btn">
-                    🙋 我的主页
-                </a>
-                <a href="{{ url_for('settings') }}" class="switch-btn {% if current_view == 'settings' %}active{% endif %}" id="settings-btn">
-                    ⚙️ 系统设置
-                </a>
+                <a href="#" data-view="qa_robot"
+                   class="switch-btn {% if current_view == 'qa_robot' %}active{% endif %}"
+                   id="qa-robot-btn">🤖 问答机器人</a>
+
+                <a href="{{ url_for('digital_human') }}" target="_blank"
+                   class="switch-btn {% if current_view == 'digital_human' %}active{% endif %}"
+                   id="digital-human-btn">👤 3D 数字人</a>
+
+                <a href="#" data-view="feature_experience"
+                   class="switch-btn {% if current_view == 'feature_experience' %}active{% endif %}"
+                   id="feature-experience-btn">✨ 功能体验</a>
+
+                <a href="#" data-view="qa_discussion"
+                   class="switch-btn {% if current_view == 'qa_discussion' %}active{% endif %}"
+                   id="qa-discussion-btn">💬 讨论区</a>
+
+                <a href="#" data-view="user_profile"
+                   class="switch-btn {% if current_view == 'user_profile' %}active{% endif %}"
+                   id="user-profile-btn">🙋 我的主页</a>
+
+                <a href="#" data-view="settings"
+                   class="switch-btn {% if current_view == 'settings' %}active{% endif %}"
+                   id="settings-btn">⚙️ 系统设置</a>
+
                 {% if session.get('role') == 'admin' %}
-                <a href="{{ url_for('admin_panel') }}" class="switch-btn" id="admin-panel-btn">
-                    🔐 管理员后台
-                </a>
+                <a href="{{ url_for('admin_panel') }}"
+                   class="switch-btn" id="admin-panel-btn">🔐 管理员后台</a>
                 {% endif %}
             </div>
-            
-            <a href="{{ url_for('logout') }}" class="logout-btn" id="logout-btn" style="margin-top: 15px;">
+
+            <a href="{{ url_for('logout') }}" class="logout-btn" id="logout-btn">
                 🚪 退出登录
             </a>
         </div>
     </div>
 
     <script>
+        // ==================== 翻译词典 ====================
         const translationDict = {
-            // Q&A Robot
             "智能问答机器人": "Intelligent Q&A Robot",
             "本地知识库 + DeepSeek API 综合回答": "Local DB + DeepSeek AI Integrated Answer",
-            "历史记录": "History",
-            "+ 新对话": "+ New Chat",
-            "提问": "Question",
-            "回答模式": "Response Mode",
-            "发送": "Send",
-            "思考中...": "Thinking...",
+            "历史记录": "History", "+ 新对话": "+ New Chat",
+            "提问": "Question", "回答模式": "Response Mode",
+            "发送": "Send", "思考中...": "Thinking...",
             "选择发音人（中文）": "Select Voice (Chinese)",
-            "输出中文": "Output Chinese",
-            "清空当前对话": "Clear Current Chat",
-            "提示": "Tips",
-            "可以询问各种常见问题": "Ask common Q&A questions",
+            "输出中文": "Output Chinese", "清空当前对话": "Clear Current Chat",
+            "提示": "Tips", "可以询问各种常见问题": "Ask common Q&A questions",
             "系统会优先检索本地知识库，再按回答模式生成答案": "Retrieves local knowledge first, then calls AI model",
             "支持多种类型的问题 and 答案": "Supports multiple types of questions/answers",
             "支持多种类型的问题和答案": "Supports multiple types of questions/answers",
-            "统计信息": "Statistics",
-            "对话历史": "Chat History",
+            "统计信息": "Statistics", "对话历史": "Chat History",
             "条消息": " messages",
             "欢迎使用智能问答机器人！": "Welcome to Intelligent Q&A Robot!",
             "我是结合本地知识库和DeepSeek API的智能问答助手。请在左侧输入问题，并选择适合的回答模式。": "I am a Q&A assistant combining local DB and DeepSeek AI. Enter your question on the left to start.",
-            
-            // Feature Experience
             "AI 智慧教育功能体验": "AI Smart Education Showcase",
-            "AI 生成 PPT": "AI Slide Generator",
-            "AI 数字人教学": "AI Avatar Lecture",
+            "AI 生成 PPT": "AI Slide Generator", "AI 数字人教学": "AI Avatar Lecture",
             "AI 批改作业": "AI Homework Grading",
             "PPT 课件生成器": "Slide Outline Generator",
             "输入主题，AI 将自动规划大纲、设计排版与生成讲解稿。": "Enter a topic, AI will draft outlines, layouts, and voice narrations.",
             "课件主题或大纲": "Slide Topic or Outline",
-            "视觉主题风格": "Theme Style",
-            "课件页数": "Slide Count",
+            "视觉主题风格": "Theme Style", "课件页数": "Slide Count",
             "开启生成方案": "Generate Slides",
             "等待生成课件预览": "Waiting for slide preview...",
             "页": " Pages",
             "古诗词鉴赏与美学价值": "Appreciating Classical Poetry",
             "人工智能与智慧教育的未来": "AI & Smart Education Future",
             "启发式教学在理科课堂的探索": "Heuristic Science Teaching",
-            "古诗词鉴赏": "Poetry Apprec.",
-            "智能教育": "Smart Edu",
+            "古诗词鉴赏": "Poetry Apprec.", "智能教育": "Smart Edu",
             "启发式教学": "Heuristic Edu",
             "古典雅致 (棕红水墨)": "Elegant Classical (Ink)",
             "现代科技 (深蓝霓虹)": "Modern Tech (Neon)",
             "简约学术 (灰蓝框架)": "Academic Simple (Slate)",
             "活泼卡通 (橙紫圆角)": "Playful Cartoon (Purple)",
-            
-            // Discussion Board
-            "讨论区": "Discussion Board",
-            "最新": "Latest",
-            "最热": "Hot",
-            "共": "Total ",
-            "条": " posts",
-            "加载中...": "Loading...",
-            "加载更多": "Load More",
-            "发布讨论": "Post a Discussion",
-            "内容 *": "Content *",
-            "发布成功": "Posted successfully",
-            
-            // User Profile
-            "发布的讨论": "Discussions",
-            "发表的评论": "Comments",
-            "收藏": "Favorites",
-            "累计获赞": "Likes Received",
-            "累计浏览": "Views",
-            "发布": "Posts",
-            "评论": "Comments",
-            "管理员": "Administrator",
-            "普通用户": "User",
-            "未绑定邮箱": "No email bound",
-            "未知": "Unknown",
-            
-            // Settings
+            "讨论区": "Discussion Board", "最新": "Latest", "最热": "Hot",
+            "共": "Total ", "条": " posts", "加载中...": "Loading...",
+            "加载更多": "Load More", "发布讨论": "Post a Discussion",
+            "内容 *": "Content *", "发布成功": "Posted successfully",
+            "发布的讨论": "Discussions", "发表的评论": "Comments",
+            "收藏": "Favorites", "累计获赞": "Likes Received", "累计浏览": "Views",
+            "发布": "Posts", "评论": "Comments",
+            "管理员": "Administrator", "普通用户": "User",
+            "未绑定邮箱": "No email bound", "未知": "Unknown",
             "系统设置": "Settings",
             "偏好设置 (Preference)": "Preferences",
             "个人账户中心": "Account Center",
             "偏好设置 / Preference": "Preferences",
             "个人账户中心 / Account Center": "Account Center",
             "选择系统语言 (Choose Language)": "System Language",
-            "中文界面 (Chinese)": "Chinese",
-            "英文界面 (English)": "English",
+            "中文界面 (Chinese)": "Chinese", "英文界面 (English)": "English",
             "界面语言预览 (Language Preview)": "Language Preview",
             "修改账号信息 (Update Profile)": "Update Account Profile",
-            "用户名:": "Username:",
-            "账号角色:": "Role:",
-            "注册邮箱:": "Email:",
-            "注册时间:": "Created at:",
+            "用户名:": "Username:", "账号角色:": "Role:",
+            "注册邮箱:": "Email:", "注册时间:": "Created at:",
             "保存邮箱配置": "Save Profile",
             "选择界面颜色 (Choose Interface Color)": "Interface Color Theme",
-            "默认 (Default)": "Default",
-            "黄色 (Yellow)": "Yellow",
-            "绿色 (Green)": "Green",
-            "白色 (White)": "White"
+            "默认 (Default)": "Default", "黄色 (Yellow)": "Yellow",
+            "绿色 (Green)": "Green", "白色 (White)": "White"
         };
 
+        // ==================== 翻译 DOM ====================
         function translateDOM(root, lang) {
             if (lang !== 'en') return;
-            
-            // 1. 递归翻译文本节点
-            const walker = document.createTreeWalker(
-                root,
-                NodeFilter.SHOW_TEXT,
-                null,
-                false
-            );
-            
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
             let node;
             while (node = walker.nextNode()) {
                 const text = node.nodeValue.trim();
                 if (!text) continue;
-                
                 for (const [zh, en] of Object.entries(translationDict)) {
-                    if (text === zh) {
-                        node.nodeValue = en;
-                        break;
-                    } else if (text.replace(/[^\w\s\u4e00-\u9fa5]/g, '').trim() === zh) {
-                        // 包含图标的情形，保留图标并翻译文字
+                    if (text === zh) { node.nodeValue = en; break; }
+                    else if (text.replace(/[^\w\s\u4e00-\u9fa5]/g, '').trim() === zh) {
                         const match = node.nodeValue.match(/^([^\u4e00-\u9fa5]*)(.*?)([^\u4e00-\u9fa5]*)$/);
-                        if (match && match[2].trim() === zh) {
-                            node.nodeValue = match[1] + en + match[3];
-                        }
+                        if (match && match[2].trim() === zh) node.nodeValue = match[1] + en + match[3];
                         break;
                     }
                 }
             }
-            
-            // 2. 翻译 Placeholder 属性
-            const inputs = root.querySelectorAll('input[placeholder], textarea[placeholder]');
-            inputs.forEach(input => {
-                const ph = input.getAttribute('placeholder');
-                if (ph) {
-                    for (const [zh, en] of Object.entries(translationDict)) {
-                        if (ph.includes(zh)) {
-                            input.setAttribute('placeholder', ph.replace(zh, en));
-                        }
-                    }
+            root.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(el => {
+                const ph = el.getAttribute('placeholder');
+                if (!ph) return;
+                for (const [zh, en] of Object.entries(translationDict)) {
+                    if (ph.includes(zh)) el.setAttribute('placeholder', ph.replace(zh, en));
                 }
             });
         }
 
         let translationIntervalId = null;
 
+        // ==================== 语言 / 颜色主题 ====================
         function applyGlobalLanguageSetting(lang) {
-            const robotBtn = document.getElementById('qa-robot-btn');
-            const dhBtn = document.getElementById('digital-human-btn');
-            const feBtn = document.getElementById('feature-experience-btn');
-            const dcBtn = document.getElementById('qa-discussion-btn');
-            const prBtn = document.getElementById('user-profile-btn');
-            const settingsBtn = document.getElementById('settings-btn');
-            const logoutBtn = document.getElementById('logout-btn');
+            const map = {
+                'qa-robot-btn':          ['🤖 问答机器人', '🤖 QA Robot'],
+                'digital-human-btn':     ['👤 3D 数字人',  '👤 3D Avatar'],
+                'feature-experience-btn':['✨ 功能体验',    '✨ Experience'],
+                'qa-discussion-btn':     ['💬 讨论区',      '💬 Discussion'],
+                'user-profile-btn':      ['🙋 我的主页',    '🙋 My Profile'],
+                'settings-btn':          ['⚙️ 系统设置',   '⚙️ Settings'],
+                'logout-btn':            ['🚪 退出登录',    '🚪 Logout'],
+                'admin-panel-btn':       ['🔐 管理员后台',  '🔐 Admin'],
+            };
+            const idx = lang === 'en' ? 1 : 0;
+            for (const [id, texts] of Object.entries(map)) {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = texts[idx];
+            }
+            window.logout_confirm_msg = lang === 'en' ? 'Are you sure you want to log out?' : '确定要退出登录吗？';
 
             if (lang === 'en') {
-                if (robotBtn) robotBtn.innerHTML = '🤖 QA Robot';
-                if (dhBtn) dhBtn.innerHTML = '👤 3D Avatar';
-                if (feBtn) feBtn.innerHTML = '✨ Experience';
-                if (dcBtn) dcBtn.innerHTML = '💬 Discussion';
-                if (prBtn) prBtn.innerHTML = '🙋 My Profile';
-                if (settingsBtn) settingsBtn.innerHTML = '⚙️ Settings';
-                if (logoutBtn) logoutBtn.innerHTML = '🚪 Logout';
-                window.logout_confirm_msg = 'Are you sure you want to log out?';
-
-                // 启动自动翻译周期
                 if (translationIntervalId) clearInterval(translationIntervalId);
-                
-                const translateContent = () => {
-                    const contentArea = document.querySelector('.voice-content');
-                    if (contentArea) {
-                        translateDOM(contentArea, 'en');
-                    }
-                };
-                
-                // 立即执行一次并设置定时执行，用于捕获异步加载的组件
-                translateContent();
-                translationIntervalId = setInterval(translateContent, 300);
-
+                const run = () => translateDOM(document.querySelector('.voice-content'), 'en');
+                run();
+                translationIntervalId = setInterval(run, 300);
             } else {
-                if (robotBtn) robotBtn.innerHTML = '🤖 问答机器人';
-                if (dhBtn) dhBtn.innerHTML = '👤 3D 数字人';
-                if (feBtn) feBtn.innerHTML = '✨ 功能体验';
-                if (dcBtn) dcBtn.innerHTML = '💬 讨论区';
-                if (prBtn) prBtn.innerHTML = '🙋 我的主页';
-                if (settingsBtn) settingsBtn.innerHTML = '⚙️ 系统设置';
-                if (logoutBtn) logoutBtn.innerHTML = '🚪 退出登录';
-                window.logout_confirm_msg = '确定要退出登录吗？';
-
-                if (translationIntervalId) {
-                    clearInterval(translationIntervalId);
-                    translationIntervalId = null;
-                }
+                if (translationIntervalId) { clearInterval(translationIntervalId); translationIntervalId = null; }
             }
         }
 
         function applyColorTheme(color) {
-            let styleBlock = document.getElementById('theme-style-block');
-            if (!styleBlock) {
-                styleBlock = document.createElement('style');
-                styleBlock.id = 'theme-style-block';
-                document.head.appendChild(styleBlock);
-            }
-            
-            let css = '';
-            if (color === 'yellow') {
-                css = `
-                    .voice-content, .logout-sidebar {
-                        background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
-                    }
-                    .user-profile-container, .settings-container {
-                        background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%) !important;
-                    }
-                `;
-            } else if (color === 'green') {
-                css = `
-                    .voice-content, .logout-sidebar {
-                        background: linear-gradient(135deg, #22c55e 0%, #15803d 100%) !important;
-                    }
-                    .user-profile-container, .settings-container {
-                        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
-                    }
-                `;
-            } else if (color === 'white') {
-                css = `
-                    .voice-content {
-                        background: #ffffff !important;
-                    }
-                    .logout-sidebar {
-                        background: #f3f4f6 !important;
-                        border-left: 1px solid #e5e7eb;
-                    }
-                    .logout-sidebar h3, .logout-sidebar .username, .logout-sidebar a.switch-btn {
-                        color: #374151 !important;
-                    }
-                    .logout-sidebar a.switch-btn.active {
-                        background: #e5e7eb !important;
-                        color: #111827 !important;
-                        border-left: 4px solid #667eea !important;
-                    }
-                    .logout-sidebar a.switch-btn:hover {
-                        background: #f3f4f6 !important;
-                        color: #111827 !important;
-                    }
-                    .logout-btn {
-                        background: #e5e7eb !important;
-                        color: #374151 !important;
-                        border: 1px solid #d1d5db !important;
-                    }
-                    .logout-btn:hover {
-                        background: #d1d5db !important;
-                        color: #111827 !important;
-                    }
-                    .user-profile-container, .settings-container {
-                        background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%) !important;
-                    }
-                `;
-            }
-            styleBlock.innerHTML = css;
+            let s = document.getElementById('theme-style-block');
+            if (!s) { s = document.createElement('style'); s.id = 'theme-style-block'; document.head.appendChild(s); }
+            const themes = {
+                yellow: `.voice-content,.logout-sidebar{background:linear-gradient(135deg,#eab308 0%,#ca8a04 100%)!important}.user-profile-container,.settings-container{background:linear-gradient(135deg,#fef9c3 0%,#fef08a 100%)!important}`,
+                green:  `.voice-content,.logout-sidebar{background:linear-gradient(135deg,#22c55e 0%,#15803d 100%)!important}.user-profile-container,.settings-container{background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%)!important}`,
+                white:  `.voice-content{background:#ffffff!important}.logout-sidebar{background:#f3f4f6!important;border-left:1px solid #e5e7eb}.logout-sidebar h3,.logout-sidebar .username,.logout-sidebar a.switch-btn{color:#374151!important}.logout-sidebar a.switch-btn.active{background:#e5e7eb!important;color:#111827!important;border-left:4px solid #667eea!important}.logout-sidebar a.switch-btn:hover{background:#f3f4f6!important;color:#111827!important}.logout-btn{background:#e5e7eb!important;color:#374151!important;border:1px solid #d1d5db!important}.logout-btn:hover{background:#d1d5db!important;color:#111827!important}.user-profile-container,.settings-container{background:linear-gradient(135deg,#ffffff 0%,#f3f4f6 100%)!important}`
+            };
+            s.innerHTML = themes[color] || '';
         }
 
-        // Initialize language and color theme
+        // ==================== SPA 模块切换 ====================
+        // 记录哪些面板已经加载（避免重复 fetch）
+        const loadedPanels = new Set();
+
+        // 初始当前视图
+        let currentView = '{{ current_view }}' || 'qa_robot';
+
+        // 预填已随服务端渲染的面板
+        if (currentView) loadedPanels.add(currentView);
+
+        /**
+         * 切换至指定模块。
+         * - 如果面板尚未加载，先 fetch /api/partial/<view> 注入 HTML，
+         *   再执行面板内的 <script> 标签。
+         * - 已加载的面板只做 display 切换，不重新加载，确保运行状态不受影响。
+         */
+        async function switchView(view) {
+            if (view === currentView) return;
+
+            // 更新侧边栏 active 状态
+            document.querySelectorAll('.switch-btn[data-view]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+
+            // 隐藏当前面板
+            const oldPanel = document.getElementById('panel-' + currentView);
+            if (oldPanel) oldPanel.classList.remove('active');
+
+            // 显示目标面板
+            const newPanel = document.getElementById('panel-' + view);
+            if (!newPanel) return;
+            newPanel.classList.add('active');
+
+            currentView = view;
+
+            // 更新浏览器 URL（不触发刷新）
+            history.pushState({ view }, '', '/' + view);
+
+            // 如果面板内容尚未加载，fetch 片段并注入
+            if (!loadedPanels.has(view)) {
+                try {
+                    const resp = await fetch('/api/partial/' + view);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const html = await resp.text();
+                    newPanel.innerHTML = html;
+
+                    // 执行面板内的内联 <script> 标签（fetch 注入的 script 不会自动运行）
+                    newPanel.querySelectorAll('script').forEach(oldScript => {
+                        const s = document.createElement('script');
+                        s.textContent = oldScript.textContent;
+                        if (oldScript.src) s.src = oldScript.src;
+                        oldScript.parentNode.replaceChild(s, oldScript);
+                    });
+
+                    loadedPanels.add(view);
+
+                    // 重新应用语言设置
+                    const lang = localStorage.getItem('sys_lang_pref') || 'zh';
+                    if (lang === 'en') translateDOM(newPanel, 'en');
+
+                } catch(err) {
+                    newPanel.innerHTML = `<div class="spa-loading" style="color:#f87171;">
+                        <span>⚠️ 模块加载失败：${err.message}</span>
+                        <button onclick="loadedPanels.delete('${view}');switchView('${view}')"
+                            style="margin-top:10px;padding:8px 16px;border-radius:6px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);cursor:pointer;">
+                            重试
+                        </button>
+                    </div>`;
+                }
+            }
+        }
+
+        // 绑定侧边栏 data-view 按钮点击事件
+        document.querySelectorAll('.switch-btn[data-view]').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                switchView(btn.dataset.view);
+            });
+        });
+
+        // 浏览器前进/后退时同步视图
+        window.addEventListener('popstate', e => {
+            if (e.state && e.state.view) switchView(e.state.view);
+        });
+
+        // ==================== 初始化 ====================
         (function() {
-            const savedLang = localStorage.getItem('sys_lang_pref') || 'zh';
+            const savedLang  = localStorage.getItem('sys_lang_pref') || 'zh';
             const savedColor = localStorage.getItem('sys_color_pref') || 'default';
             applyGlobalLanguageSetting(savedLang);
             applyColorTheme(savedColor);
@@ -499,10 +469,8 @@
 
         // 退出登录确认
         document.getElementById('logout-btn').addEventListener('click', function(e) {
-            const confirmMsg = window.logout_confirm_msg || '确定要退出登录吗？';
-            if (!confirm(confirmMsg)) {
-                e.preventDefault();
-            }
+            const msg = window.logout_confirm_msg || '确定要退出登录吗？';
+            if (!confirm(msg)) e.preventDefault();
         });
     </script>
 </body>

@@ -73,6 +73,19 @@ except ImportError as e:
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
+@app.context_processor
+def inject_view_variables():
+    try:
+        deepseek_configured = DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured()
+    except Exception:
+        deepseek_configured = False
+    return {
+        'deepseek_presets': DEEPSEEK_PRESETS if 'DEEPSEEK_PRESETS' in globals() else {},
+        'default_deepseek_preset': DEFAULT_DEEPSEEK_PRESET if 'DEFAULT_DEEPSEEK_PRESET' in globals() else '',
+        'deepseek_configured': deepseek_configured,
+        'qa_robot_available': QA_ROBOT_AVAILABLE if 'QA_ROBOT_AVAILABLE' in globals() else False
+    }
+
 
 # 导入问答机器人服务
 QA_ROBOT_AVAILABLE = False
@@ -329,9 +342,56 @@ def settings():
                          current_view='settings')
 
 
+# ==================== SPA 局部视图 API ====================
+# 这些路由为前端 SPA 导航提供 HTML 片段，无需整页刷新
+
+@app.route('/api/partial/qa_robot')
+@login_required
+def partial_qa_robot():
+    """返回问答机器人 HTML 片段"""
+    deepseek_configured = DEEPSEEK_AVAILABLE and deepseek_service and deepseek_service.is_configured()
+    return render_template('qa_robot_content.html',
+                           username=session.get('username'),
+                           current_view='qa_robot',
+                           deepseek_presets=DEEPSEEK_PRESETS,
+                           default_deepseek_preset=DEFAULT_DEEPSEEK_PRESET,
+                           deepseek_configured=deepseek_configured,
+                           qa_robot_available=QA_ROBOT_AVAILABLE)
+
+@app.route('/api/partial/qa_discussion')
+@login_required
+def partial_qa_discussion():
+    """返回讨论区 HTML 片段"""
+    return render_template('qa_discussion_content.html',
+                           username=session.get('username'),
+                           user_id=session.get('user_id'),
+                           current_view='qa_discussion')
+
+@app.route('/api/partial/feature_experience')
+@login_required
+def partial_feature_experience():
+    """返回功能体验 HTML 片段"""
+    return render_template('feature_experience_content.html',
+                           username=session.get('username'),
+                           current_view='feature_experience')
+
+@app.route('/api/partial/settings')
+@login_required
+def partial_settings():
+    """返回系统设置 HTML 片段"""
+    return render_template('settings_content.html',
+                           username=session.get('username'),
+                           current_view='settings')
+
+@app.route('/api/partial/user_profile')
+@login_required
+def partial_user_profile():
+    """返回个人主页 HTML 片段"""
+    return render_template('user_profile.html',
+                           username=session.get('username'),
+                           current_view='user_profile')
 
 
-# 问答机器人API路由
 # 快速问答对映射（直接返回，不进行检索）
 QUICK_QA_MAP = {
     "太阳系中体积最大的行星是哪一颗": "木星",
