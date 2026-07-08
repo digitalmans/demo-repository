@@ -38,6 +38,7 @@ def translate(text, from_lang='auto', to_lang='zh'):
     lang_map = {
         'zh': 'zh',
         'en': 'en',
+        'jp': 'jp',
         'auto': 'auto'
     }
     
@@ -111,6 +112,15 @@ def translate_to_english(text):
     :return: 英文翻译结果
     """
     return translate(text, from_lang='auto', to_lang='en')
+
+
+def translate_to_japanese(text):
+    """
+    翻译为日语
+    :param text: 要翻译的文本
+    :return: 日语翻译结果
+    """
+    return translate(text, from_lang='auto', to_lang='jp')
 
 
 if __name__ == '__main__':

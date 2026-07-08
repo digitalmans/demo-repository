@@ -72,7 +72,7 @@
             <div id="settings-content-account" style="display: none;">
                 <h2 id="settings-account-title" style="margin: 0 0 20px 0; color: #333; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px; font-weight: 600;">👤 个人账户中心 / Account Center</h2>
                 
-                <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
                     <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
                         <span id="account-label-username" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">用户名:</span>
                         <span style="color: #333; font-weight: 500;" id="account-username">{{ username }}</span>
@@ -86,17 +86,56 @@
                         <span style="color: #333;" id="account-email">未绑定邮箱</span>
                     </div>
                     <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
+                        <span id="account-label-phone" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">手机号:</span>
+                        <span style="color: #333;" id="account-phone">未绑定手机号</span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
+                        <span id="account-label-birthday" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">生日:</span>
+                        <span style="color: #333;" id="account-birthday">未设置</span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #f1f3f5; padding-bottom: 12px; align-items: center;">
                         <span id="account-label-created" style="width: 120px; font-weight: 600; color: #495057; font-size: 14px;">注册时间:</span>
                         <span style="color: #333;" id="account-created">未知</span>
                     </div>
                 </div>
                 
-                <div style="margin-top: 30px;">
+                <div style="margin-top: 20px;">
                     <h3 id="settings-update-title" style="font-size: 16px; color: #495057; margin-bottom: 15px; font-weight: 600;">修改账号信息 (Update Profile)</h3>
-                    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
-                        <input type="email" id="update-email-input" placeholder="输入新邮箱" style="padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px;">
-                        <button id="settings-update-btn" onclick="updateAccountEmail()" style="padding: 10px 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                            保存邮箱配置
+                    <div style="display: flex; flex-direction: column; gap: 15px; max-width: 450px;">
+                        <!-- 用户名 -->
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <label style="font-size: 13px; color: #666; font-weight: 600;" id="account-edit-username-lbl">修改用户名:</label>
+                            <input type="text" id="update-username-input" placeholder="输入新用户名" style="padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px;">
+                        </div>
+
+                        <!-- 邮箱 & 验证码 -->
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <label style="font-size: 13px; color: #666; font-weight: 600;" id="account-edit-email-lbl">绑定/修改邮箱:</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="email" id="update-email-input" placeholder="输入新邮箱" style="flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px;">
+                                <button id="send-email-code-btn" onclick="sendEmailCode()" style="padding: 10px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; min-width: 110px;">获取验证码</button>
+                            </div>
+                            <input type="text" id="update-email-code" placeholder="输入邮箱验证码" style="padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px; margin-top: 5px; display: none;">
+                        </div>
+
+                        <!-- 手机号 & 验证码 -->
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <label style="font-size: 13px; color: #666; font-weight: 600;" id="account-edit-phone-lbl">绑定/修改手机号:</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="update-phone-input" placeholder="输入手机号" style="flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px;">
+                                <button id="send-phone-code-btn" onclick="sendPhoneCode()" style="padding: 10px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; min-width: 110px;">获取验证码</button>
+                            </div>
+                            <input type="text" id="update-phone-code" placeholder="输入手机验证码" style="padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px; margin-top: 5px; display: none;">
+                        </div>
+
+                        <!-- 生日 -->
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <label style="font-size: 13px; color: #666; font-weight: 600;" id="account-edit-birthday-lbl">设置生日:</label>
+                            <input type="date" id="update-birthday-input" style="padding: 10px; border: 1px solid #ced4da; border-radius: 6px; outline: none; font-size: 14px;">
+                        </div>
+
+                        <button id="settings-update-btn" onclick="updateAccountProfile()" style="padding: 12px 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; margin-top: 10px;">
+                            保存修改
                         </button>
                         <div id="account-update-message" style="font-size: 13px; margin-top: 5px;"></div>
                     </div>
@@ -157,10 +196,16 @@ function applyLanguageSetting(lang) {
     const sLabelUser = document.getElementById('account-label-username');
     const sLabelRole = document.getElementById('account-label-role');
     const sLabelEmail = document.getElementById('account-label-email');
+    const sLabelPhone = document.getElementById('account-label-phone');
+    const sLabelBirthday = document.getElementById('account-label-birthday');
     const sLabelCreated = document.getElementById('account-label-created');
     const sUpdateTitle = document.getElementById('settings-update-title');
-    const sUpdateInput = document.getElementById('update-email-input');
     const sUpdateBtn = document.getElementById('settings-update-btn');
+
+    const editUserLbl = document.getElementById('account-edit-username-lbl');
+    const editEmailLbl = document.getElementById('account-edit-email-lbl');
+    const editPhoneLbl = document.getElementById('account-edit-phone-lbl');
+    const editBirthdayLbl = document.getElementById('account-edit-birthday-lbl');
 
     if (lang === 'en') {
         // 设置子页面
@@ -180,10 +225,24 @@ function applyLanguageSetting(lang) {
         if (sLabelUser) sLabelUser.innerText = 'Username:';
         if (sLabelRole) sLabelRole.innerText = 'Role:';
         if (sLabelEmail) sLabelEmail.innerText = 'Email:';
+        if (sLabelPhone) sLabelPhone.innerText = 'Phone:';
+        if (sLabelBirthday) sLabelBirthday.innerText = 'Birthday:';
         if (sLabelCreated) sLabelCreated.innerText = 'Created at:';
         if (sUpdateTitle) sUpdateTitle.innerText = 'Update Account Profile';
-        if (sUpdateInput) sUpdateInput.placeholder = 'Enter new email address';
-        if (sUpdateBtn) sUpdateBtn.innerText = 'Save Profile';
+        if (sUpdateBtn) sUpdateBtn.innerText = 'Save Changes';
+
+        if (editUserLbl) editUserLbl.innerText = 'Change Username:';
+        if (editEmailLbl) editEmailLbl.innerText = 'Bind/Change Email:';
+        if (editPhoneLbl) editPhoneLbl.innerText = 'Bind/Change Phone:';
+        if (editBirthdayLbl) editBirthdayLbl.innerText = 'Set Birthday:';
+        
+        document.getElementById('update-username-input').placeholder = 'Enter new username';
+        document.getElementById('update-email-input').placeholder = 'Enter new email';
+        document.getElementById('update-email-code').placeholder = 'Enter email verification code';
+        document.getElementById('update-phone-input').placeholder = 'Enter new phone number';
+        document.getElementById('update-phone-code').placeholder = 'Enter phone verification code';
+        document.getElementById('send-email-code-btn').innerText = 'Send Code';
+        document.getElementById('send-phone-code-btn').innerText = 'Send Code';
     } else {
         // 设置子页面
         if (sSidebarTitle) sSidebarTitle.innerText = '⚙️ 系统设置';
@@ -202,10 +261,24 @@ function applyLanguageSetting(lang) {
         if (sLabelUser) sLabelUser.innerText = '用户名:';
         if (sLabelRole) sLabelRole.innerText = '账号角色:';
         if (sLabelEmail) sLabelEmail.innerText = '注册邮箱:';
+        if (sLabelPhone) sLabelPhone.innerText = '手机号:';
+        if (sLabelBirthday) sLabelBirthday.innerText = '生日:';
         if (sLabelCreated) sLabelCreated.innerText = '注册时间:';
         if (sUpdateTitle) sUpdateTitle.innerText = '修改账号信息 (Update Profile)';
-        if (sUpdateInput) sUpdateInput.placeholder = '输入新邮箱';
-        if (sUpdateBtn) sUpdateBtn.innerText = '保存邮箱配置';
+        if (sUpdateBtn) sUpdateBtn.innerText = '保存修改';
+
+        if (editUserLbl) editUserLbl.innerText = '修改用户名:';
+        if (editEmailLbl) editEmailLbl.innerText = '绑定/修改邮箱:';
+        if (editPhoneLbl) editPhoneLbl.innerText = '绑定/修改手机号:';
+        if (editBirthdayLbl) editBirthdayLbl.innerText = '设置生日:';
+
+        document.getElementById('update-username-input').placeholder = '输入新用户名';
+        document.getElementById('update-email-input').placeholder = '输入新邮箱';
+        document.getElementById('update-email-code').placeholder = '输入邮箱验证码';
+        document.getElementById('update-phone-input').placeholder = '输入手机号';
+        document.getElementById('update-phone-code').placeholder = '输入手机验证码';
+        document.getElementById('send-email-code-btn').innerText = '获取验证码';
+        document.getElementById('send-phone-code-btn').innerText = '获取验证码';
     }
 }
 
@@ -215,6 +288,186 @@ function changeColorPreference(color) {
     if (typeof applyColorTheme === 'function') {
         applyColorTheme(color);
     }
+}
+
+let originalUserObj = {};
+
+// 获取用户数据填充到个人账户中心
+function fetchUserProfile() {
+    fetch('/api/user/{{ username }}/profile')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.profile && data.profile.user) {
+                const user = data.profile.user;
+                originalUserObj = user;
+
+                const roleEl = document.getElementById('account-role');
+                if (roleEl) {
+                    roleEl.innerText = user.role === 'admin' ? '管理员' : '普通用户';
+                    roleEl.style.background = user.role === 'admin' ? '#fce4ec' : '#e3f2fd';
+                    roleEl.style.color = user.role === 'admin' ? '#c2185b' : '#1976d2';
+                }
+                const usernameEl = document.getElementById('account-username');
+                if (usernameEl) usernameEl.innerText = user.username || '';
+
+                const emailEl = document.getElementById('account-email');
+                if (emailEl) emailEl.innerText = user.email || '未绑定邮箱';
+
+                const phoneEl = document.getElementById('account-phone');
+                if (phoneEl) phoneEl.innerText = user.phone || '未绑定手机号';
+
+                const birthdayEl = document.getElementById('account-birthday');
+                if (birthdayEl) birthdayEl.innerText = user.birthday || '未设置';
+                
+                const createdEl = document.getElementById('account-created');
+                if (createdEl) createdEl.innerText = user.created_at || '未知';
+                
+                // 填充输入框
+                document.getElementById('update-username-input').value = user.username || '';
+                document.getElementById('update-email-input').value = user.email || '';
+                document.getElementById('update-phone-input').value = user.phone || '';
+                document.getElementById('update-birthday-input').value = user.birthday || '';
+
+                // 隐藏验证码输入框
+                document.getElementById('update-email-code').style.display = 'none';
+                document.getElementById('update-phone-code').style.display = 'none';
+                document.getElementById('update-email-code').value = '';
+                document.getElementById('update-phone-code').value = '';
+            }
+        }).catch(err => {
+            console.error('获取个人信息失败:', err);
+        });
+}
+
+// 监听输入，若值改变则显示验证码输入框
+document.getElementById('update-email-input').addEventListener('input', function(e) {
+    const isChanged = e.target.value.trim() !== (originalUserObj.email || '');
+    document.getElementById('update-email-code').style.display = isChanged ? 'block' : 'none';
+});
+
+document.getElementById('update-phone-input').addEventListener('input', function(e) {
+    const isChanged = e.target.value.trim() !== (originalUserObj.phone || '');
+    document.getElementById('update-phone-code').style.display = isChanged ? 'block' : 'none';
+});
+
+function sendEmailCode() {
+    const email = document.getElementById('update-email-input').value.trim();
+    const msg = document.getElementById('account-update-message');
+    if (!email) {
+        msg.innerText = '❌ 请先输入邮箱';
+        msg.style.color = '#ff5e62';
+        return;
+    }
+    
+    msg.innerText = '正在发送验证码...';
+    msg.style.color = '#666';
+
+    fetch('/api/user/send_email_code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            msg.innerText = `✅ ${data.message}`;
+            msg.style.color = '#2b8a3e';
+            // 测试模式，自动填充验证码以便快速验证
+            document.getElementById('update-email-code').value = data.code;
+        } else {
+            msg.innerText = `❌ ${data.error}`;
+            msg.style.color = '#ff5e62';
+        }
+    })
+    .catch(err => {
+        msg.innerText = `❌ 发送失败: ${err.message}`;
+        msg.style.color = '#ff5e62';
+    });
+}
+
+function sendPhoneCode() {
+    const phone = document.getElementById('update-phone-input').value.trim();
+    const msg = document.getElementById('account-update-message');
+    if (!phone) {
+        msg.innerText = '❌ 请先输入手机号';
+        msg.style.color = '#ff5e62';
+        return;
+    }
+    
+    msg.innerText = '正在发送验证码...';
+    msg.style.color = '#666';
+
+    fetch('/api/user/send_phone_code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            msg.innerText = `✅ ${data.message}`;
+            msg.style.color = '#2b8a3e';
+            // 测试模式，自动填充验证码
+            document.getElementById('update-phone-code').value = data.code;
+        } else {
+            msg.innerText = `❌ ${data.error}`;
+            msg.style.color = '#ff5e62';
+        }
+    })
+    .catch(err => {
+        msg.innerText = `❌ 发送失败: ${err.message}`;
+        msg.style.color = '#ff5e62';
+    });
+}
+
+function updateAccountProfile() {
+    const username = document.getElementById('update-username-input').value.trim();
+    const email = document.getElementById('update-email-input').value.trim();
+    const email_code = document.getElementById('update-email-code').value.trim();
+    const phone = document.getElementById('update-phone-input').value.trim();
+    const phone_code = document.getElementById('update-phone-code').value.trim();
+    const birthday = document.getElementById('update-birthday-input').value.trim();
+    const msg = document.getElementById('account-update-message');
+    
+    msg.innerText = '正在保存修改...';
+    msg.style.color = '#666';
+
+    fetch('/api/user/update_profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            username: username,
+            email: email,
+            email_code: email_code,
+            phone: phone,
+            phone_code: phone_code,
+            birthday: birthday
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            msg.innerText = '✅ 个人资料保存成功！';
+            msg.style.color = '#2b8a3e';
+            
+            // 重新拉取展示数据
+            fetchUserProfile();
+            
+            // 如果用户名发生改变，需要重新加载页面同步全局 session
+            if (username !== (originalUserObj.username || '')) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        } else {
+            msg.innerText = `❌ ${data.error}`;
+            msg.style.color = '#ff5e62';
+        }
+    })
+    .catch(err => {
+        msg.innerText = `❌ 保存失败: ${err.message}`;
+        msg.style.color = '#ff5e62';
+    });
 }
 
 // 初始化加载设置
@@ -234,44 +487,6 @@ function changeColorPreference(color) {
         }
     }, 100);
     
-    // 获取用户数据填充到个人账户中心
-    fetch('/api/user/{{ username }}/profile')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.user) {
-                const user = data.user;
-                const roleEl = document.getElementById('account-role');
-                if (roleEl) {
-                    roleEl.innerText = user.role === 'admin' ? '管理员' : '普通用户';
-                    roleEl.style.background = user.role === 'admin' ? '#fce4ec' : '#e3f2fd';
-                    roleEl.style.color = user.role === 'admin' ? '#c2185b' : '#1976d2';
-                }
-                const emailEl = document.getElementById('account-email');
-                if (emailEl) emailEl.innerText = user.email || '未绑定邮箱';
-                
-                const createdEl = document.getElementById('account-created');
-                if (createdEl) createdEl.innerText = user.created_at || '未知';
-                
-                const inputEl = document.getElementById('update-email-input');
-                if (inputEl) inputEl.value = user.email || '';
-            }
-        }).catch(err => {
-            console.error('获取个人信息失败:', err);
-        });
+    fetchUserProfile();
 })();
-
-function updateAccountEmail() {
-    const email = document.getElementById('update-email-input').value;
-    const msg = document.getElementById('account-update-message');
-    msg.innerText = '正在保存...';
-    msg.style.color = '#666';
-    
-    // 模拟或调用更新API
-    setTimeout(() => {
-        msg.innerText = '✅ 邮箱配置保存成功！';
-        msg.style.color = '#2b8a3e';
-        const emailEl = document.getElementById('account-email');
-        if (emailEl) emailEl.innerText = email || '未绑定邮箱';
-    }, 800);
-}
 </script>

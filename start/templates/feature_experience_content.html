@@ -13,7 +13,7 @@
             <button class="fe-tab-btn active" onclick="switchFETab('ppt')" id="tab-btn-ppt" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;">
                 📊 AI 生成 PPT
             </button>
-            <button class="fe-tab-btn" onclick="switchFETab('course')" id="tab-btn-course" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;">
+            <button class="fe-tab-btn" onclick="switchFETab('course')" id="tab-btn-course" style="display: none; background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 600; font-size: 0.95em; align-items: center; gap: 6px;">
                 👤 AI 数字人教学
             </button>
             <button class="fe-tab-btn" onclick="switchFETab('grading')" id="tab-btn-grading" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.6); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;">
@@ -36,10 +36,14 @@
                     <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">课件主题或大纲</label>
                     <textarea id="ppt-topic" placeholder="例：中国古典诗词美学研究，或人工智能在基础教育的应用..." style="height: 100px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; color: white; resize: none; font-size: 0.9em; outline: none; transition: border-color 0.3s;"></textarea>
                     
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
-                        <button onclick="presetPPT('古诗词鉴赏与美学价值')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 20px; font-size: 0.75em; cursor: pointer; transition: all 0.2s;">📜 古诗词鉴赏</button>
-                        <button onclick="presetPPT('人工智能与智慧教育的未来')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 20px; font-size: 0.75em; cursor: pointer; transition: all 0.2s;">🤖 智能教育</button>
-                        <button onclick="presetPPT('启发式教学在理科课堂的探索')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 20px; font-size: 0.75em; cursor: pointer; transition: all 0.2s;">💡 启发式教学</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; gap: 10px;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1;">
+                            <button onclick="presetPPT('古诗词鉴赏与美学价值')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 20px; font-size: 0.72em; cursor: pointer; transition: all 0.2s;">📜 古诗词</button>
+                            <button onclick="presetPPT('人工智能与智慧教育的未来')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 20px; font-size: 0.72em; cursor: pointer; transition: all 0.2s;">🤖 AI教育</button>
+                        </div>
+                        <button onclick="generateOutline()" id="ppt-outline-btn" style="background: rgba(102, 126, 234, 0.25); border: 1px solid rgba(102, 126, 234, 0.4); color: #8ba4f9; padding: 5px 12px; border-radius: 6px; font-size: 0.8em; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+                            ✨ AI 生成大纲
+                        </button>
                     </div>
                 </div>
 
@@ -140,7 +144,7 @@
                                 <button onclick="exportPPT()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 6px;">
                                     💾 导出课件
                                 </button>
-                                <button onclick="linkToCourse()" style="background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%); border: none; color: white; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                <button onclick="linkToCourse()" style="display: none; background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%); border: none; color: white; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; display: flex; align-items: center; gap: 6px;">
                                     👤 送去数字人课堂教学
                                 </button>
                             </div>
@@ -520,6 +524,43 @@ function switchFETab(tabName) {
 // ==================== 1. AI生成PPT模块逻辑 ====================
 function presetPPT(text) {
     document.getElementById('ppt-topic').value = text;
+}
+
+async function generateOutline() {
+    const topicInput = document.getElementById('ppt-topic');
+    const topic = topicInput.value.trim();
+    if (!topic) {
+        alert('请先输入要生成大纲的主题（例如：古诗词鉴赏）');
+        return;
+    }
+    
+    const outlineBtn = document.getElementById('ppt-outline-btn');
+    const originalText = outlineBtn.innerHTML;
+    outlineBtn.disabled = true;
+    outlineBtn.innerHTML = '⏳ 正在设计大纲...';
+    
+    try {
+        const response = await fetch('/api/feature_experience/generate_outline', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic: topic })
+        });
+        
+        const data = await response.json();
+        if (data.success && data.outline) {
+            topicInput.value = data.outline;
+            // 自动调整高度以展示大纲
+            topicInput.style.height = '180px';
+        } else {
+            alert('生成大纲失败: ' + (data.error || '未知错误'));
+        }
+    } catch(err) {
+        console.error(err);
+        alert('请求生成大纲接口出错，请确保后端正常运行！');
+    } finally {
+        outlineBtn.disabled = false;
+        outlineBtn.innerHTML = originalText;
+    }
 }
 
 async function generatePPT() {

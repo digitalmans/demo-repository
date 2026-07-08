@@ -30,14 +30,20 @@
                             style="width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; font-family: inherit; resize: vertical; transition: border-color 0.3s; line-height: 1.5;"
                         ></textarea>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <label for="qa-robot-preset-select" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666; font-weight: 500;">回答模式</label>
+                    <div style="margin-bottom: 15px;">
+                        <label for="qa-robot-preset-select" style="display: block; margin-bottom: 5px; font-size: 0.95em; color: #333; font-weight: 600;">🤖 选择大语言模型</label>
                         <select id="qa-robot-preset-select" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background: white; cursor: pointer; transition: border-color 0.3s;">
-                            {% for preset_key, preset in deepseek_presets.items() %}
-                            <option value="{{ preset_key }}" {% if preset_key == default_deepseek_preset %}selected{% endif %}>{{ preset.label }}</option>
-                            {% endfor %}
-                            <option value="local">本地知识库问答</option>
+                            <option value="Qwen3-32B">千问 Qwen3-32B (推荐)</option>
+                            <option value="gpt-oss-120b">gpt-oss-120b</option>
+                            <option value="GLM-4.6">智谱 GLM-4.6</option>
+                            <option value="DeepSeek-V3">DeepSeek-V3</option>
+                            <option value="local">本地知识库 (无大模型)</option>
                         </select>
+                    </div>
+
+                    <div id="qa-robot-kb-checkbox-container" style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px; transition: opacity 0.3s;">
+                        <input type="checkbox" id="qa-robot-use-kb" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="qa-robot-use-kb" style="font-size: 0.95em; color: #333; font-weight: 500; cursor: pointer; user-select: none;">结合本地知识库检索 (RAG)</label>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -47,36 +53,26 @@
                         </button>
                     </div>
                     <div style="margin-bottom: 10px;">
-                        <label for="qa-robot-speaker-select" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666; font-weight: 500;">🎤 选择发音人（中文）</label>
+                        <label for="qa-robot-speaker-select" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666; font-weight: 500;">🎤 选择发音人</label>
                         <select id="qa-robot-speaker-select" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background: white; cursor: pointer; transition: border-color 0.3s;" onchange="qaRobotUpdateSpeaker()">
-                            <option value="0">0 - 度小美（女声）</option>
-                            <option value="1">1 - 度小字（男声）</option>
-                            <option value="3">3 - 度逍遥（男声）</option>
-                            <option value="4">4 - 度丫丫（女声）</option>
+                            <option value="0">女声 (Female)</option>
+                            <option value="3">男声 (Male)</option>
                         </select>
                     </div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button class="btn btn-secondary" id="qa-robot-output-zh-btn" onclick="qaRobotOutputChinese()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #4CAF50; color: white;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" id="qa-robot-output-zh-btn" onclick="qaRobotOutputChinese()" style="flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #4CAF50; color: white; white-space: nowrap;">
                         🇨🇳 输出中文
                         </button>
-                        <!-- 输出英文功能已取消
-                        <button class="btn btn-secondary" id="qa-robot-output-en-btn" onclick="qaRobotOutputEnglish()" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #2196F3; color: white;">
+                        <button class="btn btn-secondary" id="qa-robot-output-en-btn" onclick="qaRobotOutputEnglish()" style="flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #2196F3; color: white; white-space: nowrap;">
                         🇺🇸 输出英文
                         </button>
-                        -->
+                        <button class="btn btn-secondary" id="qa-robot-output-ja-btn" onclick="qaRobotOutputJapanese()" style="flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all 0.3s; background: #E91E63; color: white; white-space: nowrap;">
+                        🇯🇵 输出日语
+                        </button>
                     </div>
                     <button class="btn btn-secondary" id="qa-robot-clear-btn" onclick="qaRobotClearChat()" style="padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; margin-bottom: 10px; background: #f0f0f0; color: #666;">
                         清空当前对话
                     </button>
-                    
-                    <div class="hint-box" style="margin-top: 20px; padding: 15px; background: #f8f9ff; border-radius: 8px; border-left: 4px solid #667eea;">
-                        <p class="hint-title" style="font-weight: 600; color: #667eea; margin-bottom: 10px; font-size: 0.95em;">💡 提示</p>
-                        <ul class="hint-list" style="list-style: none; padding-left: 0;">
-                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">可以询问各种常见问题</li>
-                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">系统会优先检索本地知识库，再按回答模式生成答案</li>
-                            <li style="font-size: 0.9em; color: #666; margin-bottom: 5px; padding-left: 20px; position: relative;">支持多种类型的问题和答案</li>
-                        </ul>
-                    </div>
                 </div>
 
                 <div class="stats-card" id="qa-robot-stats-card" style="background: white; border-radius: 15px; padding: 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);">
@@ -141,6 +137,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // 自动聚焦输入框
         questionInput.focus();
     }
+
+    // 动态控制本地知识库检索增强复选框状态
+    const presetSelect = document.getElementById('qa-robot-preset-select');
+    const kbContainer = document.getElementById('qa-robot-kb-checkbox-container');
+    const useKbCheckbox = document.getElementById('qa-robot-use-kb');
+    if (presetSelect && kbContainer && useKbCheckbox) {
+        const toggleKbCheckbox = () => {
+            if (presetSelect.value === 'local') {
+                kbContainer.style.opacity = '0.5';
+                useKbCheckbox.disabled = true;
+                useKbCheckbox.checked = true;
+            } else {
+                kbContainer.style.opacity = '1';
+                useKbCheckbox.disabled = false;
+            }
+        };
+        presetSelect.addEventListener('change', toggleKbCheckbox);
+        toggleKbCheckbox(); // 初始化状态
+    }
 });
 
 function qaRobotInitDeepSeekKeyConfig() {
@@ -204,8 +219,10 @@ async function qaRobotSendQuestion() {
     const questionInput = document.getElementById('qa-robot-question-input');
     const presetSelect = document.getElementById('qa-robot-preset-select');
     const keyInput = document.getElementById('qa-robot-deepseek-key-input');
+    const useKbCheckbox = document.getElementById('qa-robot-use-kb');
     const question = questionInput.value.trim();
-    const preset = presetSelect ? presetSelect.value : '{{ default_deepseek_preset }}';
+    const preset = presetSelect ? presetSelect.value : 'Qwen3-32B';
+    const useKb = useKbCheckbox ? useKbCheckbox.checked : true;
     const deepseekApiKey = keyInput && keyInput.value.trim()
         ? keyInput.value.trim()
         : qaRobotGetDeepSeekApiKey();
@@ -241,6 +258,7 @@ async function qaRobotSendQuestion() {
             body: JSON.stringify({
                 question: question,
                 preset: preset,
+                use_kb: useKb,
                 deepseek_api_key: deepseekApiKey
             })
         });
@@ -755,8 +773,6 @@ async function qaRobotOutputChinese() {
     await qaRobotPlayTTS(cleanText, null, 'zh', speaker);
 }
 
-// 输出英文功能已取消
-/*
 // 输出英文（播放最后一条机器人回复的英文语音）
 async function qaRobotOutputEnglish() {
     const chatMessages = document.getElementById('qa-robot-chat-messages');
@@ -800,7 +816,9 @@ async function qaRobotOutputEnglish() {
         
         const data = await response.json();
         if (data.success && data.translated_text) {
-            await qaRobotPlayTTS(data.translated_text, null, 'en');
+            const speakerSelect = document.getElementById('qa-robot-speaker-select');
+            const speaker = speakerSelect ? parseInt(speakerSelect.value) || 0 : qaRobotSelectedSpeaker;
+            await qaRobotPlayTTS(data.translated_text, null, 'en', speaker);
         } else {
             alert('翻译失败: ' + (data.error || '未知错误'));
         }
@@ -808,7 +826,60 @@ async function qaRobotOutputEnglish() {
         alert('翻译请求失败: ' + error.message);
     }
 }
-*/
+
+// 输出日语（播放最后一条机器人回复的日语语音）
+async function qaRobotOutputJapanese() {
+    const chatMessages = document.getElementById('qa-robot-chat-messages');
+    const botMessages = chatMessages.querySelectorAll('.message.bot');
+    
+    if (botMessages.length === 0) {
+        alert('没有可播放的回复');
+        return;
+    }
+    
+    // 获取最后一条机器人消息
+    const lastBotMessage = botMessages[botMessages.length - 1];
+    const textElement = lastBotMessage.querySelector('div[style*="max-width: 70%"]');
+    
+    if (!textElement) {
+        alert('无法找到回复内容');
+        return;
+    }
+    
+    const text = textElement.textContent.trim();
+    if (!text) {
+        alert('回复内容为空');
+        return;
+    }
+    
+    // 移除相似度信息等额外内容
+    const cleanText = text.split('\n\n[相似度:')[0].trim();
+    
+    // 先翻译成日语，再播放
+    try {
+        const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: cleanText,
+                target_lang: 'jp'
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success && data.translated_text) {
+            const speakerSelect = document.getElementById('qa-robot-speaker-select');
+            const speaker = speakerSelect ? parseInt(speakerSelect.value) || 0 : qaRobotSelectedSpeaker;
+            await qaRobotPlayTTS(data.translated_text, null, 'jp', speaker);
+        } else {
+            alert('翻译失败: ' + (data.error || '未知错误'));
+        }
+    } catch (error) {
+        alert('翻译请求失败: ' + error.message);
+    }
+}
 
 // 显示语言选择菜单
 function qaRobotShowLanguageMenu(buttonElement, text) {
@@ -916,9 +987,12 @@ function qaRobotStopTTS(buttonElement = null) {
 async function qaRobotPlayTTS(text, buttonElement, language = 'zh', speaker = null) {
     try {
         // 确保text是字符串
-        const textStr = typeof text === 'string' ? text : String(text || '');
+        let textStr = typeof text === 'string' ? text : String(text || '');
         
-        if (!textStr || !textStr.trim()) {
+        // 过滤掉 "[来源: ...]" 等不需朗读的备注
+        textStr = textStr.replace(/\n?\[来源:\s*[^\]]+\]/g, '').trim();
+        
+        if (!textStr) {
             alert('文本内容为空');
             return;
         }

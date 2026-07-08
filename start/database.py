@@ -67,6 +67,8 @@ def init_database():
                 username VARCHAR(50) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 email VARCHAR(100),
+                phone VARCHAR(20) DEFAULT NULL,
+                birthday DATE DEFAULT NULL,
                 role VARCHAR(20) DEFAULT 'user' COMMENT '用户角色: user(普通用户), admin(管理员)',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP NULL,
@@ -90,6 +92,30 @@ def init_database():
                 cursor.execute("ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT 'user' COMMENT '用户角色: user(普通用户), admin(管理员)'")
                 cursor.execute("ALTER TABLE users ADD INDEX idx_role (role)")
                 print("已添加role字段")
+
+            # 检查是否需要添加phone字段（兼容旧表）
+            cursor.execute("""
+                SELECT COUNT(*) as count 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = %s 
+                AND TABLE_NAME = 'users' 
+                AND COLUMN_NAME = 'phone'
+            """, (MYSQL_CONFIG['database'],))
+            if cursor.fetchone()['count'] == 0:
+                cursor.execute("ALTER TABLE users ADD COLUMN phone VARCHAR(20) DEFAULT NULL")
+                print("已添加phone字段")
+
+            # 检查是否需要添加birthday字段（兼容旧表）
+            cursor.execute("""
+                SELECT COUNT(*) as count 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = %s 
+                AND TABLE_NAME = 'users' 
+                AND COLUMN_NAME = 'birthday'
+            """, (MYSQL_CONFIG['database'],))
+            if cursor.fetchone()['count'] == 0:
+                cursor.execute("ALTER TABLE users ADD COLUMN birthday DATE DEFAULT NULL")
+                print("已添加birthday字段")
             
             # 创建默认管理员账号（如果不存在）
             cursor.execute("SELECT id FROM users WHERE username = 'admin'")
@@ -315,7 +341,7 @@ def verify_user(username, password):
         
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id, username, password, email, role, created_at FROM users WHERE username = %s",
+                "SELECT id, username, password, email, phone, birthday, role, created_at FROM users WHERE username = %s",
                 (username,)
             )
             user = cursor.fetchone()
@@ -338,6 +364,8 @@ def verify_user(username, password):
                 'id': user['id'],
                 'username': user['username'],
                 'email': user['email'],
+                'phone': user.get('phone'),
+                'birthday': user['birthday'].strftime('%Y-%m-%d') if user.get('birthday') else None,
                 'role': user.get('role', 'user'),
                 'created_at': user['created_at'].isoformat() if user['created_at'] else None
             }
@@ -361,7 +389,7 @@ def get_user_info(username):
         
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id, username, email, role, created_at, last_login FROM users WHERE username = %s",
+                "SELECT id, username, email, phone, birthday, role, created_at, last_login FROM users WHERE username = %s",
                 (username,)
             )
             user = cursor.fetchone()
@@ -371,6 +399,8 @@ def get_user_info(username):
                     'id': user['id'],
                     'username': user['username'],
                     'email': user['email'],
+                    'phone': user.get('phone'),
+                    'birthday': user['birthday'].strftime('%Y-%m-%d') if user.get('birthday') else None,
                     'role': user.get('role', 'user'),
                     'created_at': user['created_at'].isoformat() if user['created_at'] else None,
                     'last_login': user['last_login'].isoformat() if user['last_login'] else None
@@ -384,6 +414,44 @@ def get_user_info(username):
     except Exception as e:
         print(f"获取用户信息错误: {e}")
         return None
+
+
+def update_user_profile(user_id, new_username, new_email=None, new_phone=None, new_birthday=None):
+    """
+    更新用户个人资料
+    :param user_id: 用户ID
+    :param new_username: 新用户名
+    :param new_email: 新邮箱
+    :param new_phone: 新手机号
+    :param new_birthday: 新生日 (YYYY-MM-DD)
+    :return: (success, message)
+    """
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 检查用户名是否被其他人占用
+            cursor.execute("SELECT id FROM users WHERE username = %s AND id != %s", (new_username, user_id))
+            if cursor.fetchone():
+                connection.close()
+                return False, "该用户名已被其他账号占用"
+            
+            # 如果是空字符串转为None
+            email = new_email.strip() if new_email and new_email.strip() else None
+            phone = new_phone.strip() if new_phone and new_phone.strip() else None
+            birthday = new_birthday.strip() if new_birthday and new_birthday.strip() else None
+            
+            sql = """
+                UPDATE users 
+                SET username = %s, email = %s, phone = %s, birthday = %s 
+                WHERE id = %s
+            """
+            cursor.execute(sql, (new_username, email, phone, birthday, user_id))
+            connection.commit()
+        connection.close()
+        return True, "更新个人资料成功"
+    except Exception as e:
+        print(f"更新个人资料错误: {e}")
+        return False, f"更新失败: {str(e)}"
 
 
 def get_all_users():
@@ -1260,7 +1328,7 @@ def get_user_profile(username):
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id, username, email, role, created_at FROM users WHERE username=%s", (username,))
+            cursor.execute("SELECT id, username, email, phone, birthday, role, created_at FROM users WHERE username=%s", (username,))
             user = cursor.fetchone()
             if not user:
                 connection.close()
@@ -1302,6 +1370,8 @@ def get_user_profile(username):
                 'id': user['id'],
                 'username': user['username'],
                 'email': user.get('email'),
+                'phone': user.get('phone'),
+                'birthday': user['birthday'].strftime('%Y-%m-%d') if user.get('birthday') else None,
                 'role': user.get('role', 'user'),
                 'created_at': user['created_at'].isoformat() if user.get('created_at') else None,
             },

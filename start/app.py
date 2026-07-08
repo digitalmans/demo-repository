@@ -32,7 +32,8 @@ from database import (
     get_qa_discussion_detail, vote_qa_target, get_user_votes,
     get_qa_comments_extended, toggle_favorite, is_favorited,
     get_user_favorited_ids, get_user_profile,
-    get_user_discussions, get_user_comments, get_user_favorites
+    get_user_discussions, get_user_comments, get_user_favorites,
+    update_user_profile
 )
 
 # 添加 voice_assistant 目录到路径，以便导入 asr 和 tts 模块
@@ -63,7 +64,7 @@ except ImportError as e:
 
 # 导入翻译模块
 try:
-    from translator import translate, translate_to_chinese, translate_to_english, TranslationError
+    from translator import translate, translate_to_chinese, translate_to_english, translate_to_japanese, TranslationError
     TRANSLATOR_AVAILABLE = True
 except ImportError as e:
     print(f"警告: 无法导入翻译模块: {e}")
@@ -458,7 +459,7 @@ def api_qa_robot_ask():
     try:
         data = request.get_json() or {}
         question = str(data.get('question') or '').strip()
-        preset = str(data.get('preset') or DEFAULT_DEEPSEEK_PRESET).strip() or DEFAULT_DEEPSEEK_PRESET
+        preset = str(data.get('preset') or 'Qwen3-32B').strip() or 'Qwen3-32B'
         deepseek_api_key = str(data.get('deepseek_api_key') or '').strip()
         use_local_only = preset == 'local'
         force_deepseek = (data.get('force_deepseek') == True) or (preset == 'deepseek_only')
@@ -479,6 +480,8 @@ def api_qa_robot_ask():
         )
         if not QA_ROBOT_AVAILABLE and (use_local_only or not deepseek_configured):
             return jsonify({'success': False, 'error': '问答机器人模块不可用，且当前请求无法使用DeepSeek API'}), 503
+        
+        use_kb = data.get('use_kb', True)
         
         # 首先检查是否是快速问答对（如果强制使用DeepSeek，则跳过快速匹配）
         quick_answer = None if force_deepseek else match_quick_qa(question)
@@ -505,9 +508,9 @@ def api_qa_robot_ask():
                 'alternatives': []
             })
         
-        # 如果不是快速问答对，先做本地检索（如果强制使用DeepSeek，则跳过本地知识库检索）
+        # 如果不是快速问答对，并且启用了本地知识库（或者是仅本地问答模式），则做本地检索
         result = None
-        if not force_deepseek and QA_ROBOT_AVAILABLE and qa_robot_service:
+        if not force_deepseek and (use_local_only or use_kb) and QA_ROBOT_AVAILABLE and qa_robot_service:
             result = qa_robot_service.ask(question, top_k=3, threshold=0.1)
 
         answer = None
@@ -695,12 +698,14 @@ def api_translate():
         
         # 获取目标语言，默认为中文
         target_lang = data.get('target_lang', 'zh')
-        if target_lang not in ['zh', 'en']:
+        if target_lang not in ['zh', 'en', 'jp', 'ja']:
             target_lang = 'zh'
         
         # 执行翻译
         if target_lang == 'zh':
             translated_text = translate_to_chinese(text)
+        elif target_lang in ['jp', 'ja']:
+            translated_text = translate_to_japanese(text)
         else:
             translated_text = translate_to_english(text)
         
@@ -1333,6 +1338,348 @@ def api_user_profile(username):
     if not profile:
         return jsonify({'success': False, 'error': '用户不存在'}), 404
     return jsonify({'success': True, 'profile': profile})
+
+
+@app.route('/api/user/send_email_code', methods=['POST'])
+@login_required
+def api_send_email_code():
+    """发送邮箱验证码 (模拟)"""
+    import random
+    try:
+        data = request.get_json() or {}
+        email = data.get('email', '').strip()
+        if not email:
+            return jsonify({'success': False, 'error': '邮箱不能为空'}), 400
+        
+        # 简单校验邮箱格式
+        if '@' not in email or '.' not in email:
+            return jsonify({'success': False, 'error': '邮箱格式不正确'}), 400
+
+        code = str(random.randint(100000, 999999))
+        session['email_code'] = code
+        session['email_code_target'] = email
+        print(f"[TEST EMAIL CODE] Sent verification code {code} to {email}")
+        
+        return jsonify({
+            'success': True,
+            'code': code,
+            'message': f'验证码已发送至 {email}（测试模式，您的验证码为 {code}）'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/user/send_phone_code', methods=['POST'])
+@login_required
+def api_send_phone_code():
+    """发送手机验证码 (模拟)"""
+    import random
+    try:
+        data = request.get_json() or {}
+        phone = data.get('phone', '').strip()
+        if not phone:
+            return jsonify({'success': False, 'error': '手机号不能为空'}), 400
+        
+        if len(phone) < 11:
+            return jsonify({'success': False, 'error': '手机号格式不正确'}), 400
+
+        code = str(random.randint(100000, 999999))
+        session['phone_code'] = code
+        session['phone_code_target'] = phone
+        print(f"[TEST PHONE CODE] Sent verification code {code} to {phone}")
+        
+        return jsonify({
+            'success': True,
+            'code': code,
+            'message': f'验证码已发送至 {phone}（测试模式，您的验证码为 {code}）'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/feature_experience/generate_outline', methods=['POST'])
+@login_required
+def api_generate_outline():
+    """AI生成PPT大纲接口"""
+    try:
+        data = request.get_json() or {}
+        topic = data.get('topic', '').strip()
+        
+        if not topic:
+            return jsonify({'success': False, 'error': '主题不能为空'}), 400
+            
+        # 尝试从环境变量加载 Key
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+        
+        api_key = os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
+        if not api_key:
+            return jsonify({'success': False, 'error': '未配置 API Key，无法使用 AI 生成功能'}), 500
+            
+        if os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY"):
+            base_url = "https://api.moark.com/v1"
+            model = "Qwen3-32B"
+            extra_headers = {"X-Failover-Enabled": "true"}
+        else:
+            base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+            model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+            extra_headers = {}
+            
+        prompt = (
+            f"请为PPT课件主题【{topic}】编写一份结构清晰、内容丰富的大纲。\n"
+            f"大纲需要分章节，每个章节下列出每张幻灯片的主题，并说明其核心要点。\n"
+            f"大纲格式应简洁，直接采用 Markdown 格式，不要有任何其他解释性废话，直接返回大纲内容。"
+        )
+        
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": "You are a professional assistant that designs slide deck outlines. Output only the outline directly."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1500,
+            "stream": False
+        }
+        
+        if model == "Qwen3-32B":
+            payload["top_p"] = 0.7
+            payload["frequency_penalty"] = 1
+            payload["extra_body"] = {"top_k": 50}
+            
+        res = deepseek_service._post_chat_completions(payload, api_key=api_key, base_url=base_url, extra_headers=extra_headers)
+        choices = res.get("choices") or []
+        if choices:
+            content = choices[0].get("message", {}).get("content", "").strip()
+            if not content and choices[0].get("message", {}).get("reasoning_content"):
+                content = choices[0].get("message", {}).get("reasoning_content", "").strip()
+            return jsonify({'success': True, 'outline': content})
+        else:
+            return jsonify({'success': False, 'error': 'API 未返回大纲内容'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/feature_experience/generate_ppt', methods=['POST'])
+@login_required
+def api_generate_ppt():
+    """AI生成PPT接口"""
+    try:
+        data = request.get_json() or {}
+        topic = data.get('topic', '').strip()
+        style = data.get('style', 'tech').strip()
+        page_count = data.get('page_count', 5)
+        
+        if not topic:
+            return jsonify({'success': False, 'error': '主题不能为空'}), 400
+            
+        # 尝试从环境变量加载 Key 并调用 Moark / DeepSeek
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+        
+        api_key = os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
+        
+        if api_key and DEEPSEEK_AVAILABLE and deepseek_service:
+            if os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY"):
+                model = "Qwen3-32B"
+                base_url = "https://api.moark.com/v1"
+                extra_headers = {"X-Failover-Enabled": "true"}
+            else:
+                model = deepseek_service.model
+                base_url = deepseek_service.base_url
+                extra_headers = {}
+                
+            prompt = (
+                f"你是一个专业的PPT大纲及讲解内容生成助手。请根据用户的主题或输入的大纲：“{topic}”，幻灯片风格风格为：“{style}”（古典雅致/现代科技/简约学术/活泼卡通），"
+                f"生成共{page_count}页的PPT幻灯片内容。确保每页的讲解配音自然口语化，适合AI数字人播报。\n"
+                f"你必须返回一个符合以下JSON数组格式的文本，不要包含任何Markdown标记（如```json），直接以 [ 开头，以 ] 结尾，以便于程序直接解析。\n"
+                f"格式要求：\n"
+                f"[\n"
+                f"  {{\n"
+                f"    \"title\": \"第1页的标题\",\n"
+                f"    \"points\": [\"核心要点1\", \"核心要点2\", \"核心要点3\"],\n"
+                f"    \"narration\": \"第一页幻灯片的讲解内容，数字人授课配音文本，要求通俗易懂，口语化，长度在60-120字左右。\"\n"
+                f"  }},\n"
+                f"  ...\n"
+                f"]"
+            )
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "You are a professional assistant that generates PPT slides in JSON format. Return only valid JSON array. Do not include markdown tags."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.5,
+                "max_tokens": 3000,
+                "stream": False
+            }
+            if model == "Qwen3-32B":
+                payload["top_p"] = 0.7
+                payload["frequency_penalty"] = 1
+                payload["extra_body"] = {"top_k": 50}
+                
+            try:
+                res = deepseek_service._post_chat_completions(payload, api_key=api_key, base_url=base_url, extra_headers=extra_headers)
+                choices = res.get("choices") or []
+                if choices:
+                    content = choices[0].get("message", {}).get("content", "").strip()
+                    if not content and choices[0].get("message", {}).get("reasoning_content"):
+                        content = choices[0].get("message", {}).get("reasoning_content", "").strip()
+                    if content.startswith("```"):
+                        lines = content.split("\n")
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        content = "\n".join(lines).strip()
+                    slides = json.loads(content)
+                    return jsonify({'success': True, 'slides': slides, 'source': f'AI ({model})'})
+            except Exception as e:
+                print(f"[API_GENERATE_PPT] API 调用失败: {e}，将回退到本地模板引擎生成。")
+
+        # 本地生成逻辑（Fallback）
+        slides = []
+        topic_lower = topic.lower()
+        
+        # 1. 匹配古诗词/中国文学/历史/传统文化
+        if any(kw in topic_lower for kw in ['古诗', '诗词', '文学', '历史', '传统文化', '中国', '语文', '古代']):
+            slides = [
+                {
+                    "title": f"《{topic}》的背景与文化渊源",
+                    "points": ["历史朝代的兴衰与文学流派演变", "作者个人生平际遇与情感底色", "特定时代背景下的社会风貌"],
+                    "narration": f"同学们好！今天我们来学习关于《{topic}》的精彩内容。首先，我们需要了解它的背景与文化渊源。每个优秀的文化作品，都深深地烙印着它所处的时代印记、社会风貌以及作者波澜壮阔的人生旅程。让我们穿越时光，回到那段历史之中。"
+                },
+                {
+                    "title": "作品的核心意象与美学价值",
+                    "points": ["经典自然意象的寄托与象征意蕴", "情景交融、虚实结合的艺术手法", "含蓄隽永、意境深远的独特美学风格"],
+                    "narration": f"接下来，我们深入探讨《{topic}》中的美学价值。文学作品往往通过具体的意象来表达情感，比如月亮、春风、流水。作者善于把主观情感融入到客观景物中，达到情景交融的最高境界。我们品读时，不仅要赏析文字，更要感悟那份悠远的意境。"
+                },
+                {
+                    "title": "名篇名句赏析与语言艺术",
+                    "points": ["关键字词的精妙锤炼与多重释义", "句式结构对情感跌宕起伏的推波助澜", "声律和谐、琅琅上口的音韵之美"],
+                    "narration": "学习古典文学，最美妙的莫过于赏析名篇名句。这些字句经过了千锤百炼，极其精妙。让我们一起来看这几个关键句，它们字句凝练，音韵和谐，读起来琅琅上口，在情感的高潮处推波助澜，表现力极强。"
+                },
+                {
+                    "title": "对后世的深远影响与现代启示",
+                    "points": ["在后世文学创作中的传承与发扬", "跨越时空阻隔的人性共鸣与情感投射", "现代语境下的创造性转化与创新发展"],
+                    "narration": f"最后，我们来思考《{topic}》对后世的深远影响。优秀的文学和历史遗产是跨越时空的，它不仅深深影响了后世的创作，在今天也依然能引起我们的强烈共鸣。我们在现代语境下，应该如何去继承和发扬这些珍贵的文化财富呢？这值得我们每个人深思。"
+                }
+            ]
+        # 2. 匹配人工智能/科技/教育信息化
+        elif any(kw in topic_lower for kw in ['人工智能', '科技', 'ai', '教育', '智慧', '学校', '计算机', '技术']):
+            slides = [
+                {
+                    "title": f"{topic} 的概念界定与兴起背景",
+                    "points": ["前沿技术的迭代发展与政策环境红利", "传统教学模式面临的关键痛点与变革诉求", "人机协同教育新范式的概念演进"],
+                    "narration": f"大家好，今天我们的课程主题是《{topic}》。首先，我们来看一下它的概念界定与兴起背景。近年来，随着大模型、算力等底层技术的爆发，以及国家教育数字化战略的推动，传统教育正经历深刻重塑。如何用前沿科技解决传统教学的痛点，是我们探讨的核心。"
+                },
+                {
+                    "title": "核心应用场景与关键技术架构",
+                    "points": ["多模态互动教学与智能学习资源生成", "个性化自适应学习路径精准规划", "全过程学习行为多维分析与智能评估"],
+                    "narration": "那么，它有哪些核心的应用场景呢？首先是教学资源的生成，比如我们现在正在体验的数字人授课和PPT自动生成。其次是自适应学习，通过分析学生的行为，规划最适合的专属路线。最后是智能的学情评估，实现真正的因材施教。"
+                },
+                {
+                    "title": "面临的现实挑战与伦理考量",
+                    "points": ["数字鸿沟引发教育公平性的全新审视", "教学数据隐私保护与信息系统安全底线", "数字技术对教师传统角色定位 of 重塑"],
+                    "narration": "虽然科技带来了极大的便利，但我们也必须保持清醒，看到面临的挑战。比如，落后地区是否能公平享受到这些技术？学生的隐私数据该如何严格保密？更重要的是，当AI能够做很多事情时，我们教师传统的工作角色该如何调整和定位？"
+                },
+                {
+                    "title": "未来发展趋势与融合共生图景",
+                    "points": ["大模型技术在细分教育垂直领域的深度融合", "人机双能驱动教学体系的全面建立", "回归教育本质——关注学生核心素养培养"],
+                    "narration": "最后，展望未来，技术必将与教育各环节进行更深度的融合，构建一个教师与AI双能驱动、融合共生的智能教育新图景。无论技术怎么变，教育的本质——点燃智慧、润泽心灵是永远不会改变的。让我们拥抱科技，共同见证教育的美好未来！"
+                }
+            ]
+        # 3. 其他常规主题
+        
+        return jsonify({'success': True, 'slides': slides, 'source': 'Local Template'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/user/update_profile', methods=['POST'])
+@login_required
+def api_update_profile():
+    """更新用户资料接口"""
+    try:
+        data = request.get_json() or {}
+        new_username = data.get('username', '').strip()
+        new_email = data.get('email', '').strip() or None
+        email_code = data.get('email_code', '').strip()
+        new_phone = data.get('phone', '').strip() or None
+        phone_code = data.get('phone_code', '').strip()
+        new_birthday = data.get('birthday', '').strip() or None
+        
+        user_id = session.get('user_id')
+        current_username = session.get('username')
+        
+        if not new_username:
+            return jsonify({'success': False, 'error': '用户名不能为空'}), 400
+        if len(new_username) < 3:
+            return jsonify({'success': False, 'error': '用户名至少需要3个字符'}), 400
+
+        # 获取当前的用户信息以进行修改前的对比
+        current_user = get_user_info(current_username)
+        if not current_user:
+            return jsonify({'success': False, 'error': '未找到当前登录的用户信息'}), 404
+        
+        # 1. 邮箱验证码校验
+        # 如果新邮箱不为空且与当前邮箱不同，则必须校验验证码
+        current_email = current_user.get('email')
+        if new_email and new_email != current_email:
+            saved_code = session.get('email_code')
+            saved_target = session.get('email_code_target')
+            if not email_code:
+                return jsonify({'success': False, 'error': '需要输入邮箱验证码'}), 400
+            if saved_target != new_email or saved_code != email_code:
+                return jsonify({'success': False, 'error': '邮箱验证码不正确或目标邮箱不匹配'}), 400
+        
+        # 2. 手机验证码校验
+        # 如果新手机号不为空且与当前手机号不同，则必须校验验证码
+        current_phone = current_user.get('phone')
+        if new_phone and new_phone != current_phone:
+            saved_code = session.get('phone_code')
+            saved_target = session.get('phone_code_target')
+            if not phone_code:
+                return jsonify({'success': False, 'error': '需要输入手机验证码'}), 400
+            if saved_target != new_phone or saved_code != phone_code:
+                return jsonify({'success': False, 'error': '手机验证码不正确或目标手机号不匹配'}), 400
+
+        # 3. 生日格式校验
+        if new_birthday:
+            import datetime
+            try:
+                datetime.datetime.strptime(new_birthday, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'success': False, 'error': '生日格式不正确，应为 YYYY-MM-DD'}), 400
+
+        # 4. 执行更新
+        success, message = update_user_profile(
+            user_id=user_id,
+            new_username=new_username,
+            new_email=new_email,
+            new_phone=new_phone,
+            new_birthday=new_birthday
+        )
+        
+        if not success:
+            return jsonify({'success': False, 'error': message}), 400
+
+        # 5. 更新成功后同步更新 session 里的用户名
+        session['username'] = new_username
+        
+        # 清除已使用的验证码
+        session.pop('email_code', None)
+        session.pop('email_code_target', None)
+        session.pop('phone_code', None)
+        session.pop('phone_code_target', None)
+        
+        return jsonify({
+            'success': True,
+            'message': '个人资料更新成功！'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/user/<username>/discussions', methods=['GET'])

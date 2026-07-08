@@ -12,3 +12,7 @@ dist/
 target/
 .gemini/
 .DS_Store
+.env
+result.mp3
+error.txt
+voice_assistant/outputs/
