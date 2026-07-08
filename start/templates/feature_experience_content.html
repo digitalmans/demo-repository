@@ -32,46 +32,59 @@
                 <h3 style="font-size: 1.1em; color: #00ffff; margin-bottom: 5px; font-weight: 600;">PPT 课件生成器</h3>
                 <p style="font-size: 0.85em; color: rgba(255,255,255,0.5);">输入主题，AI 将自动规划大纲、设计排版与生成讲解稿。</p>
                 
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">课件主题或大纲</label>
-                    <textarea id="ppt-topic" placeholder="例：中国古典诗词美学研究，或人工智能在基础教育的应用..." style="height: 100px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; color: white; resize: none; font-size: 0.9em; outline: none; transition: border-color 0.3s;"></textarea>
+                <!-- 第一步：AI 生成结构化大纲 -->
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <h4 style="font-size: 0.95em; color: #00ffff; margin: 0; font-weight: 600;">第一步：AI 生成结构化大纲</h4>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 0.85em; color: rgba(255,255,255,0.7); font-weight: 500;">输入课件主题：</label>
+                        <input type="text" id="ppt-topic-input" placeholder="例：中国古典诗词美学研究，或人工智能在基础教育的应用..." style="height: 38px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 0 10px; color: white; font-size: 0.85em; outline: none; transition: border-color 0.3s;">
+                    </div>
                     
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; gap: 10px;">
-                        <div style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1;">
-                            <button onclick="presetPPT('古诗词鉴赏与美学价值')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 20px; font-size: 0.72em; cursor: pointer; transition: all 0.2s;">📜 古诗词</button>
-                            <button onclick="presetPPT('人工智能与智慧教育的未来')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 20px; font-size: 0.72em; cursor: pointer; transition: all 0.2s;">🤖 AI教育</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 5px;">
+                        <div style="display: flex; gap: 4px;">
+                            <button onclick="presetTopic('古诗词鉴赏与美学')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 3px 6px; border-radius: 10px; font-size: 0.7em; cursor: pointer; transition: all 0.2s;">📜 古诗词</button>
+                            <button onclick="presetTopic('宇宙探索与太阳系')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); padding: 3px 6px; border-radius: 10px; font-size: 0.7em; cursor: pointer; transition: all 0.2s;">🚀 宇宙探索</button>
                         </div>
                         <button onclick="generateOutline()" id="ppt-outline-btn" style="background: rgba(102, 126, 234, 0.25); border: 1px solid rgba(102, 126, 234, 0.4); color: #8ba4f9; padding: 5px 12px; border-radius: 6px; font-size: 0.8em; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
-                            ✨ AI 生成大纲
+                            ✨ 生成大纲
                         </button>
                     </div>
-                </div>
 
-                <div style="display: flex; gap: 15px;">
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
-                        <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">视觉主题风格</label>
-                        <select id="ppt-style" style="height: 38px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; padding: 0 10px; font-size: 0.9em; outline: none; cursor: pointer;">
-                            <option value="ancient">古典雅致 (棕红水墨)</option>
-                            <option value="tech" selected>现代科技 (深蓝霓虹)</option>
-                            <option value="academic">简约学术 (灰蓝框架)</option>
-                            <option value="cartoon">活泼卡通 (橙紫圆角)</option>
-                        </select>
-                    </div>
-                    <div style="width: 100px; display: flex; flex-direction: column; gap: 8px;">
-                        <label style="font-size: 0.9em; color: rgba(255,255,255,0.8); font-weight: 600;">课件页数</label>
-                        <select id="ppt-pages" style="height: 38px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; padding: 0 10px; font-size: 0.9em; outline: none; cursor: pointer;">
-                            <option value="3">3页</option>
-                            <option value="4" selected>4页</option>
-                            <option value="5">5页</option>
-                            <option value="6">6页</option>
-                            <option value="8">8页</option>
-                        </select>
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 5px;">
+                        <label style="font-size: 0.85em; color: rgba(255,255,255,0.7); font-weight: 500;">AI 设计的大纲结构（可微调）：</label>
+                        <textarea id="ppt-topic" placeholder="点击“生成大纲”按钮生成，或在此直接输入自定义大纲..." style="height: 110px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 10px; color: white; resize: none; font-size: 0.85em; outline: none; transition: border-color 0.3s;"></textarea>
                     </div>
                 </div>
 
-                <button id="ppt-generate-btn" onclick="generatePPT()" style="margin-top: 10px; height: 45px; border-radius: 8px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    🚀 开启生成方案
-                </button>
+                <!-- 第二步：设定风格并生成课件 -->
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+                    <h4 style="font-size: 0.95em; color: #00ffff; margin: 0; font-weight: 600;">第二步：设定风格并生成课件</h4>
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 0.8em; color: rgba(255,255,255,0.7); font-weight: 500;">视觉主题风格</label>
+                            <select id="ppt-style" style="height: 36px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: white; padding: 0 8px; font-size: 0.85em; outline: none; cursor: pointer;">
+                                <option value="ancient">古典雅致 (棕红水墨)</option>
+                                <option value="tech" selected>现代科技 (深蓝霓虹)</option>
+                                <option value="academic">简约学术 (灰蓝框架)</option>
+                                <option value="cartoon">活泼卡通 (橙紫圆角)</option>
+                            </select>
+                        </div>
+                        <div style="width: 90px; display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 0.8em; color: rgba(255,255,255,0.7); font-weight: 500;">课件页数</label>
+                            <select id="ppt-pages" style="height: 36px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: white; padding: 0 8px; font-size: 0.85em; outline: none; cursor: pointer;">
+                                <option value="3">3页</option>
+                                <option value="4" selected>4页</option>
+                                <option value="5">5页</option>
+                                <option value="6">6页</option>
+                                <option value="8">8页</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="ppt-generate-btn" onclick="generatePPT()" style="height: 40px; border-radius: 6px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); font-size: 0.9em; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        🚀 开启生成方案
+                    </button>
+                </div>
             </div>
             
             <!-- 右侧：效果预览区 -->
@@ -522,15 +535,20 @@ function switchFETab(tabName) {
 }
 
 // ==================== 1. AI生成PPT模块逻辑 ====================
+function presetTopic(text) {
+    document.getElementById('ppt-topic-input').value = text;
+}
+
 function presetPPT(text) {
-    document.getElementById('ppt-topic').value = text;
+    document.getElementById('ppt-topic-input').value = text;
 }
 
 async function generateOutline() {
-    const topicInput = document.getElementById('ppt-topic');
+    const topicInput = document.getElementById('ppt-topic-input');
+    const outlineArea = document.getElementById('ppt-topic');
     const topic = topicInput.value.trim();
     if (!topic) {
-        alert('请先输入要生成大纲的主题（例如：古诗词鉴赏）');
+        alert('请先输入课件主题（例如：古诗词鉴赏）');
         return;
     }
     
@@ -548,9 +566,7 @@ async function generateOutline() {
         
         const data = await response.json();
         if (data.success && data.outline) {
-            topicInput.value = data.outline;
-            // 自动调整高度以展示大纲
-            topicInput.style.height = '180px';
+            outlineArea.value = data.outline;
         } else {
             alert('生成大纲失败: ' + (data.error || '未知错误'));
         }
