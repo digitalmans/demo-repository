@@ -67,6 +67,9 @@
                         <div style="display: flex; flex-direction: column; align-items: center;">
                             <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 拼豆转换图样 (全彩高亮像素样稿)</span>
                             <canvas id="text-mood-canvas" style="max-width: 440px; max-height: 440px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);"></canvas>
+                            <button id="text-mood-use-as-digital-human-btn" onclick="useCanvasAsDigitalHuman('text-mood-canvas', 'text-mood-use-as-digital-human-btn')" style="margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                👤 将此拼豆应用为 2D 数字人模型 (.pth / 形象)
+                            </button>
                         </div>
                     </div>
                     <div id="text-mood-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
@@ -125,6 +128,9 @@
                         <div style="display: flex; flex-direction: column; align-items: center;">
                             <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 拼豆图样网格 (全彩高亮像素样稿)</span>
                             <canvas id="upload-bead-canvas" style="max-width: 440px; max-height: 440px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);"></canvas>
+                            <button id="upload-bead-use-as-digital-human-btn" onclick="useCanvasAsDigitalHuman('upload-bead-canvas', 'upload-bead-use-as-digital-human-btn')" style="margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                👤 将此拼豆应用为 2D 数字人模型 (.pth / 形象)
+                            </button>
                         </div>
                     </div>
                     <div id="upload-bead-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
@@ -244,6 +250,51 @@ window.useImageAsDigitalHuman = async function useImageAsDigitalHuman() {
     } catch (err) {
         console.error(err);
         alert('网络错误，无法应用为数字人模型');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+window.useCanvasAsDigitalHuman = async function useCanvasAsDigitalHuman(canvasId, btnId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        alert('未找到拼豆画布！');
+        return;
+    }
+    
+    // 获取 canvas 图像的 base64 字符串
+    let dataUrl;
+    try {
+        dataUrl = canvas.toDataURL('image/png');
+    } catch (e) {
+        console.error(e);
+        alert('提取拼豆画质失败，可能是由于跨域限制。');
+        return;
+    }
+    
+    const btn = document.getElementById(btnId);
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⌛ 正在转换模型...';
+    
+    try {
+        const response = await fetch('/api/digital_human/set_avatar_from_url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_url: dataUrl
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            alert('🎉 2D 数字人模型(.pth/形象)生成并设置成功！已将此拼豆图像应用为最新的数字人脸。');
+        } else {
+            alert('失败: ' + data.error);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('网络错误，无法将拼豆应用为数字人模型');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;

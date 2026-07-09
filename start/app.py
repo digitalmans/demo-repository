@@ -1272,6 +1272,19 @@ def api_digital_human_set_avatar_from_url():
         if not image_url:
             return jsonify({'success': False, 'error': '图像 URL 不能为空'}), 400
 
+        target_path = os.path.join(app.root_path, 'static', 'models', 'avatar_2d.png')
+
+        if image_url.startswith('data:image/'):
+            try:
+                import base64
+                header, encoded = image_url.split(",", 1)
+                image_data = base64.b64decode(encoded)
+                with open(target_path, 'wb') as f:
+                    f.write(image_data)
+                return jsonify({'success': True})
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'解析 base64 图像失败: {str(e)}'}), 400
+
         import urllib.parse
         parsed_url = urllib.parse.urlparse(image_url)
         target_path = os.path.join(app.root_path, 'static', 'models', 'avatar_2d.png')
