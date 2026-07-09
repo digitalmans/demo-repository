@@ -160,16 +160,10 @@ async def generate_audio_base64(text):
             base_url="https://api.moark.com/v1",
             api_key="QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q",
         )
-        logger.info(f"正在请求 Moark ChatTTS 语音合成...")
+        logger.info(f"正在请求 Moark fish-speech-1.2-sft 语音合成...")
         response = await moark_client.audio.speech.create(
             input=text,
-            model="ChatTTS",
-            extra_body={
-                "prompt": "[oral_1]",
-                "temperature": 0.2,
-                "top_P": 0.7,
-                "top_K": 20,
-            },
+            model="fish-speech-1.2-sft",
             voice="alloy",
         )
         audio_bytes = response.content
