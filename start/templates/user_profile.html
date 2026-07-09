@@ -67,6 +67,7 @@
 </div>
 
 <script>
+(function() {
 const profileUsername = {{ profile_username|tojson }};
 const currentUsername = {{ session.get('username','')|tojson }};
 const isSelf = currentUsername === profileUsername;
@@ -249,9 +250,6 @@ function initUserProfileModule() {
     loadProfile();
     loadTabContent();
 }
-if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', initUserProfileModule);
-} else {
-    setTimeout(initUserProfileModule, 10);
-}
+initUserProfileModule();
+})();
 </script>

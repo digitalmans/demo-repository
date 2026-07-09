@@ -72,6 +72,7 @@ except ImportError as e:
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 @app.context_processor
 def inject_view_variables():

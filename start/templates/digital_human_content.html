@@ -130,6 +130,7 @@
 <script src="{{ url_for('static', filename='js/OrbitControls.js') }}"></script>
 
 <script>
+(function() {
 // ==================== WAV 音频录制器 ====================
 class WAVRecorder {
     constructor() {
@@ -659,9 +660,6 @@ function initDigitalHumanModule() {
     const micBtn = document.getElementById('dh-mic-btn');
     if (micBtn) micBtn.addEventListener('click', toggleVoiceRecording);
 }
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDigitalHumanModule);
-} else {
-    setTimeout(initDigitalHumanModule, 10);
-}
+initDigitalHumanModule();
+})();
 </script>

@@ -102,6 +102,7 @@
 </div>
 
 <script>
+(function() {
 let currentDiscussionId = null;
 let currentDiscussion = null;
 let currentSort = 'latest';
@@ -567,12 +568,9 @@ function formatTime(timeStr) {
 function initQaDiscussionModule() {
     loadDiscussions(true);
 }
-if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', initQaDiscussionModule);
-} else {
-    setTimeout(initQaDiscussionModule, 10);
-}
+initQaDiscussionModule();
 setInterval(() => { currentOffset = 0; loadDiscussions(true); }, 60000);
+})();
 </script>
 
 <style>

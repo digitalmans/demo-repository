@@ -105,6 +105,7 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <script>
+(function() {
 // 问答机器人 - 前端JavaScript（集成版本）
 
 let qaRobotMessageCount = 0;
@@ -1123,4 +1124,5 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+})();
 </script>
