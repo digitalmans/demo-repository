@@ -333,27 +333,6 @@ function App() {
           <h1 className="app-title">Nexus 3D</h1>
           <p className="app-subtitle">AI Generation & Unity Automation Agent</p>
         </div>
-        <button
-          className="btn"
-          style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid #ef4444',
-            color: '#f87171',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: '0.95rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease'
-          }}
-          onClick={() => window.location.href = 'http://127.0.0.1:5180'}
-          title="退出 3D 数字人，返回点豆成金 (bean-to-gold)"
-        >
-          🚪 退出返回点豆成金
-        </button>
       </header>
 
       <div className="grid-2">
