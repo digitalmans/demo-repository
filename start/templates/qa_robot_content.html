@@ -114,8 +114,7 @@ const qaRobotDeepSeekConfigured = {{ 'true' if deepseek_configured else 'false' 
 const qaRobotLocalAvailable = {{ 'true' if qa_robot_available else 'false' }};
 const qaRobotDeepSeekKeyStorageName = 'qa_robot_deepseek_api_key';
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
+function initQaRobotModule() {
     qaRobotInitDeepSeekKeyConfig();
 
     // 加载统计信息
@@ -144,8 +143,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const useKbCheckbox = document.getElementById('qa-robot-use-kb');
     if (presetSelect && kbContainer && useKbCheckbox) {
         const toggleKbCheckbox = () => {
-            if (presetSelect.value === 'local') {
-                kbContainer.style.opacity = '0.5';
+            const val = presetSelect.value;
+            if (val === 'local_only') {
+                kbContainer.style.opacity = '0.6';
                 useKbCheckbox.disabled = true;
                 useKbCheckbox.checked = true;
             } else {
@@ -156,7 +156,12 @@ document.addEventListener('DOMContentLoaded', function() {
         presetSelect.addEventListener('change', toggleKbCheckbox);
         toggleKbCheckbox(); // 初始化状态
     }
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initQaRobotModule);
+} else {
+    setTimeout(initQaRobotModule, 10);
+}
 
 function qaRobotInitDeepSeekKeyConfig() {
     const keyInput = document.getElementById('qa-robot-deepseek-key-input');

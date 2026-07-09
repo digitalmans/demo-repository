@@ -638,21 +638,30 @@ async function toggleVoiceRecording() {
     }
 }
 
-// 绑定初始化事件
-document.addEventListener('DOMContentLoaded', () => {
+function initDigitalHumanModule() {
     initDigitalHuman();
 
     // 绑定发送按钮
-    document.getElementById('dh-send-btn').addEventListener('click', sendTextInput);
+    const sendBtn = document.getElementById('dh-send-btn');
+    if (sendBtn) sendBtn.addEventListener('click', sendTextInput);
     
     // 绑定回车键
-    document.getElementById('dh-text-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            sendTextInput();
-        }
-    });
+    const textInput = document.getElementById('dh-text-input');
+    if (textInput) {
+        textInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendTextInput();
+            }
+        });
+    }
 
     // 绑定麦克风语音按钮
-    document.getElementById('dh-mic-btn').addEventListener('click', toggleVoiceRecording);
-});
+    const micBtn = document.getElementById('dh-mic-btn');
+    if (micBtn) micBtn.addEventListener('click', toggleVoiceRecording);
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDigitalHumanModule);
+} else {
+    setTimeout(initDigitalHumanModule, 10);
+}
 </script>
