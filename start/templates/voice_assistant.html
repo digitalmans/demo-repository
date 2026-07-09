@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -166,6 +166,14 @@
                 {% endif %}
             </div>
 
+            <div class="spa-panel {% if current_view == 'mood_pixel' %}active{% endif %}" id="panel-mood_pixel">
+                {% if current_view == 'mood_pixel' %}
+                    {% include 'mood_pixel_content.html' %}
+                {% else %}
+                    <div class="spa-loading"><div class="spa-spinner"></div><span>加载中...</span></div>
+                {% endif %}
+            </div>
+
             <div class="spa-panel {% if current_view == 'qa_discussion' %}active{% endif %}" id="panel-qa_discussion">
                 {% if current_view == 'qa_discussion' %}
                     {% include 'qa_discussion_content.html' %}
@@ -210,6 +218,10 @@
                 <a href="#" data-view="qa_robot"
                    class="switch-btn {% if current_view == 'qa_robot' %}active{% endif %}"
                    id="qa-robot-btn">🤖 问答机器人</a>
+
+                <a href="#" data-view="mood_pixel"
+                   class="switch-btn {% if current_view == 'mood_pixel' %}active{% endif %}"
+                   id="mood-pixel-btn">🎨 心情拼豆</a>
 
                 <a href="{{ url_for('digital_human') }}" target="_blank"
                    class="switch-btn {% if current_view == 'digital_human' %}active{% endif %}"

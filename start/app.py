@@ -307,6 +307,141 @@ def qa_robot():
                          qa_robot_available=QA_ROBOT_AVAILABLE)
 
 
+@app.route('/mood_pixel')
+@login_required
+def mood_pixel():
+    """心情拼豆页面（需要登录）"""
+    return render_template('voice_assistant.html',
+                           username=session.get('username'),
+                           current_view='mood_pixel')
+
+
+@app.route('/api/mood_pixel/text_to_image', methods=['POST'])
+@login_required
+def mood_pixel_text_to_image():
+    """使用 Moark FLUX-1-schnell 进行文生图"""
+    data = request.get_json() or {}
+    prompt = data.get('prompt', '').strip()
+    size = data.get('size', '1024x1024')
+    if not prompt:
+        return jsonify({'error': 'Prompt is required'}), 400
+
+    try:
+        from openai import OpenAI
+        import base64
+        import requests as req
+
+        client = OpenAI(
+            base_url="https://api.moark.com/v1",
+            api_key="QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q",
+        )
+
+        response = client.images.generate(
+            prompt=prompt,
+            model="flux-1-schnell",
+            size=size,
+            extra_body={
+                "guidance_scale": 7.5,
+                "seed": 42,
+                "lora_weights": [],
+                "lora_scale": 0,
+                "num_images_per_prompt": 1,
+                "width": 0,
+                "height": 0,
+                "negative_prompt": "blurry, low quality, distorted",
+            },
+            response_format="b64_json",
+        )
+
+        for i, image_data in enumerate(response.data):
+            if getattr(image_data, 'b64_json', None):
+                return jsonify({
+                    'success': True,
+                    'image_base64': 'data:image/jpeg;base64,' + image_data.b64_json
+                })
+            elif getattr(image_data, 'url', None):
+                return jsonify({
+                    'success': True,
+                    'image_url': image_data.url
+                })
+        return jsonify({'error': 'No image data returned'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mood_pixel/image_to_image', methods=['POST'])
+@login_required
+def mood_pixel_image_to_image():
+    """使用 Moark FLUX.1-Kontext-dev 进行图生图"""
+    if 'image' not in request.files:
+        return jsonify({'error': 'Image file is required'}), 400
+
+    file = request.files['image']
+    prompt = request.form.get('prompt', 'Convert to colorful clean perler bead pixel art pattern')
+
+    try:
+        import requests as req
+        from requests_toolbelt import MultipartEncoder
+        import os
+        import tempfile
+
+        suffix = os.path.splitext(file.filename or '.jpg')[1] or '.jpg'
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            file.save(tmp.name)
+            tmp_path = tmp.name
+
+        API_URL = "https://api.moark.com/v1/images/edits"
+        API_TOKEN = "QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q"
+        headers = {
+            "Authorization": f"Bearer {API_TOKEN}"
+        }
+
+        fields = [
+            ("prompt", prompt),
+            ("model", "FLUX.1-Kontext-dev"),
+            ("size", "1024x1024"),
+            ("steps", "20"),
+            ("guidance_scale", "2.5"),
+            ("seed", "42"),
+            ("return_image_quality", "80"),
+            ("return_image_format", "b64_json"),
+            ("lora_scale", "0"),
+            ("width", "0"),
+            ("height", "0"),
+        ]
+
+        mime_type = file.mimetype or "image/jpeg"
+        with open(tmp_path, "rb") as f:
+            fields.append(("image", (os.path.basename(tmp_path), f.read(), mime_type)))
+
+        encoder = MultipartEncoder(fields)
+        headers["Content-Type"] = encoder.content_type
+
+        response = req.post(API_URL, headers=headers, data=encoder, timeout=60)
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
+
+        result = response.json()
+        if "data" in result and len(result["data"]) > 0:
+            img_data = result["data"][0]
+            if "b64_json" in img_data:
+                return jsonify({
+                    'success': True,
+                    'image_base64': 'data:image/jpeg;base64,' + img_data["b64_json"]
+                })
+            elif "url" in img_data:
+                return jsonify({
+                    'success': True,
+                    'image_url': img_data["url"]
+                })
+        return jsonify({'error': 'Generation failed or returned unexpected format', 'details': str(result)}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
 @app.route('/qa_discussion')
 @login_required
 def qa_discussion():
@@ -320,8 +455,9 @@ def qa_discussion():
 @app.route('/digital_human')
 @login_required
 def digital_human():
-    """3D 数字人页面（需要登录）"""
+    """3D 数字人页面（直达 3D 数字人系统）"""
     return redirect("http://127.0.0.1:5173")
+
 
 
 @app.route('/feature_experience')
@@ -358,6 +494,15 @@ def partial_qa_robot():
                            deepseek_configured=deepseek_configured,
                            qa_robot_available=QA_ROBOT_AVAILABLE)
 
+@app.route('/api/partial/mood_pixel')
+@login_required
+def partial_mood_pixel():
+    """返回心情拼豆 HTML 片段"""
+    return render_template('mood_pixel_content.html',
+                           username=session.get('username'),
+                           current_view='mood_pixel')
+
+
 @app.route('/api/partial/qa_discussion')
 @login_required
 def partial_qa_discussion():
@@ -387,8 +532,10 @@ def partial_settings():
 @login_required
 def partial_user_profile():
     """返回个人主页 HTML 片段"""
+    username = request.args.get('username', session.get('username'))
     return render_template('user_profile.html',
                            username=session.get('username'),
+                           profile_username=username,
                            current_view='user_profile')
 
 

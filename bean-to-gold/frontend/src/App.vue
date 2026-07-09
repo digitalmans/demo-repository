@@ -243,6 +243,10 @@ async function generate() {
   }
 }
 
+function open3DAvatar() {
+  window.location.href = 'http://127.0.0.1:5173'
+}
+
 const btnLabel = computed(() => {
   if (loading.value) return loadingStep.value || '处理中…'
   if (mode.value === 'mood') return '生成像素心情图'
@@ -266,9 +270,33 @@ const btnLabel = computed(() => {
       <button type="button" :class="['tab', { active: mode === 'perler' }]" @click="mode = 'perler'">
         上传拼豆
       </button>
+      <button type="button" :class="['tab', { active: mode === 'avatar3d' }]" @click="mode = 'avatar3d'">
+        👤 3D 数字模型
+      </button>
     </div>
 
     <main class="card">
+      <template v-if="mode === 'avatar3d'">
+        <div class="section-head">
+          <h2 class="section-title">👤 3D 数字人与模型交互系统 (Nexus 3D Avatar)</h2>
+          <p class="section-copy">基于 AI 驱动的 3D 虚拟数字人交互与 3D 资产建模环境。</p>
+        </div>
+        <div style="padding: 36px 24px; text-align: center; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed var(--border); margin: 16px 0;">
+          <div style="font-size: 3.5rem; margin-bottom: 16px;">🤖 + 👤</div>
+          <h3 style="margin-bottom: 12px; color: #fff; font-size: 1.4rem;">进入 3D 数字人环境</h3>
+          <p style="color: var(--muted); margin-bottom: 28px; max-width: 540px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+            点击下方按钮即可跳转到现在的 3D 数字人虚拟交互环境。退出时将自动返回此主界面。
+          </p>
+          <button
+            type="button"
+            class="btn"
+            style="padding: 14px 38px; font-size: 1.1rem; cursor: pointer; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: #fff; font-weight: 700; box-shadow: 0 4px 15px rgba(102,126,234,0.4);"
+            @click="open3DAvatar"
+          >
+            🚀 进入现在的 3D 数字人
+          </button>
+        </div>
+      </template>
       <template v-if="mode === 'mood'">
         <label class="field mood-text-field">
           <div class="field-label-row">
@@ -358,7 +386,7 @@ const btnLabel = computed(() => {
         </label>
       </template>
 
-      <button type="button" class="btn" :disabled="!canSubmit" @click="generate">
+      <button v-if="mode !== 'avatar3d'" type="button" class="btn" :disabled="!canSubmit" @click="generate">
         {{ btnLabel }}
       </button>
 

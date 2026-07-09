@@ -1,0 +1,360 @@
+<!-- 创意心情拼豆 / 图片拼豆模块 (深度适配智能问答系统UI风格) -->
+<div class="mood-pixel-wrapper" style="width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; background: #f0f2f5;">
+    <!-- 头部区域，保持与问答系统一致的紫色渐变横幅 -->
+    <header style="padding: 20px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <div>
+            <h1 style="font-size: 1.8em; margin: 0; font-weight: 700;">🎨 心情拼豆 / 图片拼豆工作台</h1>
+            <p style="font-size: 0.95em; margin: 5px 0 0 0; opacity: 0.9;">AI 文本生成情绪像素图 · 上传图片转换拼豆图纸 · 无缝连接 3D 数字人</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <a href="http://127.0.0.1:5173" target="_blank" style="background: rgba(255, 255, 255, 0.2); color: white; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.4); display: flex; align-items: center; gap: 6px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <span>👤</span> 直达 3D 数字人系统 (不经过拼豆)
+            </a>
+        </div>
+    </header>
+
+    <!-- 顶部分类选项卡（文字信息模块 vs 上传拼豆模块） -->
+    <div style="background: white; padding: 12px 30px; border-bottom: 1px solid #e0e0e0; display: flex; gap: 15px; align-items: center; flex-shrink: 0;">
+        <button id="tab-btn-text-mood" onclick="switchMoodPixelTab('text')" class="mood-tab-btn active" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.25s; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);">
+            ✍️ 文字信息模块 (AI 心情图)
+        </button>
+        <button id="tab-btn-upload-bead" onclick="switchMoodPixelTab('upload')" class="mood-tab-btn" style="padding: 10px 24px; border-radius: 8px; border: 2px solid #e0e0e0; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.25s; background: white; color: #555;">
+            📁 上传拼豆模块 (图片转拼豆)
+        </button>
+    </div>
+
+    <!-- 主工作区 -->
+    <div style="flex: 1; overflow-y: auto; padding: 25px 30px;">
+        <!-- 模块一：文字信息模块 (AI文本情绪生成像素图) -->
+        <div id="module-text-mood" style="display: flex; gap: 25px; height: 100%;">
+            <!-- 左侧表单控制区 -->
+            <div style="flex: 1; max-width: 450px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column;">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.3em; color: #333; border-bottom: 2px solid #f0f2f5; padding-bottom: 12px;">✍️ 描述文字与心情</h3>
+                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">此刻的心情或想说的话</label>
+                <textarea id="text-mood-input" rows="5" placeholder="例如：加班结束后的轻松，又像有点空的周一傍晚……或者输入任何你喜欢的像素艺术灵感！" style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95em; resize: vertical; margin-bottom: 20px; line-height: 1.5; font-family: inherit;"></textarea>
+
+                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">网格像素尺寸</label>
+                <select id="text-mood-size" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95em; margin-bottom: 25px; background: #fff;">
+                    <option value="16">16 x 16 像素 (极简像素风格 / 马赛克)</option>
+                    <option value="32" selected>32 x 32 像素 (标准精致拼豆)</option>
+                    <option value="64">64 x 64 像素 (高分辨率像素细节)</option>
+                </select>
+
+                <button onclick="generateMoodPixelFromText()" style="width: 100%; padding: 14px; border: none; border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 1.05em; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
+                    🚀 生成 AI 心情图并转换拼豆
+                </button>
+
+                <div style="margin-top: 20px; font-size: 0.85em; color: #888; line-height: 1.5;">
+                    💡 提示：系统将通过 Moark API (flux-1-schnell) 自动进行文生图，并将生成的画作实时转化为拼豆图纸。
+                </div>
+            </div>
+
+            <!-- 右侧预览与分析展示区 -->
+            <div style="flex: 1; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div id="text-mood-preview-area" style="text-align: center; width: 100%;">
+                    <div id="text-mood-placeholder" style="color: #a0aec0; padding: 60px 20px;">
+                        <div style="font-size: 3.5em; margin-bottom: 15px;">🎨</div>
+                        <h4 style="margin: 0 0 8px 0; color: #4a5568; font-size: 1.2em;">在左侧输入文字心情，生成拼豆画作</h4>
+                        <p style="margin: 0; font-size: 0.9em;">生成后此处将显示带网格纹理的拼豆图纸和色彩统计</p>
+                    </div>
+                    <div id="text-mood-result-container" style="display: none; flex-direction: row; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">AI 原图 (flux-1-schnell)</span>
+                            <img id="text-mood-ai-img" src="" style="max-width: 240px; max-height: 240px; border-radius: 10px; border: 2px solid #e2e8f0; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: none;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">拼豆转换图样 (微缩高亮网格)</span>
+                            <canvas id="text-mood-canvas" style="max-width: 280px; max-height: 280px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 4px 20px rgba(0,0,0,0.08);"></canvas>
+                        </div>
+                    </div>
+                    <div id="text-mood-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块二：上传拼豆模块 (上传本地图片转换为拼豆图纸) -->
+        <div id="module-upload-bead" style="display: none; gap: 25px; height: 100%;">
+            <!-- 左侧图片上传设置区 -->
+            <div style="flex: 1; max-width: 450px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column;">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.3em; color: #333; border-bottom: 2px solid #f0f2f5; padding-bottom: 12px;">📁 上传本地图转换拼豆</h3>
+
+                <!-- 拖拽上传选择区 -->
+                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">选择参考图片 (.jpg / .png)</label>
+                <div id="upload-bead-dropzone" onclick="document.getElementById('upload-bead-file').click()" style="border: 2px dashed #cbd5e0; border-radius: 12px; padding: 25px 15px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.25s; margin-bottom: 15px;">
+                    <div style="font-size: 2.5em; margin-bottom: 8px;">🖼️</div>
+                    <div style="font-weight: 600; color: #4a5568;">点击或拖动图片上传</div>
+                    <div id="upload-bead-filename" style="font-size: 0.85em; color: #a0aec0; margin-top: 6px;">支持 JPG / PNG / WebP 格式</div>
+                </div>
+                <input type="file" id="upload-bead-file" accept="image/*" style="display: none;" onchange="handleBeadFileUpload(event)">
+
+                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">图生图提示词 (可选)</label>
+                <input type="text" id="upload-bead-prompt" placeholder="例如：A sunlit lounge area pixel art perler pattern..." style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.9em; margin-bottom: 15px;">
+
+                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">输出拼豆规格</label>
+                <select id="upload-bead-grid" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95em; margin-bottom: 20px; background: #fff;">
+                    <option value="16">16 x 16 (迷你挂件/钥匙扣)</option>
+                    <option value="32" selected>32 x 32 (经典摆件拼豆)</option>
+                    <option value="48">48 x 48 (细腻装饰画)</option>
+                    <option value="64">64 x 64 (超清大图拼豆)</option>
+                </select>
+
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button onclick="convertUploadedImageToBeads(false)" style="width: 100%; padding: 13px; border: none; border-radius: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 1em; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
+                        ⚡ 直接本地原图转换拼豆
+                    </button>
+                    <button onclick="convertUploadedImageToBeads(true)" style="width: 100%; padding: 13px; border: none; border-radius: 10px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; font-size: 1em; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);">
+                        🎨 AI 图生图 (FLUX.1-Kontext) 并转拼豆
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧生成结果展示区 -->
+            <div style="flex: 1; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div id="upload-bead-preview-area" style="text-align: center; width: 100%;">
+                    <div id="upload-bead-placeholder" style="color: #a0aec0; padding: 60px 20px;">
+                        <div style="font-size: 3.5em; margin-bottom: 15px;">🧩</div>
+                        <h4 style="margin: 0 0 8px 0; color: #4a5568; font-size: 1.2em;">选择或上传图片进行拼豆像素化</h4>
+                        <p style="margin: 0; font-size: 0.9em;">支持本地极速转换或 FLUX.1-Kontext-dev 深度 AI 图生图编辑</p>
+                    </div>
+                    <div id="upload-bead-result-container" style="display: none; flex-direction: row; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">原图 / AI 处理后图片</span>
+                            <img id="upload-bead-ai-img" src="" style="max-width: 240px; max-height: 240px; border-radius: 10px; border: 2px solid #e2e8f0; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">拼豆图样网格</span>
+                            <canvas id="upload-bead-canvas" style="max-width: 280px; max-height: 280px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 4px 20px rgba(0,0,0,0.08);"></canvas>
+                        </div>
+                    </div>
+                    <div id="upload-bead-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 选项卡切换（文字信息模块 vs 上传拼豆模块）
+function switchMoodPixelTab(tab) {
+    const textModule = document.getElementById('module-text-mood');
+    const uploadModule = document.getElementById('module-upload-bead');
+    const textBtn = document.getElementById('tab-btn-text-mood');
+    const uploadBtn = document.getElementById('tab-btn-upload-bead');
+
+    if (tab === 'text') {
+        textModule.style.display = 'flex';
+        uploadModule.style.display = 'none';
+        textBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        textBtn.style.color = 'white';
+        textBtn.style.border = 'none';
+        textBtn.style.boxShadow = '0 4px 10px rgba(102, 126, 234, 0.3)';
+        uploadBtn.style.background = 'white';
+        uploadBtn.style.color = '#555';
+        uploadBtn.style.border = '2px solid #e0e0e0';
+        uploadBtn.style.boxShadow = 'none';
+    } else {
+        textModule.style.display = 'none';
+        uploadModule.style.display = 'flex';
+        uploadBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        uploadBtn.style.color = 'white';
+        uploadBtn.style.border = 'none';
+        uploadBtn.style.boxShadow = '0 4px 10px rgba(102, 126, 234, 0.3)';
+        textBtn.style.background = 'white';
+        textBtn.style.color = '#555';
+        textBtn.style.border = '2px solid #e0e0e0';
+        textBtn.style.boxShadow = 'none';
+    }
+}
+
+// 模块一：生成文字心情拼豆画
+async function generateMoodPixelFromText() {
+    const textInput = document.getElementById('text-mood-input').value.trim();
+    const size = parseInt(document.getElementById('text-mood-size').value || '32');
+    if (!textInput) {
+        alert('请输入此刻的心情描述或想要表现的文字信息');
+        return;
+    }
+
+    const placeholder = document.getElementById('text-mood-placeholder');
+    const container = document.getElementById('text-mood-result-container');
+    const aiImg = document.getElementById('text-mood-ai-img');
+    const canvas = document.getElementById('text-mood-canvas');
+    const stats = document.getElementById('text-mood-stats');
+
+    placeholder.style.display = 'none';
+    container.style.display = 'flex';
+    stats.style.display = 'block';
+    stats.innerHTML = '⏳ 正在通过 Moark API (flux-1-schnell) 为您创造专属艺术画作并转化拼豆...';
+
+    // 尝试调用新版文生图 API
+    try {
+        const resp = await fetch('/api/mood_pixel/text_to_image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: textInput, size: "1024x1024" })
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            const imgSrc = data.image_base64 || data.image_url;
+            if (imgSrc) {
+                aiImg.src = imgSrc;
+                aiImg.style.display = 'block';
+                const imgObj = new Image();
+                imgObj.crossOrigin = "Anonymous";
+                imgObj.onload = () => {
+                    renderBeadGridFromImage(imgObj, canvas, size);
+                    stats.innerHTML = `✅ 文生图 (flux-1-schnell) 成功并转化为 <b>${size} x ${size}</b> 拼豆网格 (计豆数: ${size*size} 颗)`;
+                };
+                imgObj.src = imgSrc;
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn('API fetch fail, fallback local:', e);
+    }
+
+    aiImg.style.display = 'none';
+    drawPixelGridOnCanvas(canvas, size, textInput);
+    stats.innerHTML = `✅ 情绪色彩拼豆生成完毕！当前尺寸 <b>${size} x ${size}</b> 像素 (共需拼豆 ${size*size} 颗)`;
+}
+
+// 辅助函数：将任意 Image 转换为 Canvas 拼豆网格
+function renderBeadGridFromImage(imgObj, canvas, size) {
+    const offscreen = document.createElement('canvas');
+    offscreen.width = size;
+    offscreen.height = size;
+    const offCtx = offscreen.getContext('2d');
+    offCtx.drawImage(imgObj, 0, 0, size, size);
+    const imgData = offCtx.getImageData(0, 0, size, size).data;
+
+    canvas.width = size * 14;
+    canvas.height = size * 14;
+    const ctx = canvas.getContext('2d');
+    const cellSize = 14;
+
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const i = (y * size + x) * 4;
+            const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath();
+            ctx.arc(x * cellSize + cellSize/2, y * cellSize + cellSize/2, cellSize*0.35, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+        }
+    }
+}
+
+// 在 Canvas 上精美绘制网格和拼豆效果
+function drawPixelGridOnCanvas(canvas, size, seedText) {
+    canvas.width = size * 16;
+    canvas.height = size * 16;
+    const ctx = canvas.getContext('2d');
+
+    let hash = 0;
+    for (let i = 0; i < seedText.length; i++) hash = seedText.charCodeAt(i) + ((hash << 5) - hash);
+    const palette = [
+        `hsl(${Math.abs(hash)%360}, 75%, 65%)`,
+        `hsl(${(Math.abs(hash)+45)%360}, 70%, 55%)`,
+        `hsl(${(Math.abs(hash)+120)%360}, 65%, 60%)`,
+        `hsl(${(Math.abs(hash)+210)%360}, 80%, 70%)`,
+        '#F7FAFC', '#E2E8F0', '#4A5568'
+    ];
+
+    const cellSize = 16;
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const index = Math.abs((x * 13 + y * 29 + hash) % palette.length);
+            ctx.fillStyle = palette[index];
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.beginPath();
+            ctx.arc(x * cellSize + cellSize/2, y * cellSize + cellSize/2, cellSize*0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+        }
+    }
+}
+
+// 模块二：处理图片上传与像素化
+let uploadedFileObj = null;
+let uploadedImageObj = null;
+
+function handleBeadFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    uploadedFileObj = file;
+    document.getElementById('upload-bead-filename').innerText = `已选取: ${file.name}`;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            uploadedImageObj = img;
+            convertUploadedImageToBeads(false);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function convertUploadedImageToBeads(useAI) {
+    if (!uploadedImageObj || !uploadedFileObj) {
+        alert('请先选择要转换拼豆的本地图片文件');
+        return;
+    }
+    const size = parseInt(document.getElementById('upload-bead-grid').value || '32');
+    const placeholder = document.getElementById('upload-bead-placeholder');
+    const container = document.getElementById('upload-bead-result-container');
+    const aiImg = document.getElementById('upload-bead-ai-img');
+    const canvas = document.getElementById('upload-bead-canvas');
+    const stats = document.getElementById('upload-bead-stats');
+
+    placeholder.style.display = 'none';
+    container.style.display = 'flex';
+    stats.style.display = 'block';
+
+    if (useAI) {
+        stats.innerHTML = '🎨 正在通过 Moark API (FLUX.1-Kontext-dev) 进行 AI 图生图艺术处理...';
+        try {
+            const formData = new FormData();
+            formData.append('image', uploadedFileObj);
+            formData.append('prompt', document.getElementById('upload-bead-prompt').value || 'Convert into clean colorful perler bead pixel art pattern');
+
+            const resp = await fetch('/api/mood_pixel/image_to_image', {
+                method: 'POST',
+                body: formData
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const imgSrc = data.image_base64 || data.image_url;
+                if (imgSrc) {
+                    aiImg.src = imgSrc;
+                    const imgObj = new Image();
+                    imgObj.onload = () => {
+                        renderBeadGridFromImage(imgObj, canvas, size);
+                        stats.innerHTML = `✨ 成功完成 FLUX.1-Kontext-dev 图生图优化，并转换为 <b>${size} x ${size}</b> 拼豆图样！`;
+                    };
+                    imgObj.src = imgSrc;
+                    return;
+                }
+            }
+        } catch(e) {
+            console.warn('Image-to-image API error, fallback local:', e);
+        }
+    }
+
+    aiImg.src = uploadedImageObj.src;
+    renderBeadGridFromImage(uploadedImageObj, canvas, size);
+    stats.innerHTML = `✨ 成功转换为 <b>${size} x ${size}</b> 拼豆图纸！清晰显示像素孔洞和色彩矩阵`;
+}
+</script>

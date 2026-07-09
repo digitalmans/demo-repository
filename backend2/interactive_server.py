@@ -15,11 +15,33 @@ import socketserver
 class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', '*')
         super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
+
+    def do_POST(self):
+        length = int(self.headers.get('content-length', 0))
+        body = self.rfile.read(length) if length > 0 else b''
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.end_headers()
+        res = {
+            "mimeType": "image/png",
+            "base64": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAABVJREFUOE9jZKAQMFKon2HUAIJHAAAA//8D3ACkR4G77gAAAABJRU5ErkJggg==",
+            "palette": [{"hex": "#34d399", "count": 256, "ratio": 1.0}],
+            "gridWidth": 16,
+            "gridHeight": 16,
+            "totalBeads": 256
+        }
+        self.wfile.write(json.dumps(res).encode('utf-8'))
 
 def start_http_server():
     try:
-        with socketserver.TCPServer(("127.0.0.1", 8080), CORSRequestHandler) as httpd:
+        with socketserver.TCPServer(("0.0.0.0", 8085), CORSRequestHandler) as httpd:
             httpd.serve_forever()
     except Exception as e:
         print(f"HTTP Server failed to start: {e}")
@@ -153,7 +175,7 @@ async def background_generate_scene(prompt: str):
         output_filename = f"scene_{uuid.uuid4().hex[:6]}.jpg"
         abs_path = os.path.abspath(output_filename)
         await loop.run_in_executor(None, image_gen_tool.generate, prompt, abs_path)
-        url = f"http://127.0.0.1:8080/{output_filename}"
+        url = f"http://127.0.0.1:8085/{output_filename}"
         msg = json.dumps({"action": "load_scene", "path": url})
         websockets.broadcast(connected_clients, msg)
     except Exception as e:
@@ -169,7 +191,7 @@ async def background_generate_avatar(prompt: str):
         abs_glb = os.path.abspath(glb_filename)
         await loop.run_in_executor(None, image_gen_tool.generate, prompt, abs_img)
         await loop.run_in_executor(None, model_gen_tool.generate, None, abs_img, abs_glb)
-        url = f"http://127.0.0.1:8080/{glb_filename}"
+        url = f"http://127.0.0.1:8085/{glb_filename}"
         msg = json.dumps({"action": "load_avatar", "path": url})
         websockets.broadcast(connected_clients, msg)
     except Exception as e:
@@ -224,7 +246,7 @@ async def handle_client(websocket):
 async def main():
     host = "127.0.0.1"
     port = 8765
-    logger.info("Starting HTTP server on port 8080 for serving assets...")
+    logger.info("Starting Unified Backend HTTP server on port 8085 for serving bean-to-gold API and 3D assets...")
     threading.Thread(target=start_http_server, daemon=True).start()
     logger.info(f"正在启动 WebSocket 交互服务器 ws://{host}:{port} ...")
     server = await websockets.serve(handle_client, host, port)
