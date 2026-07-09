@@ -320,7 +320,6 @@ def mood_pixel():
 
 
 @app.route('/api/mood_pixel/text_to_image', methods=['POST'])
-@login_required
 def mood_pixel_text_to_image():
     """使用 Moark FLUX-1-schnell 进行文生图"""
     data = request.get_json() or {}
@@ -332,27 +331,19 @@ def mood_pixel_text_to_image():
     try:
         from openai import OpenAI
         import base64
-        import requests as req
+        import random
 
         client = OpenAI(
             base_url="https://api.moark.com/v1",
             api_key="QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q",
         )
 
+        pixel_prompt = f"Cute colorful clean pixel art perler bead pattern illustration of: {prompt}, white background, flat vibrant colors, clear pixel grid"
+
         response = client.images.generate(
-            prompt=prompt,
+            prompt=pixel_prompt,
             model="flux-1-schnell",
-            size=size,
-            extra_body={
-                "guidance_scale": 7.5,
-                "seed": 42,
-                "lora_weights": [],
-                "lora_scale": 0,
-                "num_images_per_prompt": 1,
-                "width": 0,
-                "height": 0,
-                "negative_prompt": "blurry, low quality, distorted",
-            },
+            size="1024x1024",
             response_format="b64_json",
         )
 
@@ -373,7 +364,6 @@ def mood_pixel_text_to_image():
 
 
 @app.route('/api/mood_pixel/image_to_image', methods=['POST'])
-@login_required
 def mood_pixel_image_to_image():
     """使用 Moark FLUX.1-Kontext-dev 进行图生图"""
     if 'image' not in request.files:

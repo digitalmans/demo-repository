@@ -196,25 +196,30 @@ window.generateMoodPixelFromText = async function generateMoodPixelFromText() {
             const data = await resp.json();
             const imgSrc = data.image_base64 || data.image_url;
             if (imgSrc) {
-                aiImg.src = imgSrc;
-                aiImg.style.display = 'block';
                 const imgObj = new Image();
                 imgObj.crossOrigin = "Anonymous";
                 imgObj.onload = () => {
                     renderBeadGridFromImage(imgObj, canvas, size);
-                    stats.innerHTML = `✅ 文生图 (flux-1-schnell) 成功并转化为 <b>${size} x ${size}</b> 拼豆网格 (计豆数: ${size*size} 颗)`;
+                    stats.innerHTML = `✨ <b>"${textInput}"</b> AI 专属拼豆画作生成完毕！当前图纸尺寸 <b>${size} x ${size}</b> 像素 (共需拼豆 ${size*size} 颗)`;
+                };
+                imgObj.onerror = () => {
+                    stats.innerHTML = '❌ 图像解析失败，请重新尝试生成。';
                 };
                 imgObj.src = imgSrc;
                 return;
+            } else {
+                stats.innerHTML = `❌ 生成未返回数据：${data.error || '未知错误'}`;
+                return;
             }
+        } else {
+            const errJson = await resp.json().catch(() => ({}));
+            stats.innerHTML = `❌ AI 引擎返回异常 (${resp.status}): ${errJson.error || '请求未成功'}`;
+            return;
         }
     } catch (e) {
-        console.warn('API fetch fail, fallback local:', e);
+        console.error('AI API fetch fail:', e);
+        stats.innerHTML = `❌ 网络或连接出现错误: ${e.message}`;
     }
-
-    aiImg.style.display = 'none';
-    drawPixelGridOnCanvas(canvas, size, textInput);
-    stats.innerHTML = `✅ 情绪色彩拼豆生成完毕！当前尺寸 <b>${size} x ${size}</b> 像素 (共需拼豆 ${size*size} 颗)`;
 }
 
 // 辅助函数：将任意 Image 转换为 Canvas 拼豆网格
