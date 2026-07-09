@@ -1138,6 +1138,95 @@ def api_voice_tts():
         return jsonify({'success': False, 'error': f'服务器错误: {str(e)}'}), 500
 
 
+@app.route('/api/digital_human/wav2lip', methods=['POST'])
+@login_required
+def api_digital_human_wav2lip():
+    """Wav2Lip 2D 数字人视频生成 API"""
+    try:
+        data = request.get_json() or {}
+        text = str(data.get('text') or '').strip()
+        speaker = data.get('speaker', 0)
+        language = 'zh'
+        
+        if not text:
+            return jsonify({'success': False, 'error': '文本内容不能为空'}), 400
+
+        # Step 1: 检查 TTS 缓存或生成新的语音文件
+        import hashlib
+        text_hash = hashlib.md5((text + f"_spk{speaker}").encode('utf-8')).hexdigest()
+        audio_filename = f"tts_{text_hash}_{language}.mp3"
+        audio_path = os.path.join(app.config['OUTPUT_FOLDER'], audio_filename)
+        
+        # 引入 tts
+        from tts import tts
+        cache_success, cached_file = get_tts_audio_cache(text, language)
+        if cache_success and os.path.exists(cached_file):
+            audio_path = cached_file
+        else:
+            # 执行生成
+            original_dir = os.getcwd()
+            try:
+                os.chdir(voice_assistant_path)
+                saved_file = tts(text, language=language, speaker=speaker)
+            finally:
+                os.chdir(original_dir)
+                
+            if saved_file == "error.txt":
+                return jsonify({'success': False, 'error': '语音生成失败'}), 500
+                
+            if not os.path.isabs(saved_file):
+                file_in_va = os.path.join(voice_assistant_path, saved_file)
+                if os.path.exists(file_in_va):
+                    if os.path.exists(audio_path):
+                        os.remove(audio_path)
+                    os.rename(file_in_va, audio_path)
+                else:
+                    if os.path.exists(audio_path):
+                        pass
+                    else:
+                        return jsonify({'success': False, 'error': '音频文件生成后未找到'}), 500
+            else:
+                audio_path = saved_file
+            
+            save_tts_audio_cache(text, language, audio_path)
+
+        # Step 2: 准备 Wav2Lip 2D 人脸输入图片和输出视频文件名
+        face_path = os.path.join(app.root_path, 'static', 'models', 'avatar_2d.png')
+        video_filename = f"2d_{text_hash}.mp4"
+        video_output_path = os.path.join(app.config['OUTPUT_FOLDER'], video_filename)
+
+        # Step 3: 调用 wav2lip_integration 进行合成
+        from wav2lip_integration import generate_2d_digital_human_video
+        success, media_type, final_path = generate_2d_digital_human_video(audio_path, face_path, video_output_path)
+        
+        if success:
+            final_filename = os.path.basename(final_path)
+            return jsonify({
+                'success': True,
+                'video_url': f'/api/digital_human/video/{final_filename}',
+                'media_type': media_type
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Wav2Lip 视频合成失败'}), 500
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'服务器内部错误: {str(e)}'}), 500
+
+
+@app.route('/api/digital_human/video/<filename>')
+def serve_digital_human_video(filename):
+    """提供生成的 2D 数字人视频/音频文件播放"""
+    video_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+    if os.path.exists(video_path):
+        mimetype = 'video/mp4'
+        if filename.endswith('.mp3'):
+            mimetype = 'audio/mpeg'
+        elif filename.endswith('.wav'):
+            mimetype = 'audio/wav'
+        return send_file(video_path, mimetype=mimetype)
+    return "Not Found", 404
+
+
 @app.route('/admin')
 @login_required
 @admin_required

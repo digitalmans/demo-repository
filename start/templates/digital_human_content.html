@@ -2,15 +2,30 @@
 <div class="digital-human-wrapper" style="width: 100%; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
     <div class="dh-container" style="display: flex; height: 100%; width: 100%; background: #f4f5f6; color: #333333;">
         
-        <!-- 左侧：3D数字人渲染区 -->
-        <div class="dh-left-panel" style="flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid rgba(0, 0, 0, 0.1);">
-            <!-- 三维视口 -->
-            <div id="canvas-container" style="width: 100%; height: 100%; position: relative;"></div>
+        <!-- 左侧：双通道数字人区 -->
+        <div class="dh-left-panel" style="flex: 1; display: flex; overflow: hidden; border-right: 1px solid rgba(0, 0, 0, 0.1); background: #f4f5f6; position: relative;">
+            
+            <!-- 3D 数字人视口 -->
+            <div style="flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; border-right: 2px solid rgba(0, 0, 0, 0.15);">
+                <div style="position: absolute; top: 15px; left: 15px; background: rgba(102, 126, 234, 0.95); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.82em; z-index: 5; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.15); letter-spacing: 0.5px;">🤖 3D 机器人</div>
+                <div id="canvas-container" style="width: 100%; height: 100%; position: relative;"></div>
+            </div>
+            
+            <!-- 2D 数字人视口 -->
+            <div style="flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; background: #121319;">
+                <div style="position: absolute; top: 15px; left: 15px; background: rgba(118, 75, 162, 0.95); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.82em; z-index: 5; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.15); letter-spacing: 0.5px;">👤 2D 拟真数字人 (Wav2Lip)</div>
+                <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative;">
+                    <!-- 静态头像 -->
+                    <img id="dh-2d-avatar" src="/static/models/avatar_2d.png" style="max-width: 100%; max-height: 100%; object-fit: contain; position: absolute; z-index: 2; transition: opacity 0.3s;">
+                    <!-- 唇形同步视频 -->
+                    <video id="dh-2d-video" style="width: 100%; height: 100%; object-fit: contain; display: block; position: absolute; z-index: 1;" playsinline></video>
+                </div>
+            </div>
             
             <!-- 加载状态 -->
             <div id="model-loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f4f5f6; z-index: 100;">
                 <div class="dh-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(0, 0, 0, 0.1); border-top-color: #667eea; border-radius: 50%; animation: dh-spin 1s linear infinite;"></div>
-                <p style="margin-top: 20px; font-size: 1.1em; color: #667eea; letter-spacing: 1px;">正在唤醒数字人... <span id="loading-percentage">0%</span></p>
+                <p style="margin-top: 20px; font-size: 1.1em; color: #667eea; letter-spacing: 1px;">正在唤醒数字人系统... <span id="loading-percentage">0%</span></p>
             </div>
 
             <!-- 控制面板与状态条 -->
@@ -443,11 +458,63 @@ async function speakResponse(text) {
         currentAudio.pause();
         currentAudio = null;
     }
+    const videoEl = document.getElementById('dh-2d-video');
+    if (videoEl) {
+        videoEl.pause();
+        videoEl.src = '';
+    }
     isTalking = false;
+    document.getElementById('dh-2d-avatar').style.opacity = '1';
 
     const speaker = document.getElementById('dh-speaker-select').value;
-    updateStatus('正在思考并合成语音...', '#FF9800');
+    updateStatus('正在思考并合成双数字人语音...', '#FF9800');
 
+    try {
+        // 尝试调用 2D 数字人 Wav2Lip 视频合成接口
+        const response = await fetch('/api/digital_human/wav2lip', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: text,
+                speaker: parseInt(speaker)
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.video_url) {
+                const isVideo = data.media_type === 'mp4';
+                document.getElementById('dh-2d-avatar').style.opacity = isVideo ? '0' : '1';
+                videoEl.src = data.video_url;
+                
+                videoEl.onplay = () => {
+                    isTalking = true;
+                    updateStatus('正在发声... (🗣️)', '#00ffff');
+                };
+
+                videoEl.onended = () => {
+                    isTalking = false;
+                    updateStatus('空闲 (💤)', '#4CAF50');
+                    resetModelNodes();
+                    document.getElementById('dh-2d-avatar').style.opacity = '1';
+                };
+
+                videoEl.onerror = () => {
+                    isTalking = false;
+                    updateStatus('2D数字人播放异常', '#f44336');
+                    document.getElementById('dh-2d-avatar').style.opacity = '1';
+                };
+
+                videoEl.play();
+                return;
+            }
+        }
+    } catch (wav2lipErr) {
+        console.warn('Wav2Lip 合成失败，正在回退到标准 TTS:', wav2lipErr);
+    }
+
+    // 回退到标准 TTS
+    updateStatus('Wav2Lip 未就绪，已回退到标准 3D 播报...', '#FF9800');
     try {
         const response = await fetch('/api/voice/tts', {
             method: 'POST',
@@ -475,7 +542,6 @@ async function speakResponse(text) {
         currentAudio.onended = () => {
             isTalking = false;
             updateStatus('空闲 (💤)', '#4CAF50');
-            // Reset head & mouth
             resetModelNodes();
         };
 
