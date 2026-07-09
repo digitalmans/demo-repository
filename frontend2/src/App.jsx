@@ -333,6 +333,24 @@ function App() {
           <h1 className="app-title">Nexus 3D</h1>
           <p className="app-subtitle">AI Generation & Unity Automation Agent</p>
         </div>
+        <div>
+          <button 
+            className="btn" 
+            style={{ 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+              color: 'white', 
+              border: 'none', 
+              padding: '8px 16px', 
+              borderRadius: '8px', 
+              fontWeight: '600', 
+              cursor: 'pointer',
+              boxShadow: '0 4px 10px rgba(102, 126, 234, 0.3)' 
+            }}
+            onClick={() => window.location.href = 'http://127.0.0.1:5001/digital_human_2d'}
+          >
+            👤 切换至 2D 数字人
+          </button>
+        </div>
       </header>
 
       <div className="grid-2">

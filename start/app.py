@@ -452,6 +452,15 @@ def digital_human():
     return redirect("http://127.0.0.1:5173")
 
 
+@app.route('/digital_human_2d')
+@login_required
+def digital_human_2d():
+    """2D 数字人页面（需要登录）"""
+    return render_template('voice_assistant.html', 
+                         username=session.get('username'),
+                         current_view='digital_human_2d')
+
+
 
 @app.route('/feature_experience')
 @login_required
@@ -494,6 +503,15 @@ def partial_mood_pixel():
     return render_template('mood_pixel_content.html',
                            username=session.get('username'),
                            current_view='mood_pixel')
+
+
+@app.route('/api/partial/digital_human_2d')
+@login_required
+def partial_digital_human_2d():
+    """返回2D数字人 HTML 片段"""
+    return render_template('digital_human_content.html',
+                           username=session.get('username'),
+                           current_view='digital_human_2d')
 
 
 @app.route('/api/partial/qa_discussion')

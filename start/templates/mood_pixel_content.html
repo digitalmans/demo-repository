@@ -7,19 +7,22 @@
             <p style="font-size: 0.95em; margin: 5px 0 0 0; opacity: 0.9;">AI 文本生成实物图拼豆 · 上传图片转换拼豆图纸 · 无缝连接 3D 数字人</p>
         </div>
         <div style="display: flex; gap: 12px;">
-            <a href="http://127.0.0.1:5173" target="_blank" style="background: rgba(255, 255, 255, 0.2); color: white; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.4); display: flex; align-items: center; gap: 6px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                <span>👤</span> 直达 3D 数字人系统 (不经过拼豆)
+            <a href="/digital_human_2d" target="_blank" style="background: rgba(255, 255, 255, 0.2); color: white; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.4); display: flex; align-items: center; gap: 6px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <span>👤</span> 直达 2D 数字人系统
             </a>
         </div>
     </header>
 
-    <!-- 顶部分类选项卡（文字信息模块 vs 上传拼豆模块） -->
+    <!-- 顶部分类选项卡（文字信息模块 vs 上传拼豆模块 vs 文生图模块） -->
     <div style="background: white; padding: 12px 30px; border-bottom: 1px solid #e0e0e0; display: flex; gap: 15px; align-items: center; flex-shrink: 0;">
         <button id="tab-btn-text-mood" onclick="switchMoodPixelTab('text')" class="mood-tab-btn active" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.25s; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);">
             ✍️ 文字信息模块 (AI 实物文生图)
         </button>
         <button id="tab-btn-upload-bead" onclick="switchMoodPixelTab('upload')" class="mood-tab-btn" style="padding: 10px 24px; border-radius: 8px; border: 2px solid #e0e0e0; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.25s; background: white; color: #555;">
             📁 上传拼豆模块 (图片转拼豆)
+        </button>
+        <button id="tab-btn-text-to-image" onclick="switchMoodPixelTab('text_to_image')" class="mood-tab-btn" style="padding: 10px 24px; border-radius: 8px; border: 2px solid #e0e0e0; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.25s; background: white; color: #555;">
+            🖼️ 文生图模块 (纯图片生成)
         </button>
     </div>
 
@@ -128,6 +131,38 @@
                 </div>
             </div>
         </div>
+
+        <!-- 模块三：文生图模块 (纯图片生成) -->
+        <div id="module-text-to-image" style="display: none; gap: 25px; height: 100%;">
+            <div style="flex: 1; max-width: 450px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column;">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.3em; color: #333; border-bottom: 2px solid #f0f2f5; padding-bottom: 12px;">🖼️ 纯文本生成高清图像</h3>
+                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">输入画面创意描述</label>
+                <textarea id="pure-text-image-input" rows="5" placeholder="例如：一个充满科技感的机器人，站在赛博朋克城市的街道上，霓虹闪烁，高清细节，虚幻引擎渲染..." style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95em; resize: vertical; margin-bottom: 20px; line-height: 1.5; font-family: inherit;"></textarea>
+
+                <button onclick="generatePureImageFromText()" style="width: 100%; padding: 14px; border: none; border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 1.05em; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
+                    🎨 立即生成 AI 高清图像
+                </button>
+
+                <div style="margin-top: 20px; font-size: 0.85em; color: #888; line-height: 1.5;">
+                    💡 提示：系统将调用 FLUX 艺术生成引擎，直接返回高清无损渲染图像。
+                </div>
+            </div>
+
+            <div style="flex: 1; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div id="pure-image-preview-area" style="text-align: center; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div id="pure-image-placeholder" style="color: #a0aec0; padding: 60px 20px;">
+                        <div style="font-size: 3.5em; margin-bottom: 15px;">🖼️</div>
+                        <h4 style="margin: 0 0 8px 0; color: #4a5568; font-size: 1.2em;">在左侧输入画面创意，直接展示生成的 AI 图像</h4>
+                        <p style="margin: 0; font-size: 0.9em;">生成的高清大图支持在此处直接预览与下载保存</p>
+                    </div>
+                    <div id="pure-image-result-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                        <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 生成的高清大图</span>
+                        <img id="pure-image-result-img" src="" style="max-width: 90%; max-height: 480px; border: 2px solid #e2e8f0; border-radius: 12px; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15); object-fit: contain;">
+                    </div>
+                    <div id="pure-image-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -137,31 +172,89 @@
 window.switchMoodPixelTab = function switchMoodPixelTab(tab) {
     const textModule = document.getElementById('module-text-mood');
     const uploadModule = document.getElementById('module-upload-bead');
+    const imageModule = document.getElementById('module-text-to-image');
+    
     const textBtn = document.getElementById('tab-btn-text-mood');
     const uploadBtn = document.getElementById('tab-btn-upload-bead');
+    const imageBtn = document.getElementById('tab-btn-text-to-image');
+
+    const allModules = [textModule, uploadModule, imageModule];
+    const allButtons = [textBtn, uploadBtn, imageBtn];
+
+    allModules.forEach(mod => { if (mod) mod.style.display = 'none'; });
+    allButtons.forEach(btn => {
+        if (btn) {
+            btn.style.background = 'white';
+            btn.style.color = '#555';
+            btn.style.border = '2px solid #e0e0e0';
+            btn.style.boxShadow = 'none';
+        }
+    });
 
     if (tab === 'text') {
         textModule.style.display = 'flex';
-        uploadModule.style.display = 'none';
         textBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         textBtn.style.color = 'white';
         textBtn.style.border = 'none';
         textBtn.style.boxShadow = '0 4px 10px rgba(102, 126, 234, 0.3)';
-        uploadBtn.style.background = 'white';
-        uploadBtn.style.color = '#555';
-        uploadBtn.style.border = '2px solid #e0e0e0';
-        uploadBtn.style.boxShadow = 'none';
-    } else {
-        textModule.style.display = 'none';
+    } else if (tab === 'upload') {
         uploadModule.style.display = 'flex';
         uploadBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         uploadBtn.style.color = 'white';
         uploadBtn.style.border = 'none';
         uploadBtn.style.boxShadow = '0 4px 10px rgba(102, 126, 234, 0.3)';
-        textBtn.style.background = 'white';
-        textBtn.style.color = '#555';
-        textBtn.style.border = '2px solid #e0e0e0';
-        textBtn.style.boxShadow = 'none';
+    } else {
+        imageModule.style.display = 'flex';
+        imageBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        imageBtn.style.color = 'white';
+        imageBtn.style.border = 'none';
+        imageBtn.style.boxShadow = '0 4px 10px rgba(102, 126, 234, 0.3)';
+    }
+}
+
+window.generatePureImageFromText = async function generatePureImageFromText() {
+    const textInput = document.getElementById('pure-text-image-input').value.trim();
+    if (!textInput) {
+        alert('请输入想要生成的画面创意描述');
+        return;
+    }
+
+    const placeholder = document.getElementById('pure-image-placeholder');
+    const container = document.getElementById('pure-image-result-container');
+    const resultImg = document.getElementById('pure-image-result-img');
+    const stats = document.getElementById('pure-image-stats');
+
+    placeholder.style.display = 'none';
+    container.style.display = 'none';
+    stats.style.display = 'block';
+    stats.innerHTML = '⏳ 正在通过 Moark API (flux-1-schnell) 为您生成高清图像...';
+
+    try {
+        const resp = await fetch('/api/mood_pixel/text_to_image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: textInput, size: "1024x1024" })
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            const imgSrc = data.image_base64 || data.image_url;
+            if (imgSrc) {
+                resultImg.src = imgSrc;
+                container.style.display = 'flex';
+                stats.innerHTML = `✨ <b>"${textInput}"</b> AI 高清图像生成完毕！`;
+                return;
+            } else {
+                stats.innerHTML = `❌ 生成未返回数据：${data.error || '未知错误'}`;
+                return;
+            }
+        } else {
+            const errJson = await resp.json().catch(() => ({}));
+            stats.innerHTML = `❌ AI 引擎返回异常 (${resp.status}): ${errJson.error || '请求未成功'}`;
+            return;
+        }
+    } catch (e) {
+        console.error('AI API fetch fail:', e);
+        stats.innerHTML = `❌ 网络或连接出现错误: ${e.message}`;
     }
 }
 
