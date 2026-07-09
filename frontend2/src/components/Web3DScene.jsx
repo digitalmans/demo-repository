@@ -105,11 +105,14 @@ function Avatar({ id, modelPath, modelName, position, animationTrigger, audioBas
   useEffect(() => {
     if (audioBase64) {
       try {
-        const audio = new Audio("data:audio/wav;base64," + audioBase64);
+        const mimeType = audioBase64.startsWith('UklGR') ? 'audio/wav' : 'audio/mpeg';
+        const audio = new Audio(`data:${mimeType};base64,` + audioBase64);
         setIsPlayingAudio(true);
-        audio.play();
+        audio.play().catch(e => console.error("Audio playback error:", e));
         audio.onended = () => setIsPlayingAudio(false);
-      } catch (err) {}
+      } catch (err) {
+        console.error("Audio initialization error:", err);
+      }
     }
   }, [audioBase64]);
 
