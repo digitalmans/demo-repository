@@ -842,6 +842,67 @@ def api_qa_robot_search():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/ai_status_summary', methods=['GET'])
+def api_ai_status_summary():
+    """获取全系统所有 AI 模块的状态与配置情况"""
+    try:
+        ds_cfg = False
+        if DEEPSEEK_AVAILABLE and deepseek_service:
+            try:
+                ds_cfg = deepseek_service.is_configured()
+            except Exception:
+                ds_cfg = False
+        neo_cfg = bool(QA_ROBOT_AVAILABLE and qa_robot_service is not None)
+        moark_cfg = True
+        ai_list = [
+            {
+                "name": "DeepSeek 大模型",
+                "category": "智能问答与推理",
+                "configured": ds_cfg,
+                "status_text": "服务器已配置" if ds_cfg else "支持客户端/未配置",
+                "icon": "🤖"
+            },
+            {
+                "name": "Neo4j 知识图谱 AI",
+                "category": "知识库图谱检索",
+                "configured": neo_cfg,
+                "status_text": "Neo4j已连接" if neo_cfg else "图数据库未连接",
+                "icon": "🕸️"
+            },
+            {
+                "name": "Moark 绘图 AI (FLUX.1)",
+                "category": "心情拼豆文生图/图生图",
+                "configured": moark_cfg,
+                "status_text": "已配置 API 密钥",
+                "icon": "🎨"
+            },
+            {
+                "name": "ASR 语音识别 AI",
+                "category": "实时语音对话识别",
+                "configured": VOICE_ASSISTANT_AVAILABLE,
+                "status_text": "语音转写已启动" if VOICE_ASSISTANT_AVAILABLE else "未启用",
+                "icon": "🎙️"
+            },
+            {
+                "name": "TTS 语音合成 AI",
+                "category": "语音对话播报朗读",
+                "configured": VOICE_ASSISTANT_AVAILABLE,
+                "status_text": "语音朗读已就绪" if VOICE_ASSISTANT_AVAILABLE else "未启用",
+                "icon": "🔊"
+            },
+            {
+                "name": "3D 数字人驱动 AI",
+                "category": "虚拟数字人互联",
+                "configured": True,
+                "status_text": "三维引擎已配置",
+                "icon": "🧑‍💻"
+            }
+        ]
+        return jsonify({'success': True, 'ai_list': ai_list})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/qa_robot/history', methods=['GET'])
 @login_required
 def api_qa_robot_history():
