@@ -178,7 +178,7 @@
                             <button id="use-as-digital-human-btn" onclick="useImageAsDigitalHuman()" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
                                 👤 应用为 2D 数字人脸
                             </button>
-                            <button onclick="downloadImageUrl('pure-image-result-img', 'pure-image.png')" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                            <button onclick="openExportFormatModal('pure-image-result-img', 'pure-image')" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
                                 ⬇️ 下载高清大图
                             </button>
                         </div>
@@ -347,6 +347,109 @@ window.downloadImageUrl = function downloadImageUrl(imgId, filename) {
     } catch (e) {
         console.error(e);
         alert('导出图像失败，请右键图片“另存为”保存。');
+    }
+}
+
+let currentExportElementId = null;
+let currentExportFilename = 'export_image';
+
+window.openExportFormatModal = function openExportFormatModal(elementId, filename) {
+    currentExportElementId = elementId;
+    currentExportFilename = filename;
+    document.getElementById('format-export-modal').style.display = 'flex';
+}
+
+window.closeExportFormatModal = function closeExportFormatModal() {
+    document.getElementById('format-export-modal').style.display = 'none';
+}
+
+window.triggerExportFormat = async function triggerExportFormat(format) {
+    closeExportFormatModal();
+    const el = document.getElementById(currentExportElementId);
+    if (!el) {
+        alert('无法找到源图像元素！');
+        return;
+    }
+
+    let imgDataUrl = '';
+    let width = 800;
+    let height = 800;
+
+    if (el.tagName.toLowerCase() === 'canvas') {
+        imgDataUrl = el.toDataURL('image/png');
+        width = el.width;
+        height = el.height;
+    } else if (el.tagName.toLowerCase() === 'img') {
+        if (!el.src) {
+            alert('高清大图尚在生成中或不存在！');
+            return;
+        }
+        imgDataUrl = el.src;
+        width = el.naturalWidth || 800;
+        height = el.naturalHeight || 800;
+    }
+
+    if (format === 'PNG') {
+        const link = document.createElement('a');
+        link.download = `${currentExportFilename}.png`;
+        link.href = imgDataUrl;
+        link.click();
+    } else if (format === 'JPG') {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const link = document.createElement('a');
+            link.download = `${currentExportFilename}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        };
+        img.src = imgDataUrl;
+    } else if (format === 'SVG') {
+        const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+  <image width="${width}" height="${height}" href="${imgDataUrl}"/>
+</svg>`;
+        const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+        const link = document.createElement('a');
+        link.download = `${currentExportFilename}.svg`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+    } else if (format === 'PDF') {
+        const loadingBtn = document.createElement('div');
+        loadingBtn.innerText = '⌛ 正在打包并导出 PDF...';
+        loadingBtn.setAttribute('style', 'position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 12px 20px; border-radius: 8px; z-index: 999999; font-size: 0.9em;');
+        document.body.appendChild(loadingBtn);
+
+        try {
+            if (!window.jspdf) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const orientation = width > height ? 'l' : 'p';
+            const pdf = new jsPDF(orientation, 'px', [width, height]);
+            
+            pdf.addImage(imgDataUrl, 'PNG', 0, 0, width, height);
+            pdf.save(`${currentExportFilename}.pdf`);
+        } catch (e) {
+            console.error(e);
+            alert('生成 PDF 失败，可能是由于网络连接加载 jsPDF 库超时。');
+        } finally {
+            document.body.removeChild(loadingBtn);
+        }
     }
 }
 
@@ -594,3 +697,52 @@ window.convertUploadedImageToBeads = async function convertUploadedImageToBeads(
 }
 })();
 </script>
+
+<!-- Format Selection Modal -->
+<div id="format-export-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 99999; justify-content: center; align-items: center; font-family: inherit;">
+    <div style="background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255,255,255,0.3); border-radius: 16px; padding: 30px; width: 420px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 20px; animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 1.25em; color: #1e293b; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                💾 选择导出与下载格式
+            </h3>
+            <button onclick="closeExportFormatModal()" style="border: none; background: transparent; font-size: 1.4em; color: #94a3b8; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">×</button>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 5px;">
+            <!-- PNG -->
+            <button onclick="triggerExportFormat('PNG')" style="padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25); transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <span style="display: flex; align-items: center; gap: 8px;">🖼️ <b>PNG</b> 高清无损图</span>
+                <span style="font-size: 0.8em; opacity: 0.8;">适合大图 / 透明图</span>
+            </button>
+            
+            <!-- JPG -->
+            <button onclick="triggerExportFormat('JPG')" style="padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25); transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <span style="display: flex; align-items: center; gap: 8px;">📷 <b>JPG</b> 压缩照片格式</span>
+                <span style="font-size: 0.8em; opacity: 0.8;">适合普通传输</span>
+            </button>
+            
+            <!-- SVG -->
+            <button onclick="triggerExportFormat('SVG')" style="padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.25); transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <span style="display: flex; align-items: center; gap: 8px;">🎨 <b>SVG</b> 矢量画布编码</span>
+                <span style="font-size: 0.8em; opacity: 0.8;">适合无限缩放设计</span>
+            </button>
+            
+            <!-- PDF -->
+            <button onclick="triggerExportFormat('PDF')" style="padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25); transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <span style="display: flex; align-items: center; gap: 8px;">📄 <b>PDF</b> 电子文档版本</span>
+                <span style="font-size: 0.8em; opacity: 0.8;">适合打印 / 汇报</span>
+            </button>
+        </div>
+        
+        <div style="font-size: 0.85em; color: #64748b; text-align: center; line-height: 1.4;">
+            💡 提示：系统将基于 Canvas 像素级重构该大图并一键生成对应的转换格式。
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+</style>
