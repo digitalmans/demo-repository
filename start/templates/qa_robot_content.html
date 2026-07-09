@@ -124,11 +124,20 @@ function initQaRobotModule() {
     // 加载历史记录侧边栏
     qaRobotLoadHistorySidebar();
     
-    // 绑定回车键发送
+    // 绑定发送按钮事件
+    const sendBtn = document.getElementById('qa-robot-send-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            qaRobotSendQuestion();
+        });
+    }
+
+    // 绑定回车键发送（Enter 或者 Ctrl+Enter 发送，Shift+Enter 换行）
     const questionInput = document.getElementById('qa-robot-question-input');
     if (questionInput) {
         questionInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 qaRobotSendQuestion();
             }
@@ -269,7 +278,15 @@ async function qaRobotSendQuestion() {
             })
         });
         
-        const data = await response.json();
+        let data;
+        try {
+            const textResp = await response.text();
+            data = JSON.parse(textResp);
+        } catch (parseErr) {
+            qaRobotRemoveMessage(loadingId);
+            qaRobotAddMessage('请求解析失败，可能是登录会话已失效或服务器异常，请刷新页面重新登录试试。', 'bot', true);
+            return;
+        }
         
         // 移除加载消息
         qaRobotRemoveMessage(loadingId);
@@ -1159,6 +1176,18 @@ style.textContent = `
         to { transform: rotate(360deg); }
     }
 `;
-document.head.appendChild(style);
+// 暴露给 window，确保 HTML 内联 onclick/onchange 属性能够正确访问全局作用域
+window.qaRobotSendQuestion = qaRobotSendQuestion;
+window.qaRobotCreateNewChat = qaRobotCreateNewChat;
+window.qaRobotClearChat = qaRobotClearChat;
+window.qaRobotUpdateSpeaker = qaRobotUpdateSpeaker;
+window.qaRobotOutputChinese = qaRobotOutputChinese;
+window.qaRobotOutputEnglish = qaRobotOutputEnglish;
+window.qaRobotOutputJapanese = qaRobotOutputJapanese;
+window.qaRobotSaveDeepSeekKey = qaRobotSaveDeepSeekKey;
+window.qaRobotClearDeepSeekKey = qaRobotClearDeepSeekKey;
+window.qaRobotDeleteHistoryRecord = qaRobotDeleteHistoryRecord;
+window.qaRobotStopTTS = qaRobotStopTTS;
+window.qaRobotPlayTTS = qaRobotPlayTTS;
 })();
 </script>
