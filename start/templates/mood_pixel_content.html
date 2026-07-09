@@ -67,9 +67,14 @@
                         <div style="display: flex; flex-direction: column; align-items: center;">
                             <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 拼豆转换图样 (全彩高亮像素样稿)</span>
                             <canvas id="text-mood-canvas" style="max-width: 440px; max-height: 440px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);"></canvas>
-                            <button id="text-mood-use-as-digital-human-btn" onclick="useCanvasAsDigitalHuman('text-mood-canvas', 'text-mood-use-as-digital-human-btn')" style="margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                                👤 将此拼豆应用为 2D 数字人模型 (.pth / 形象)
-                            </button>
+                            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center;">
+                                <button id="text-mood-use-as-digital-human-btn" onclick="useCanvasAsDigitalHuman('text-mood-canvas', 'text-mood-use-as-digital-human-btn')" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                    👤 应用为 2D 数字人脸
+                                </button>
+                                <button onclick="downloadCanvasPattern('text-mood-canvas', 'text-mood-bead-pattern.png')" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                    ⬇️ 导出/下载拼豆图纸
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div id="text-mood-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
@@ -128,9 +133,14 @@
                         <div style="display: flex; flex-direction: column; align-items: center;">
                             <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 拼豆图样网格 (全彩高亮像素样稿)</span>
                             <canvas id="upload-bead-canvas" style="max-width: 440px; max-height: 440px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);"></canvas>
-                            <button id="upload-bead-use-as-digital-human-btn" onclick="useCanvasAsDigitalHuman('upload-bead-canvas', 'upload-bead-use-as-digital-human-btn')" style="margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                                👤 将此拼豆应用为 2D 数字人模型 (.pth / 形象)
-                            </button>
+                            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center;">
+                                <button id="upload-bead-use-as-digital-human-btn" onclick="useCanvasAsDigitalHuman('upload-bead-canvas', 'upload-bead-use-as-digital-human-btn')" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                    👤 应用为 2D 数字人脸
+                                </button>
+                                <button onclick="downloadCanvasPattern('upload-bead-canvas', 'upload-bead-bead-pattern.png')" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                    ⬇️ 导出/下载拼豆图纸
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div id="upload-bead-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
@@ -164,9 +174,14 @@
                     <div id="pure-image-result-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
                         <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 生成的高清大图</span>
                         <img id="pure-image-result-img" src="" style="max-width: 90%; max-height: 400px; border: 2px solid #e2e8f0; border-radius: 12px; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15); object-fit: contain;">
-                        <button id="use-as-digital-human-btn" onclick="useImageAsDigitalHuman()" style="margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                            👤 应用为 2D 数字人模型 (.pth / 形象)
-                        </button>
+                        <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center;">
+                            <button id="use-as-digital-human-btn" onclick="useImageAsDigitalHuman()" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                👤 应用为 2D 数字人脸
+                            </button>
+                            <button onclick="downloadImageUrl('pure-image-result-img', 'pure-image.png')" style="padding: 10px 18px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                                ⬇️ 下载高清大图
+                            </button>
+                        </div>
                     </div>
                     <div id="pure-image-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
                 </div>
@@ -249,7 +264,7 @@ window.useImageAsDigitalHuman = async function useImageAsDigitalHuman() {
         }
     } catch (err) {
         console.error(err);
-        alert('网络错误，无法应用为数字人模型');
+        alert('错误详情: ' + err.message + ' (请检查连接是否畅通，或是否登录已失效)');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -294,10 +309,44 @@ window.useCanvasAsDigitalHuman = async function useCanvasAsDigitalHuman(canvasId
         }
     } catch (err) {
         console.error(err);
-        alert('网络错误，无法将拼豆应用为数字人模型');
+        alert('错误详情: ' + err.message + ' (请检查连接是否畅通，或是否登录已失效)');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+
+window.downloadCanvasPattern = function downloadCanvasPattern(canvasId, filename) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        alert('未找到可导出的拼豆图纸画布！');
+        return;
+    }
+    try {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (e) {
+        console.error(e);
+        alert('导出图纸失败，可能是由于浏览器安全策略限制。');
+    }
+}
+
+window.downloadImageUrl = function downloadImageUrl(imgId, filename) {
+    const img = document.getElementById(imgId);
+    if (!img || !img.src) {
+        alert('未找到可导出的图像！');
+        return;
+    }
+    try {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = img.src;
+        link.click();
+    } catch (e) {
+        console.error(e);
+        alert('导出图像失败，请右键图片“另存为”保存。');
     }
 }
 
