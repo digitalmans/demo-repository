@@ -135,12 +135,21 @@ try:
         DEEPSEEK_PRESETS,
         DEFAULT_PRESET as DEFAULT_DEEPSEEK_PRESET,
     )
-    deepseek_service = DeepSeekService()
+    if os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY"):
+        api_key = (os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY")).strip()
+        deepseek_service = DeepSeekService(
+            api_key=api_key,
+            base_url="https://api.moark.com/v1",
+            model="DeepSeek-V3",
+            timeout=120
+        )
+    else:
+        deepseek_service = DeepSeekService()
     DEEPSEEK_AVAILABLE = True
     if deepseek_service.is_configured():
-        print("✓ DeepSeek API 已配置")
+        print(f"✓ DeepSeek API 已配置 (模型: {deepseek_service.model}, 超时: {deepseek_service.timeout}s)")
     else:
-        print("提示: 未配置 DEEPSEEK_API_KEY，DeepSeek回答将回退到本地知识库")
+        print("提示: 未配置 DEEPSEEK_API_KEY/MOARK_API_KEY，DeepSeek回答将回退到本地知识库")
 except ImportError as e:
     print(f"警告: 无法导入DeepSeek服务模块: {e}")
     DeepSeekAPIError = Exception
@@ -1881,8 +1890,8 @@ def api_generate_outline():
             
         if os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY"):
             base_url = "https://api.moark.com/v1"
-            model = "Qwen3-32B"
-            extra_headers = {"X-Failover-Enabled": "true"}
+            model = "DeepSeek-V3"
+            extra_headers = {}
         else:
             base_url = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
             model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
@@ -1905,12 +1914,12 @@ def api_generate_outline():
             "stream": False
         }
         
-        if model == "Qwen3-32B":
-            payload["top_p"] = 0.7
-            payload["frequency_penalty"] = 1
-            payload["extra_body"] = {"top_k": 50}
-            
-        res = deepseek_service._post_chat_completions(payload, api_key=api_key, base_url=base_url, extra_headers=extra_headers)
+        old_timeout = deepseek_service.timeout
+        deepseek_service.timeout = 120
+        try:
+            res = deepseek_service._post_chat_completions(payload, api_key=api_key, base_url=base_url, extra_headers=extra_headers)
+        finally:
+            deepseek_service.timeout = old_timeout
         choices = res.get("choices") or []
         if choices:
             content = choices[0].get("message", {}).get("content", "").strip()
