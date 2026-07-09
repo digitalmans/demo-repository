@@ -344,7 +344,6 @@ def mood_pixel_text_to_image():
         response = client.images.generate(
             prompt=pixel_prompt,
             model="flux-1-schnell",
-            size="1024x1024",
             response_format="b64_json",
         )
 
