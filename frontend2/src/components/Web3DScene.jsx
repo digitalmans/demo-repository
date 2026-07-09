@@ -260,7 +260,9 @@ export default function Web3DScene({ backgroundPath, avatars, showGrid = true, m
 
           <Suspense fallback={null}>
             <BackgroundScene imagePath={backgroundPath} />
-            
+          </Suspense>
+
+          <Suspense fallback={null}>
             {avatars.map((avatar, idx) => (
               <Avatar 
                 key={idx} 
