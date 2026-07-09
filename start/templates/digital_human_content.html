@@ -5,8 +5,8 @@
         <!-- 左侧：双通道数字人区 -->
         <div class="dh-left-panel" style="flex: 1; display: flex; overflow: hidden; border-right: 1px solid rgba(0, 0, 0, 0.1); background: #f4f5f6; position: relative;">
             
-            <!-- 3D 数字人视口 -->
-            <div style="flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; border-right: 2px solid rgba(0, 0, 0, 0.15);">
+            <!-- 3D 数字人视口 (隐藏，仅保留 2D 拟真数字人) -->
+            <div style="display: none;">
                 <div style="position: absolute; top: 15px; left: 15px; background: rgba(102, 126, 234, 0.95); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.82em; z-index: 5; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.15); letter-spacing: 0.5px;">🤖 3D 机器人</div>
                 <div id="canvas-container" style="width: 100%; height: 100%; position: relative;"></div>
             </div>
@@ -22,8 +22,8 @@
                 </div>
             </div>
             
-            <!-- 加载状态 -->
-            <div id="model-loading" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f4f5f6; z-index: 100;">
+            <!-- 加载状态 (默认不显示，已通过 display: none !important 彻底隐藏) -->
+            <div id="model-loading" style="display: none !important; position: absolute; top: 0; left: 0; width: 100%; height: 100%; flex-direction: column; justify-content: center; align-items: center; background: #f4f5f6; z-index: 100;">
                 <div class="dh-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(0, 0, 0, 0.1); border-top-color: #667eea; border-radius: 50%; animation: dh-spin 1s linear infinite;"></div>
                 <p style="margin-top: 20px; font-size: 1.1em; color: #667eea; letter-spacing: 1px;">正在唤醒数字人系统... <span id="loading-percentage">0%</span></p>
             </div>
@@ -35,6 +35,12 @@
                     <span id="dh-status-text" style="font-weight: 600; font-size: 0.95em; color: #333333;">状态: 空闲 (💤)</span>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
+                    <!-- 导入.pth模型按钮 -->
+                    <button id="dh-upload-model-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3); transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                        📁 导入模型 (.pth)
+                    </button>
+                    <input type="file" id="dh-model-file-input" accept=".pth" style="display: none;">
+
                     <label for="dh-speaker-select" style="font-size: 0.9em; color: #666666;">🎤 发音人:</label>
                     <select id="dh-speaker-select" style="background: rgba(0,0,0,0.05); color: #333333; border: 1px solid rgba(0,0,0,0.15); padding: 5px 10px; border-radius: 6px; outline: none; cursor: pointer;">
                         <option value="0" style="background: #ffffff; color: #333333;">度小美（女声）</option>
@@ -53,7 +59,7 @@
                     🤖 返回 3D 数字人
                 </a>
                 <h2 style="font-size: 1.5em; font-weight: 700; margin: 0; color: #667eea; display: flex; justify-content: center; align-items: center; gap: 10px;">
-                    👤 3D 数字人助手
+                    👤 2D 数字人助手
                 </h2>
                 <p style="font-size: 0.85em; color: #666666; margin-top: 5px;">本地库检索 + ASR语音交互 + 自动发音动画</p>
             </div>
@@ -61,7 +67,7 @@
             <!-- 聊天区 -->
             <div id="dh-chat-messages" style="flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px;">
                 <div class="dh-msg assistant" style="display: flex; flex-direction: column; max-width: 85%; align-self: flex-start; background: #f0f0f4; padding: 12px 18px; border-radius: 12px 12px 12px 0; border: 1px solid #e0e0ea;">
-                    <div style="font-size: 0.95em; line-height: 1.5; color: #333333;">你好！我是 3D 数字人助手。你可以使用下方的文本框向我提问，或者点击麦克风按钮直接通过语音与我交流。</div>
+                    <div style="font-size: 0.95em; line-height: 1.5; color: #333333;">你好！我是 2D 数字人助手。你可以使用下方的文本框向我提问，或者点击麦克风按钮直接通过语音与我交流。</div>
                 </div>
             </div>
 
@@ -240,7 +246,7 @@ let defaultDeepseekPreset = '{{ default_deepseek_preset }}';
 
 function initDigitalHuman() {
     const container = document.getElementById('canvas-container');
-    if (!container) return;
+    if (!container || container.clientWidth === 0) return;
 
     // Scene
     scene = new THREE.Scene();
@@ -362,7 +368,7 @@ function onResize() {
     renderer.setSize(container.clientWidth, container.clientHeight);
 }
 
-const clock = new THREE.Clock();
+const clock = typeof THREE !== 'undefined' ? new THREE.Clock() : null;
 
 function animate() {
     requestAnimationFrame(animate);
@@ -406,7 +412,7 @@ function animate() {
         }
     }
 
-    renderer.render(scene, camera);
+    if (renderer) renderer.render(scene, camera);
 }
 
 // ==================== 语音交互与后台API ====================
@@ -728,6 +734,57 @@ function initDigitalHumanModule() {
     // 绑定麦克风语音按钮
     const micBtn = document.getElementById('dh-mic-btn');
     if (micBtn) micBtn.addEventListener('click', toggleVoiceRecording);
+
+    // 绑定导入模型按钮与上传逻辑
+    const uploadBtn = document.getElementById('dh-upload-model-btn');
+    const fileInput = document.getElementById('dh-model-file-input');
+    
+    if (uploadBtn && fileInput) {
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            // 校验后缀名
+            if (!file.name.endsWith('.pth')) {
+                alert('只允许上传 .pth 格式的模型权重文件');
+                return;
+            }
+            
+            updateStatus('正在上传模型文件...', '#FF9800');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/digital_human/upload_model', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    updateStatus('模型上传成功！', '#4CAF50');
+                    alert(`模型 ${data.filename} 导入成功，已自动加载！`);
+                    setTimeout(() => {
+                        updateStatus('空闲 (💤)', '#4CAF50');
+                    }, 3000);
+                } else {
+                    updateStatus('模型上传失败', '#f44336');
+                    alert(`导入失败: ${data.error}`);
+                }
+            } catch (err) {
+                console.error('上传出错:', err);
+                updateStatus('上传错误', '#f44336');
+                alert('网络连接出错，请检查后端服务');
+            } finally {
+                fileInput.value = ''; // 清空 file input
+            }
+        });
+    }
 }
 initDigitalHumanModule();
 })();

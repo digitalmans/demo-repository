@@ -1231,6 +1231,88 @@ def api_digital_human_wav2lip():
         return jsonify({'success': False, 'error': f'服务器内部错误: {str(e)}'}), 500
 
 
+@app.route('/api/digital_human/upload_model', methods=['POST'])
+@login_required
+def api_digital_human_upload_model():
+    """上传 2D 数字人 Wav2Lip 权重模型 (.pth)"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': '未包含文件字段'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': '未选择文件'}), 400
+        if not file.filename.endswith('.pth'):
+            return jsonify({'success': False, 'error': '只允许上传 .pth 后缀的模型权重文件'}), 400
+
+        # 保存目录
+        checkpoint_dir = os.path.join(app.root_path, 'wav2lip_288x288', 'checkpoints')
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        
+        # 安全的文件名
+        from werkzeug.utils import secure_filename
+        filename = secure_filename(file.filename)
+        if not filename.endswith('.pth'):
+            filename = 'custom_wav2lip_model.pth'
+
+        save_path = os.path.join(checkpoint_dir, filename)
+        file.save(save_path)
+        
+        return jsonify({'success': True, 'filename': filename})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'上传失败: {str(e)}'}), 500
+
+
+@app.route('/api/digital_human/set_avatar_from_url', methods=['POST'])
+@login_required
+def api_digital_human_set_avatar_from_url():
+    """将生成的图像 URL 设置为 2D 数字人头像模型"""
+    try:
+        data = request.get_json() or {}
+        image_url = data.get('image_url')
+        if not image_url:
+            return jsonify({'success': False, 'error': '图像 URL 不能为空'}), 400
+
+        import urllib.parse
+        parsed_url = urllib.parse.urlparse(image_url)
+        target_path = os.path.join(app.root_path, 'static', 'models', 'avatar_2d.png')
+
+        if parsed_url.netloc in ['', '127.0.0.1:5001', 'localhost:5001', '127.0.0.1:5173', 'localhost:5173']:
+            path = parsed_url.path
+            if path.startswith('/static/'):
+                local_relative = path[len('/static/'):]
+                local_path = os.path.join(app.root_path, 'static', local_relative)
+            elif path.startswith('/api/outputs/'):
+                local_relative = path[len('/api/outputs/'):]
+                local_path = os.path.join(app.config['OUTPUT_FOLDER'], local_relative)
+            else:
+                local_path = os.path.join(app.root_path, path.lstrip('/'))
+
+            if os.path.exists(local_path):
+                import shutil
+                shutil.copy2(local_path, target_path)
+                return jsonify({'success': True})
+            else:
+                # 检查输出目录下的相对文件名
+                base_name = os.path.basename(path)
+                output_path = os.path.join(app.config['OUTPUT_FOLDER'], base_name)
+                if os.path.exists(output_path):
+                    import shutil
+                    shutil.copy2(output_path, target_path)
+                    return jsonify({'success': True})
+                return jsonify({'success': False, 'error': f'未找到本地源文件'}), 404
+        else:
+            import requests
+            response = requests.get(image_url, timeout=15)
+            if response.status_code == 200:
+                with open(target_path, 'wb') as f:
+                    f.write(response.content)
+                return jsonify({'success': True})
+            else:
+                return jsonify({'success': False, 'error': f'下载源图像失败, HTTP {response.status_code}'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/digital_human/video/<filename>')
 def serve_digital_human_video(filename):
     """提供生成的 2D 数字人视频/音频文件播放"""

@@ -166,6 +166,14 @@
                 {% endif %}
             </div>
 
+            <div class="spa-panel {% if current_view == 'digital_human_2d' %}active{% endif %}" id="panel-digital_human_2d">
+                {% if current_view == 'digital_human_2d' %}
+                    {% include 'digital_human_content.html' %}
+                {% else %}
+                    <div class="spa-loading"><div class="spa-spinner"></div><span>加载中...</span></div>
+                {% endif %}
+            </div>
+
             <div class="spa-panel {% if current_view == 'mood_pixel' %}active{% endif %}" id="panel-mood_pixel">
                 {% if current_view == 'mood_pixel' %}
                     {% include 'mood_pixel_content.html' %}
@@ -219,9 +227,13 @@
                    class="switch-btn {% if current_view == 'qa_robot' %}active{% endif %}"
                    id="qa-robot-btn">🤖 问答机器人</a>
 
+                <a href="#" data-view="digital_human_2d"
+                   class="switch-btn {% if current_view == 'digital_human_2d' %}active{% endif %}"
+                   id="digital-human-2d-btn">👤 2D数字人模型生成</a>
+
                 <a href="#" data-view="mood_pixel"
                    class="switch-btn {% if current_view == 'mood_pixel' %}active{% endif %}"
-                   id="mood-pixel-btn">👤 2D数字人模型生成</a>
+                   id="mood-pixel-btn">🎨 拼豆/文生图工作台</a>
 
                 <a href="{{ url_for('digital_human') }}" target="_blank"
                    class="switch-btn {% if current_view == 'digital_human' %}active{% endif %}"

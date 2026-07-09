@@ -122,7 +122,8 @@ class RetrievalEngine:
             except Exception as e:
                 continue
         
-        raise Exception("无法连接到Neo4j数据库，请确保服务已启动")
+        print("✗ 警告: 无法连接到Neo4j数据库，图谱检索功能将受限。继续启动问答服务...")
+        self.graph = None
     
     def _init_bert_client(self):
         """初始化BERT客户端"""
@@ -145,6 +146,11 @@ class RetrievalEngine:
         :param max_initial_load: 初始加载的最大数量
         """
         print("正在加载初始数据（快速启动模式）...")
+        if self.graph is None:
+            print("警告: 由于Neo4j未连接，无法加载数据。将启用空数据模式。")
+            self.total_qa_count = 0
+            self.loading_complete = True
+            return
         
         # 先检查数据总量
         try:

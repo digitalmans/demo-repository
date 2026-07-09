@@ -157,7 +157,10 @@
                     </div>
                     <div id="pure-image-result-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
                         <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 生成的高清大图</span>
-                        <img id="pure-image-result-img" src="" style="max-width: 90%; max-height: 480px; border: 2px solid #e2e8f0; border-radius: 12px; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15); object-fit: contain;">
+                        <img id="pure-image-result-img" src="" style="max-width: 90%; max-height: 400px; border: 2px solid #e2e8f0; border-radius: 12px; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15); object-fit: contain;">
+                        <button id="use-as-digital-human-btn" onclick="useImageAsDigitalHuman()" style="margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); font-size: 0.9em; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                            👤 应用为 2D 数字人模型 (.pth / 形象)
+                        </button>
                     </div>
                     <div id="pure-image-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
                 </div>
@@ -209,6 +212,41 @@ window.switchMoodPixelTab = function switchMoodPixelTab(tab) {
         imageBtn.style.color = 'white';
         imageBtn.style.border = 'none';
         imageBtn.style.boxShadow = '0 4px 10px rgba(102, 126, 234, 0.3)';
+    }
+}
+
+window.useImageAsDigitalHuman = async function useImageAsDigitalHuman() {
+    const imgEl = document.getElementById('pure-image-result-img');
+    if (!imgEl || !imgEl.src) {
+        alert('请先生成高清图像！');
+        return;
+    }
+    
+    const btn = document.getElementById('use-as-digital-human-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⌛ 正在转换模型...';
+    
+    try {
+        const response = await fetch('/api/digital_human/set_avatar_from_url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_url: imgEl.src
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            alert('🎉 2D 数字人模型(.pth/形象)生成并设置成功！已将该图像应用为 2D 数字人的最新人脸。');
+        } else {
+            alert('失败: ' + data.error);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('网络错误，无法应用为数字人模型');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 

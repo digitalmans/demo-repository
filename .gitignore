@@ -16,3 +16,5 @@ target/
 result.mp3
 error.txt
 voice_assistant/outputs/
+*.pth
+checkpoints/
