@@ -338,7 +338,8 @@ def mood_pixel_text_to_image():
             api_key="QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q",
         )
 
-        pixel_prompt = f"Cute colorful clean pixel art perler bead pattern illustration of: {prompt}, white background, flat vibrant colors, clear pixel grid"
+        # 按照需求：生成具体的实物图（真实清晰的实物特写图），以便精准转化为实物拼豆
+        pixel_prompt = f"A high quality realistic studio photograph of a tangible real physical object: {prompt}, single subject centered in frame, clean solid white background, sharp details, vibrant realistic colors, professional commercial product photography"
 
         response = client.images.generate(
             prompt=pixel_prompt,

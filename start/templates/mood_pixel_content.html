@@ -1,10 +1,10 @@
-<!-- 创意心情拼豆 / 图片拼豆模块 (深度适配智能问答系统UI风格) -->
+<!-- 创意文字拼豆 / 图片拼豆模块 (深度适配智能问答系统UI风格) -->
 <div class="mood-pixel-wrapper" style="width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; background: #f0f2f5;">
     <!-- 头部区域，保持与问答系统一致的紫色渐变横幅 -->
     <header style="padding: 20px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
         <div>
-            <h1 style="font-size: 1.8em; margin: 0; font-weight: 700;">🎨 心情拼豆 / 图片拼豆工作台</h1>
-            <p style="font-size: 0.95em; margin: 5px 0 0 0; opacity: 0.9;">AI 文本生成情绪像素图 · 上传图片转换拼豆图纸 · 无缝连接 3D 数字人</p>
+            <h1 style="font-size: 1.8em; margin: 0; font-weight: 700;">🎨 文字拼豆 / 图片拼豆工作台</h1>
+            <p style="font-size: 0.95em; margin: 5px 0 0 0; opacity: 0.9;">AI 文本生成实物图拼豆 · 上传图片转换拼豆图纸 · 无缝连接 3D 数字人</p>
         </div>
         <div style="display: flex; gap: 12px;">
             <a href="http://127.0.0.1:5173" target="_blank" style="background: rgba(255, 255, 255, 0.2); color: white; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.4); display: flex; align-items: center; gap: 6px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
@@ -16,7 +16,7 @@
     <!-- 顶部分类选项卡（文字信息模块 vs 上传拼豆模块） -->
     <div style="background: white; padding: 12px 30px; border-bottom: 1px solid #e0e0e0; display: flex; gap: 15px; align-items: center; flex-shrink: 0;">
         <button id="tab-btn-text-mood" onclick="switchMoodPixelTab('text')" class="mood-tab-btn active" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.25s; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);">
-            ✍️ 文字信息模块 (AI 心情图)
+            ✍️ 文字信息模块 (AI 实物文生图)
         </button>
         <button id="tab-btn-upload-bead" onclick="switchMoodPixelTab('upload')" class="mood-tab-btn" style="padding: 10px 24px; border-radius: 8px; border: 2px solid #e0e0e0; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.25s; background: white; color: #555;">
             📁 上传拼豆模块 (图片转拼豆)
@@ -29,9 +29,9 @@
         <div id="module-text-mood" style="display: flex; gap: 25px; height: 100%;">
             <!-- 左侧表单控制区 -->
             <div style="flex: 1; max-width: 450px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column;">
-                <h3 style="margin: 0 0 15px 0; font-size: 1.3em; color: #333; border-bottom: 2px solid #f0f2f5; padding-bottom: 12px;">✍️ 描述文字与心情</h3>
-                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">此刻的心情或想说的话</label>
-                <textarea id="text-mood-input" rows="5" placeholder="例如：加班结束后的轻松，又像有点空的周一傍晚……或者输入任何你喜欢的像素艺术灵感！" style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95em; resize: vertical; margin-bottom: 20px; line-height: 1.5; font-family: inherit;"></textarea>
+                <h3 style="margin: 0 0 15px 0; font-size: 1.3em; color: #333; border-bottom: 2px solid #f0f2f5; padding-bottom: 12px;">✍️ 描述想要生成的实物画面</h3>
+                <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">输入实物名称或描述</label>
+                <textarea id="text-mood-input" rows="5" placeholder="例如：一只可爱的小黄猫、红富士苹果、复古手柄、小黄鸭、草莓蛋糕、盛开的向日葵..." style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95em; resize: vertical; margin-bottom: 20px; line-height: 1.5; font-family: inherit;"></textarea>
 
                 <label style="font-weight: 600; color: #444; margin-bottom: 8px; display: block;">网格像素尺寸</label>
                 <select id="text-mood-size" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95em; margin-bottom: 25px; background: #fff;">
@@ -41,11 +41,11 @@
                 </select>
 
                 <button onclick="generateMoodPixelFromText()" style="width: 100%; padding: 14px; border: none; border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 1.05em; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
-                    🚀 生成 AI 心情图并转换拼豆
+                    🚀 生成 AI 实物图并转换拼豆
                 </button>
 
                 <div style="margin-top: 20px; font-size: 0.85em; color: #888; line-height: 1.5;">
-                    💡 提示：系统将通过 Moark API (flux-1-schnell) 自动进行文生图，并将生成的画作实时转化为拼豆图纸。
+                    💡 提示：系统将通过 Moark API (flux-1-schnell) 自动生成具体的实物画面，并将画面实时转换为清晰的拼豆图样。
                 </div>
             </div>
 
@@ -54,7 +54,7 @@
                 <div id="text-mood-preview-area" style="text-align: center; width: 100%;">
                     <div id="text-mood-placeholder" style="color: #a0aec0; padding: 60px 20px;">
                         <div style="font-size: 3.5em; margin-bottom: 15px;">🎨</div>
-                        <h4 style="margin: 0 0 8px 0; color: #4a5568; font-size: 1.2em;">在左侧输入文字心情，生成拼豆画作</h4>
+                        <h4 style="margin: 0 0 8px 0; color: #4a5568; font-size: 1.2em;">在左侧输入实物描述，自动生成实物图并转换拼豆</h4>
                         <p style="margin: 0; font-size: 0.9em;">生成后此处将显示带网格纹理的拼豆图纸和色彩统计</p>
                     </div>
                     <div id="text-mood-result-container" style="display: none; justify-content: center; align-items: center;">
@@ -165,12 +165,12 @@ window.switchMoodPixelTab = function switchMoodPixelTab(tab) {
     }
 }
 
-// 模块一：生成文字心情拼豆画
+// 模块一：生成文字实物拼豆画
 window.generateMoodPixelFromText = async function generateMoodPixelFromText() {
     const textInput = document.getElementById('text-mood-input').value.trim();
     const size = parseInt(document.getElementById('text-mood-size').value || '32');
     if (!textInput) {
-        alert('请输入此刻的心情描述或想要表现的文字信息');
+        alert('请输入想要生成的实物名称或描述（例如：小猫、苹果、汽车...）');
         return;
     }
 
@@ -183,7 +183,7 @@ window.generateMoodPixelFromText = async function generateMoodPixelFromText() {
     placeholder.style.display = 'none';
     container.style.display = 'flex';
     stats.style.display = 'block';
-    stats.innerHTML = '⏳ 正在通过 Moark API (flux-1-schnell) 为您创造专属艺术画作并转化拼豆...';
+    stats.innerHTML = '⏳ 正在通过 Moark API (flux-1-schnell) 为您生成真实生动的实物画面并转化拼豆...';
 
     // 尝试调用新版文生图 API
     try {
@@ -200,7 +200,7 @@ window.generateMoodPixelFromText = async function generateMoodPixelFromText() {
                 imgObj.crossOrigin = "Anonymous";
                 imgObj.onload = () => {
                     renderBeadGridFromImage(imgObj, canvas, size);
-                    stats.innerHTML = `✨ <b>"${textInput}"</b> AI 专属拼豆画作生成完毕！当前图纸尺寸 <b>${size} x ${size}</b> 像素 (共需拼豆 ${size*size} 颗)`;
+                    stats.innerHTML = `✨ <b>"${textInput}"</b> AI 实物图拼豆生成完毕！当前图纸尺寸 <b>${size} x ${size}</b> 像素 (共需拼豆 ${size*size} 颗)`;
                 };
                 imgObj.onerror = () => {
                     stats.innerHTML = '❌ 图像解析失败，请重新尝试生成。';
