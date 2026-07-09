@@ -155,14 +155,24 @@ async def process_user_input(user_text):
 
 async def generate_audio_base64(text):
     try:
-        url = f"http://127.0.0.1:9880/?text={urllib.parse.quote(text)}&text_language=zh"
-        loop = asyncio.get_event_loop()
-        def fetch_audio():
-            req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, timeout=15) as response:
-                return response.read()
-        logger.info(f"正在请求 GPT-SoVITS 语音合成...")
-        audio_bytes = await loop.run_in_executor(None, fetch_audio)
+        from openai import AsyncOpenAI
+        moark_client = AsyncOpenAI(
+            base_url="https://api.moark.com/v1",
+            api_key="QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q",
+        )
+        logger.info(f"正在请求 Moark ChatTTS 语音合成...")
+        response = await moark_client.audio.speech.create(
+            input=text,
+            model="ChatTTS",
+            extra_body={
+                "prompt": "[oral_1]",
+                "temperature": 0.2,
+                "top_P": 0.7,
+                "top_K": 20,
+            },
+            voice="alloy",
+        )
+        audio_bytes = response.content
         return base64.b64encode(audio_bytes).decode('utf-8')
     except Exception as e:
         logger.error(f"语音合成失败: {e}")
