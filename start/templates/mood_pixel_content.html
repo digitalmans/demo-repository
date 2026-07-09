@@ -57,14 +57,13 @@
                         <h4 style="margin: 0 0 8px 0; color: #4a5568; font-size: 1.2em;">在左侧输入文字心情，生成拼豆画作</h4>
                         <p style="margin: 0; font-size: 0.9em;">生成后此处将显示带网格纹理的拼豆图纸和色彩统计</p>
                     </div>
-                    <div id="text-mood-result-container" style="display: none; flex-direction: row; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">AI 原图 (flux-1-schnell)</span>
-                            <img id="text-mood-ai-img" src="" style="max-width: 240px; max-height: 240px; border-radius: 10px; border: 2px solid #e2e8f0; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: none;">
+                    <div id="text-mood-result-container" style="display: none; justify-content: center; align-items: center;">
+                        <div style="display: none;">
+                            <img id="text-mood-ai-img" src="" style="display: none;">
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center;">
-                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">拼豆转换图样 (微缩高亮网格)</span>
-                            <canvas id="text-mood-canvas" style="max-width: 280px; max-height: 280px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 4px 20px rgba(0,0,0,0.08);"></canvas>
+                            <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 拼豆转换图样 (全彩高亮像素样稿)</span>
+                            <canvas id="text-mood-canvas" style="max-width: 440px; max-height: 440px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);"></canvas>
                         </div>
                     </div>
                     <div id="text-mood-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
@@ -116,14 +115,13 @@
                         <h4 style="margin: 0 0 8px 0; color: #4a5568; font-size: 1.2em;">选择或上传图片进行拼豆像素化</h4>
                         <p style="margin: 0; font-size: 0.9em;">支持本地极速转换或 FLUX.1-Kontext-dev 深度 AI 图生图编辑</p>
                     </div>
-                    <div id="upload-bead-result-container" style="display: none; flex-direction: row; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">原图 / AI 处理后图片</span>
-                            <img id="upload-bead-ai-img" src="" style="max-width: 240px; max-height: 240px; border-radius: 10px; border: 2px solid #e2e8f0; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <div id="upload-bead-result-container" style="display: none; justify-content: center; align-items: center;">
+                        <div style="display: none;">
+                            <img id="upload-bead-ai-img" src="" style="display: none;">
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center;">
-                            <span style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">拼豆图样网格</span>
-                            <canvas id="upload-bead-canvas" style="max-width: 280px; max-height: 280px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 4px 20px rgba(0,0,0,0.08);"></canvas>
+                            <span style="font-size: 0.95em; color: #667eea; margin-bottom: 10px; font-weight: 600;">✨ 拼豆图样网格 (全彩高亮像素样稿)</span>
+                            <canvas id="upload-bead-canvas" style="max-width: 440px; max-height: 440px; border: 2px solid #e2e8f0; border-radius: 12px; image-rendering: pixelated; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);"></canvas>
                         </div>
                     </div>
                     <div id="upload-bead-stats" style="display: none; margin-top: 20px; font-size: 0.95em; color: #4a5568;"></div>
@@ -134,8 +132,9 @@
 </div>
 
 <script>
+(function() {
 // 选项卡切换（文字信息模块 vs 上传拼豆模块）
-function switchMoodPixelTab(tab) {
+window.switchMoodPixelTab = function switchMoodPixelTab(tab) {
     const textModule = document.getElementById('module-text-mood');
     const uploadModule = document.getElementById('module-upload-bead');
     const textBtn = document.getElementById('tab-btn-text-mood');
@@ -167,7 +166,7 @@ function switchMoodPixelTab(tab) {
 }
 
 // 模块一：生成文字心情拼豆画
-async function generateMoodPixelFromText() {
+window.generateMoodPixelFromText = async function generateMoodPixelFromText() {
     const textInput = document.getElementById('text-mood-input').value.trim();
     const size = parseInt(document.getElementById('text-mood-size').value || '32');
     if (!textInput) {
@@ -290,7 +289,7 @@ function drawPixelGridOnCanvas(canvas, size, seedText) {
 let uploadedFileObj = null;
 let uploadedImageObj = null;
 
-function handleBeadFileUpload(event) {
+window.handleBeadFileUpload = function handleBeadFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     uploadedFileObj = file;
@@ -307,7 +306,7 @@ function handleBeadFileUpload(event) {
     reader.readAsDataURL(file);
 }
 
-async function convertUploadedImageToBeads(useAI) {
+window.convertUploadedImageToBeads = async function convertUploadedImageToBeads(useAI) {
     if (!uploadedImageObj || !uploadedFileObj) {
         alert('请先选择要转换拼豆的本地图片文件');
         return;
@@ -357,4 +356,5 @@ async function convertUploadedImageToBeads(useAI) {
     renderBeadGridFromImage(uploadedImageObj, canvas, size);
     stats.innerHTML = `✨ 成功转换为 <b>${size} x ${size}</b> 拼豆图纸！清晰显示像素孔洞和色彩矩阵`;
 }
+})();
 </script>
