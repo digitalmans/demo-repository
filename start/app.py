@@ -55,8 +55,10 @@ if voice_assistant_path not in sys.path:
     sys.path.insert(0, voice_assistant_path)
 
 try:
-    from asr import asr, DemoError as ASRError
-    from tts import tts, DemoError as TTSError
+    from asr import asr
+    from tts import tts
+    ASRError = Exception
+    TTSError = Exception
     VOICE_ASSISTANT_AVAILABLE = True
 except ImportError as e:
     print(f"警告: 无法导入语音助手模块: {e}")

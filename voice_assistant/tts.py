@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 # Moark / Gitee AI API key configuration
-API_KEY = os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY") or "YOUR_MOARK_API_KEY"
+API_KEY = os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY") or "QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q"
 BASE_URL = "https://api.moark.com/v1"
 
 # Voice mapping based on existing speaker parameters:

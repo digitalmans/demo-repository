@@ -20,10 +20,7 @@ def asr(audio_file, auto_detect_language=True):
     
     # Reload environment variables to pick up changes in .env dynamically
     load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
-    api_key = os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY")
-    
-    if not api_key or api_key == "YOUR_MOARK_API_KEY":
-        raise ValueError("MOARK_API_KEY is not configured! Please configure it in your .env file.")
+    api_key = os.environ.get("MOARK_API_KEY") or os.environ.get("GITEE_AI_API_KEY") or "QQFL0VLH1MMPVEOASHZAOTMJOCTXC2XHD4MWBO1Q"
 
     # Initialize OpenAI client with Moark endpoint
     client = OpenAI(
